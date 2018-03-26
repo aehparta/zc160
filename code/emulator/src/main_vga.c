@@ -5,10 +5,11 @@
  * Authors: Antti Partanen <aehparta@cc.hut.fi, duge at IRCnet>
  */
 
+#include <stdint.h>
+#include "z80cpu.h"
 #include "main_vga.h"
 
 
-/******************************************************************************/
 /* CONSTANTS */
 const char opts[] = "hK:R:I:V:f:";
 struct option longopts[] =
@@ -27,7 +28,6 @@ SDL_TimerID timer_id;
 uint32_t cpu_frequency_mhz = 8;
 
 
-/******************************************************************************/
 /**
  * Print commandline help.
  */
@@ -45,7 +45,6 @@ void p_help(void)
 }
 
 
-/******************************************************************************/
 /**
  * Set default values.
  */
@@ -57,7 +56,6 @@ void p_defaults(int argc, char *argv[])
 }
 
 
-/******************************************************************************/
 /**
  * Print commandline help.
  */
@@ -105,7 +103,6 @@ out_err:
 }
 
 
-/******************************************************************************/
 /**
  * Initialize resources needed by this process.
  *
@@ -152,7 +149,6 @@ out_err:
 }
 
 
-/******************************************************************************/
 /**
  * Free resources allocated by process, quit using libraries, terminate
  * connections and so on. This function will use exit() to quit the process.
@@ -172,13 +168,11 @@ void p_exit(int return_code)
 }
 
 
-/******************************************************************************/
 /**
  * Run CPU at specified interval (60 Hz).
  */
-Uint32 p_run_cpu(Uint32 interval, void *data)
+uint32_t p_run_cpu(uint32_t interval, void *data)
 {
-    static refresh = 0;
     SDL_Surface *screen = NULL;
     int i = FRAME_FREE_TIME_NS / 1000 * cpu_frequency_mhz;
 
@@ -187,20 +181,14 @@ Uint32 p_run_cpu(Uint32 interval, void *data)
         i -= z80cpu_step();
     }
 
-    /* refresh screen only at third of the real refresh rate (less cpu intensive) */
-    refresh++;
-    if (refresh >= 3) {
-        refresh = 0;
-        screen = SDL_GetWindowSurface(window);
-        vga_screen_update(screen);
-        SDL_UpdateWindowSurface(window);
-    }
+    screen = SDL_GetWindowSurface(window);
+    vga_screen_update(screen);
+    SDL_UpdateWindowSurface(window);
 
     return interval;
 }
 
 
-/******************************************************************************/
 /**
  * Function.
  *

@@ -1,7 +1,7 @@
 ;******************************************************************************
 ;
 ;
-; The ZC160 Operating System
+; The ZC160: GPU OS
 ;
 ;
 ;
@@ -416,8 +416,6 @@ _draw_1_char_no_newline:
     pop bc
     ret
 
-.db "sdafasdf"
-
 ;******************************************************************************
 ; draw text, mono mode
 draw_1_text:
@@ -435,7 +433,7 @@ _draw_1_text_eol:
     ret
 
 ;******************************************************************************
-; Setup and start the ZC160 Operating System.
+; Setup and start the ZC160 GPU OS.
 reset:
 ; setup stack pointer
     ld sp, OS_STACK
@@ -523,6 +521,13 @@ scroll:
     ld bc, S_TEST2
     ld (TEXT_POINTER), bc
     call draw_1_text
+
+    ld bc, 0
+    ld (DRAW_X), bc
+    ld (DRAW_Y), bc
+    ld bc, 512
+    ld (DRAW_W), bc
+    call draw_1_line_horizontal
 
 ; halt
 halt:
