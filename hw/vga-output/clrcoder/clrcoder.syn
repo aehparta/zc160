@@ -1,0 +1,9 @@
+JDF B
+// Created by Version 2.0 
+PROJECT Untitled
+DESIGN clrcoder Normal
+DEVKIT GAL20V8B-10LP
+ENTRY ABEL/Schematic
+MODULE clrcoder.sch
+MODSTYLE clrcoder Normal
+SYNTHESIS_TOOL Exemplar

@@ -1,0 +1,9 @@
+JDF B
+// Created by Version 2.0 
+PROJECT Untitled
+DESIGN bitbuf2 Normal
+DEVKIT GAL22V10B-15LP
+ENTRY ABEL/Schematic
+MODULE bitbuf2.sch
+MODSTYLE bitbuf2 Normal
+SYNTHESIS_TOOL Exemplar

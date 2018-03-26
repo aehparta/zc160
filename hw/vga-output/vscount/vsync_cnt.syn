@@ -1,0 +1,9 @@
+JDF B
+// Created by Version 2.0 
+PROJECT Untitled
+DESIGN vsync_cnt Normal
+DEVKIT GAL22V10B-15LP
+ENTRY ABEL/Schematic
+MODULE vsync_cnt.sch
+MODSTYLE vsync_cnt Normal
+SYNTHESIS_TOOL Exemplar

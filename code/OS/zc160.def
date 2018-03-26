@@ -1,0 +1,41 @@
+;******************************************************************************
+;
+;
+; The ZC160 Operating System
+;
+;
+;
+; Authors: Antti Partanen, <aehparta@iki.fi>
+;
+;******************************************************************************
+
+
+;******************************************************************************
+; ZC160 Operating System definitions
+
+; End of line char for strings
+EOL                 .equ    $00
+
+
+;******************************************************************************
+; memory constants
+OS_STACK            .equ    ($4000 - $100)
+
+
+;******************************************************************************
+; io-device addresses
+
+; DMA
+DMA_SRCL            .equ    $f0
+DMA_SRCH            .equ    $f1
+DMA_DSTL            .equ    $f2
+DMA_DSTH            .equ    $f3
+DMA_CNTL            .equ    $f4
+DMA_CNTH            .equ    $f5
+
+; memory bank selection latch
+MB_LATCH            .equ    $fc
+
+; LCD registers
+LCD_REG_CMD         .equ    $fe
+LCD_REG_DATA        .equ    $ff

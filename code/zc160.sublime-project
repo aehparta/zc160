@@ -1,0 +1,17 @@
+{
+	"folders":
+	[
+		{
+			"path": "VGA"
+		},
+		{
+			"path": "emulator"
+		},
+		{
+			"path": "tools"
+		},
+		{
+			"path": "OS"
+		}
+	]
+}

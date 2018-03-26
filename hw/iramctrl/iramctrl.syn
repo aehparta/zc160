@@ -1,0 +1,9 @@
+JDF B
+// Created by Version 2.0 
+PROJECT Untitled
+DESIGN iramctrl Normal
+DEVKIT GAL16V8D-10QP
+ENTRY ABEL/Schematic
+MODULE iramctrl.sch
+MODSTYLE iramctrl Normal
+SYNTHESIS_TOOL Exemplar

@@ -1,0 +1,9 @@
+JDF B
+// Created by Version 2.0 
+PROJECT Untitled
+DESIGN hsync Normal
+DEVKIT GAL20V8B-10LP
+ENTRY ABEL/Schematic
+MODULE hsync.sch
+MODSTYLE hsync Normal
+SYNTHESIS_TOOL Exemplar

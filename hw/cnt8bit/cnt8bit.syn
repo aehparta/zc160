@@ -1,0 +1,9 @@
+JDF B
+// Created by Version 2.0 
+PROJECT Untitled
+DESIGN cnt8bit Normal
+DEVKIT GAL22V10D-15LP
+ENTRY ABEL/Schematic
+MODULE cnt8bit.sch
+MODSTYLE cnt8bit Normal
+SYNTHESIS_TOOL Exemplar

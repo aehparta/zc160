@@ -1,0 +1,63 @@
+;******************************************************************************
+;
+;
+; The ZC160 Operating System
+;
+;
+;
+; Authors: Antti Partanen, <aehparta@iki.fi>
+;
+;******************************************************************************
+
+
+;******************************************************************************
+; ZC160 Operating System definitions
+
+; end of line char for strings
+EOL                 .equ    $00
+; newline (line feed)
+LF                  .equ    $a
+
+
+;******************************************************************************
+; memory constants
+OS_STACK            .equ    $77ff
+IRAM_START          .equ    $7800
+VRAM_START          .equ    $8000
+
+DRAW_X              .equ    $7400
+DRAW_Y              .equ    $7402
+DRAW_W              .equ    $7404
+DRAW_H              .equ    $7406
+DRAW_X2             .equ    $7408
+DRAW_Y2             .equ    $740a
+
+CURSOR_X            .equ    $7420
+CURSOR_Y            .equ    $7421
+CURSOR_FLAGS        .equ    $7422
+
+TEXT_POINTER        .equ    $7424
+
+TEMP01              .equ    $74f0
+TEMP02              .equ    $74f1
+TEMP03              .equ    $74f2
+TEMP04              .equ    $74f3
+
+DEBUG_PRINT         .equ    $0000
+DEBUG_REGS          .equ    $0002
+DEBUG_FLAGS         .equ    $0003
+
+SYSFONT             .equ    $1800
+
+
+;******************************************************************************
+; io-device addresses
+
+; VGA setup latch
+IO_VRAM_BANK        .equ    $00
+IO_LATCH            .equ    $01
+
+;******************************************************************************
+; other
+LOGO_TOP            .equ    192
+LOGO_LEFT           .equ    160

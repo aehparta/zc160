@@ -1,0 +1,9 @@
+JDF B
+// Created by Version 2.0 
+PROJECT Untitled
+DESIGN dmacnt_8_15 Normal
+DEVKIT GAL22V10D-15LP
+ENTRY ABEL/Schematic
+MODULE dmacnt_8_15.sch
+MODSTYLE dmacnt_8_15 Normal
+SYNTHESIS_TOOL Exemplar

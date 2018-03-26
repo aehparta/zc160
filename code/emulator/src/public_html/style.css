@@ -1,0 +1,94 @@
+/******************************************************************************/
+/* globals */
+{
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    width: 800px;
+    margin: 0 auto;
+    background: #333;
+    color: white;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+table td {
+    padding: 0;
+    margin: 0;
+}
+
+table th {
+    text-align: left;
+    padding: 5px 10px 5px 10px;
+    background: #ccc;
+}
+
+a {
+    outline: none;
+}
+
+a img {
+    border: 0px;
+}
+
+pre {
+    background: #ccc;
+    font-size: 8pt;
+    padding: 10px;
+}
+
+.icon {
+    margin-right: 5px;
+}
+
+.disabled {
+    color: #aaa !important;
+}
+
+.disabled a {
+    color: #aaa !important;
+}
+
+#content {
+    background: #777;
+    padding: 40px;
+}
+
+/******************************************************************************/
+/* leds */
+.led {
+    border: 1px solid #000;
+    border-radius: 18px;
+    background: #722;
+    width: 24px;
+    height: 24px;
+    margin: 5px;
+}
+
+.led_on {
+    background: #f33;
+}
+
+/******************************************************************************/
+/* hd44780 */
+#display_hd44780 {
+    background-image: url('z80wemu_display.png');
+    background-repeat: no-repeat;
+    padding-top: 42px;
+    padding-left: 40px;
+    width: 399px;
+    height: 130px;
+}
+
+#hd44780 {
+}
+
+#hd44780 .char {
+    width: 14px;
+    height: 21px;
+    background-image: url('charset.gif');
+}

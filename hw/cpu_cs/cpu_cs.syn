@@ -1,0 +1,9 @@
+JDF B
+// Created by Version 2.0 
+PROJECT Untitled
+DESIGN cpu_cs Normal
+DEVKIT GAL20V8B-10LP
+ENTRY ABEL/Schematic
+MODULE cpu_cs.sch
+MODSTYLE cpu_cs Normal
+SYNTHESIS_TOOL Exemplar
