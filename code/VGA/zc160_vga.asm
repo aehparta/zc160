@@ -298,25 +298,16 @@ draw_1_char:
     ld hl, (CURSOR_Y)
     ld h, 0
     ; multiply by 8
-    sla l
-    rl h
-    sla l
-    rl h
-    sla l
-    rl h
+    add hl, hl
+    add hl, hl
+    add hl, hl
     ; multiply by 64
-    sla l
-    rl h
-    sla l
-    rl h
-    sla l
-    rl h
-    sla l
-    rl h
-    sla l
-    rl h
-    sla l
-    rl h
+    add hl, hl
+    add hl, hl
+    add hl, hl
+    add hl, hl
+    add hl, hl
+    add hl, hl
     ; get x position
     ld bc, (CURSOR_X)
     ld b, 0
@@ -332,12 +323,9 @@ draw_1_char:
     ld h, 0
     ld l, a
     ; multiply by 8
-    sla l
-    rl h
-    sla l
-    rl h
-    sla l
-    rl h
+    add hl, hl
+    add hl, hl
+    add hl, hl
     ; add font pointer to get character data position
     ld de, SYSFONT
     add hl, de
@@ -419,17 +407,107 @@ _draw_1_char_no_newline:
 ;******************************************************************************
 ; draw text, mono mode
 draw_1_text:
+    push bc
+    push de
     push hl
-    ld hl, (TEXT_POINTER)
+    ld bc, (TEXT_POINTER)
+    push bc
 _draw_1_text_loop:
-    ld a, (hl)
+    pop bc
+    ld a, (bc)
+    inc bc
     cp EOL
     jp z, _draw_1_text_eol
-    call draw_1_char
-    inc hl
+    push bc
+    cp LF
+    jp z, _draw_1_text_lf
+    cp CR
+    jp z, _draw_1_text_cr
+    ; resolve character data position
+    ld h, 0
+    ld l, a
+    ; multiply by 8
+    add hl, hl
+    add hl, hl
+    add hl, hl
+    ; add font pointer to get character data position
+    ld de, SYSFONT
+    add hl, de
+    ex de, hl
+    ; cursor position
+    ld hl, (CURSOR_Y)
+    ld h, 0
+    ; multiply by 8
+    add hl, hl
+    add hl, hl
+    add hl, hl
+    ; multiply by 64
+    add hl, hl
+    add hl, hl
+    add hl, hl
+    add hl, hl
+    add hl, hl
+    add hl, hl
+    ; get x position
+    ld a, (CURSOR_X)
+    ld c, a
+    inc a
+    ld (CURSOR_X), a
+    ld b, 0
+    add hl, bc
+    ld bc, VRAM_START
+    add hl, bc
+    ; draw character
+    ld bc, 64
+    ld a, (de)
+    ld (hl), a
+    inc de
+    add hl, bc
+    ld a, (de)
+    ld (hl), a
+    inc de
+    add hl, bc
+    ld a, (de)
+    ld (hl), a
+    inc de
+    add hl, bc
+    ld a, (de)
+    ld (hl), a
+    inc de
+    add hl, bc
+    ld a, (de)
+    ld (hl), a
+    inc de
+    add hl, bc
+    ld a, (de)
+    ld (hl), a
+    inc de
+    add hl, bc
+    ld a, (de)
+    ld (hl), a
+    inc de
+    add hl, bc
+    ld a, (de)
+    ld (hl), a
+    jp _draw_1_text_loop
+_draw_1_text_lf:
+    ld a, (CURSOR_Y)
+    cp 47
+    jp z, _draw_1_text_lf_scroll
+    inc a
+    ld (CURSOR_Y), a
+    jp _draw_1_text_cr
+_draw_1_text_lf_scroll:
+    memcpy VRAM_START, VRAM_START + 8 * 64, 64 * 384 - 8 * 64
+    memset VRAM_START + 64 * 384 - 8 * 64, 0, 8 * 64
+_draw_1_text_cr:
+    xor a
+    ld (CURSOR_X), a
     jp _draw_1_text_loop
 _draw_1_text_eol:
     pop hl
+    pop de
+    pop bc
     ret
 
 ;******************************************************************************
@@ -444,16 +522,10 @@ reset:
     ld a, $00
     out (IO_VRAM_BANK), a
 ; clear screen, first 24 kB (mono display)
-    ld d, $00
-    ld hl, VRAM_START
-    ld bc, $6000
-reset_screen_clear:
-    ld (hl), d
-    inc hl
-    dec bc
-    ld a, b
-    or c
-    jp nz, reset_screen_clear
+    profile_start
+    memset VRAM_START, 0, $6000
+    profile_end
+
 ; position cursor to bottom
     ld bc, 0
     ld (CURSOR_X), bc
@@ -461,6 +533,7 @@ reset_screen_clear:
     ld (CURSOR_Y), bc
 
 ; draw zc160 logo
+    profile_start
 draw_logo:
     ld bc, 8
     ld (DRAW_W), bc
@@ -509,13 +582,20 @@ _draw_logo_skip_block:
     jp nz, _draw_logo_loop
     ;
     pop bc
+    profile_end
 
 ; draw text
+    ld a, 0
+    ld (CURSOR_X), a
+    ld a, 45
+    ld (CURSOR_Y), a
     ld bc, S_TEST
     ld (TEXT_POINTER), bc
-    ld b, 20
+    ld b, 10
 scroll:
+    profile_start
     call draw_1_text
+    profile_end
     djnz scroll
 
     ld bc, S_TEST2
@@ -555,4 +635,4 @@ LOGO_DATA:
 .db %11111111, %11110000, %00000111, %11111111
 
 S_TEST: .db "Hello world!", LF, EOL
-S_TEST2: .db 32,32,31,32,30,LF,EOL
+S_TEST2: .db 32,32,31,32,30, LF, EOL

@@ -12,7 +12,7 @@ DASM="$DIR/${NAME}.dasm"
 mkdir -p $DIR
 
 echo "Compile $SRC to object $OBJ..."
-z80-unknown-coff-as -z80 -forbid-unportable-instructions --warn -o $OBJ $SRC
+z80-unknown-coff-as -z80 -ignore-unportable-instructions --warn -o $OBJ $SRC
 if [ "$?" -ne "0" ]; then
     echo "Failed to compile!"
     exit 1

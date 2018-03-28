@@ -15,12 +15,15 @@
 
 ; end of line char for strings
 EOL                 .equ    $00
-; newline (line feed)
+; line feed
 LF                  .equ    $a
+; carriage return
+CR                  .equ    $d
 
 
 ;******************************************************************************
 ; memory constants
+
 OS_STACK            .equ    $77ff
 IRAM_START          .equ    $7800
 VRAM_START          .equ    $8000
@@ -57,7 +60,53 @@ SYSFONT             .equ    $1800
 IO_VRAM_BANK        .equ    $00
 IO_LATCH            .equ    $01
 
+
 ;******************************************************************************
 ; other
-LOGO_TOP            .equ    192
+LOGO_TOP            .equ    128
 LOGO_LEFT           .equ    160
+
+
+;******************************************************************************
+; memory handling macros
+
+; memset, changes bc, de, hl
+.macro memset address, value, size
+    ld de, \address
+    ld h, d
+    ld l, e
+    inc de
+    ld bc, \size - 1
+    ld (hl), \value
+    ldir
+.endm
+
+; memcpy, changes bc, de, hl
+.macro memcpy dst, src, size
+    ld de, \dst
+    ld hl, \src
+    ld bc, \size
+    ldir
+.endm
+
+; inversed memcpy, copies starting from end of src and dst, changes bc, de, hl
+.macro imemcpy dst, src, size
+    ld de, \dst + \size - 1
+    ld hl, \src + \size - 1
+    ld bc, \size
+    lddr
+.endm
+
+
+;******************************************************************************
+; debug
+
+; debug: start profiling
+.macro profile_start
+    out (255), a
+.endm
+
+; debug: end profiling
+.macro profile_end
+    out (254), a
+.endm

@@ -15,31 +15,30 @@
 
 
 /******************************************************************************/
-struct hd44780
-{
-    unsigned char *display;
-    int w;
-    int h;
+struct hd44780 {
+	unsigned char *display;
+	int w;
+	int h;
 
-    int rs;
-    int rw;
-    int en;
-    int data;
+	int rs;
+	int rw;
+	int en;
+	int data;
 
-    int onoff;
-    int cursoron;
-    int blink;
+	int onoff;
+	int cursoron;
+	int blink;
 
-    int moveshift;
-    int shiftdir;
+	int moveshift;
+	int shiftdir;
 
-    int interfacelen;
-    int displayline;
-    int charfont;
+	int interfacelen;
+	int displayline;
+	int charfont;
 
-    int useddorcg;
-    int cgaddr;
-    int ddaddr;
+	int useddorcg;
+	int cgaddr;
+	int ddaddr;
 };
 
 

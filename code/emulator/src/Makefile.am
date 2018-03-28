@@ -12,10 +12,11 @@ noinst_PROGRAMS = zc160vgaemu
 #	hd44780.c
 
 zc160vgaemu_SOURCES = \
-	main_vga.c \
-	vga.c \
-	mem.c \
-	z80cpu.c
+    main_vga.c \
+    vga.c \
+    mem.c \
+    z80cpu.c \
+    profiler.c
 
 #zc160emu_LDFLAGS = @libddebug_LIBS@ @libstrvar_LIBS@ @z80ex_LIBS@ @net3_LIBS@
 #zc160emu_CFLAGS = @libddebug_CFLAGS@ @libstrvar_CFLAGS@ @z80ex_CFLAGS@ @net3_CFLAGS@
