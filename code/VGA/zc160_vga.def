@@ -110,3 +110,13 @@ LOGO_LEFT           .equ    160
 .macro profile_end
     out (254), a
 .endm
+
+; debug: print registers
+.macro debug_print_regs
+    ld (DEBUG_REGS), a
+.endm
+
+; debug: print register
+.macro debug_print_reg register
+    ld (DEBUG_PRINT), \register
+.endm

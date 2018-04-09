@@ -2,7 +2,7 @@
 
 NAME="zc160_vga"
 
-SRC="${NAME}.asm"
+SRC="${NAME}.asm math.asm"
 
 DIR="bin"
 OBJ="$DIR/${NAME}.obj"

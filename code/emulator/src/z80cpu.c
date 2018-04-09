@@ -42,7 +42,7 @@ void z80cpu_dump_registers()
 	iff1 = z80ex_get_reg(z80cpu, regIFF1);
 	iff2 = z80ex_get_reg(z80cpu, regIFF2);
 
-	printf("%s: %04X (", " af1", af1);
+	printf(" af1: %04X, a: %3d (", af1, af1 >> 8);
 	for (bit = 7; bit >= 0; bit--) {
 		printf("%c:", (int)flags[bit]);
 		if (af1 & (1 << bit)) {
@@ -56,9 +56,9 @@ void z80cpu_dump_registers()
 	}
 	printf(")\n");
 
-	printf("%s: %04X\n", " bc1", bc1);
-	printf("%s: %04X\n", " de1", de1);
-	printf("%s: %04X\n", " hl1", hl1);
+	printf(" bc1: %04X, b: %3d, c: %3d\n", bc1, bc1 >> 8, bc1 & 0xff);
+	printf(" de1: %04X, d: %3d, e: %3d\n", de1, de1 >> 8, de1 & 0xff);
+	printf(" hl1: %04X, h: %3d, l: %3d\n", hl1, hl1 >> 8, hl1 & 0xff);
 
 	printf("%s: %04X (", " af2", af2);
 	for (bit = 7; bit >= 0; bit--) {

@@ -109,191 +109,152 @@ delay_ms1:              ; 1ms delay
 
 
 ;******************************************************************************
-; draw single pixel, mono mode
-draw_1_pixel:
-    ld a, 0
-    ld bc, (DRAW_Y)
-    ld de, 64 ; 512 / 8
-    ld hl, VRAM_START
-_draw_1_pixel_start_line_find:
-    cp c
-    jp nz, _draw_1_pizel_start_line_continue
-    cp b
-    jp z, _draw_1_pixel_start_line_found
-_draw_1_pizel_start_line_continue:
-    dec bc
+; calculate pixel address, mono mode
+; changes: a, hl, de, bc
+; return:
+;   a: bit mask of the pixel inside byte
+;   b: zero
+;   c: bit number inside the byte
+;   hl: pixel address
+mono_pixel_address:
+    ; calculate y
+    ld hl, (DRAW_Y)
+    ; multiply by 64
+    add hl, hl
+    add hl, hl
+    add hl, hl
+    add hl, hl
+    add hl, hl
+    add hl, hl
+    ; add x
+    ld de, (DRAW_X)
+    ld a, e ; save lower 3 bits to a
+    ; divide by 8
+    srl d
+    rr e
+    srl e
+    srl e
+    ; add x value
     add hl, de
-    jp _draw_1_pixel_start_line_find
-_draw_1_pixel_start_line_found:
-    ld bc, (DRAW_X)
-    ; get pixel position in the byte
-    ld a, c
+    ; add video ram start address
+    ld de, VRAM_START
+    add hl, de
+    ; get bit mask inside byte
+    ex de, hl
+    ld hl, BIT_MASK_LOOKUP
+    ld b, 0
     and $07
-    ; divide bc by 8
-    srl b
-    rr c
-    srl b
-    rr c
-    srl b
-    rr c
-    ; add bc to hl, hl then points to the byte where the pixel is
+    ld c, a
     add hl, bc
-    ; find the bit that must change
-    ld b, a
-    inc b
-    ld a, 1
-    djnz _draw_1_pixel_bit_from_byte_find
-    jp _draw_1_pixel_bit_from_byte_found
-_draw_1_pixel_bit_from_byte_find:
-    sla a
-    djnz _draw_1_pixel_bit_from_byte_find
-_draw_1_pixel_bit_from_byte_found:
+    ld a, (hl)
+    ex de, hl
+    ret
+
+
+;******************************************************************************
+; draw single pixel, mono mode
+mono_draw_pixel:
+    call mono_pixel_address
     or (hl)
+    ld (hl), a
+    ret
+
+
+;******************************************************************************
+; erase single pixel, mono mode
+mono_erase_pixel:
+    call mono_pixel_address
+    xor $ff
+    and (hl)
+    ld (hl), a
+    ret
+
+
+;******************************************************************************
+; toggle single pixel, mono mode
+mono_toggle_pixel:
+    call mono_pixel_address
+    xor (hl)
     ld (hl), a
     ret
 
 
 ;******************************************************************************
 ; draw horizontal line, mono mode
-draw_1_line_horizontal:
-    push bc
-    push de
-    push hl
-    ld a, 0
-    ld bc, (DRAW_Y)
-    ld de, 64 ; 512 / 8
-    ld hl, VRAM_START
-_draw_1_line_horizontal_start_line_find:
-    cp c
-    jp nz, _draw_1_line_horizontal_start_line_continue
-    cp b
-    jp z, _draw_1_line_horizontal_start_line_found
-_draw_1_line_horizontal_start_line_continue:
-    dec bc
-    add hl, de
-    jp _draw_1_line_horizontal_start_line_find
-_draw_1_line_horizontal_start_line_found:
-    ld bc, (DRAW_X)
-    ; get pixel position in the byte
-    ld a, c
-    and $07
-    ; divide bc by 8
-    srl b
-    rr c
-    srl b
-    rr c
-    srl b
-    rr c
-    ; add bc to hl, hl then points to the byte where the pixel is
-    add hl, bc
-    ;
-    ; first pixel byte address found, start drawing
-    ;
-    ld de, (DRAW_W)
-    cp $00
-    jp z, _draw_1_line_horizontal_first_byte_done
-    ;
-    ; draw pixels from odd start byte
-    ;
-    ld b, a
-    inc b
-    ld a, 1
-    djnz _draw_1_line_horizontal_start_bit_from_byte_find
-    jp _draw_1_line_horizontal_start_bit_from_byte_found
-_draw_1_line_horizontal_start_bit_from_byte_find:
-    sla a
-    djnz _draw_1_line_horizontal_start_bit_from_byte_find
-_draw_1_line_horizontal_start_bit_from_byte_found:
-    ld b, a
-    jp _draw_1_line_horizontal_start_bit_end_from_byte_find_loop
-_draw_1_line_horizontal_start_bit_end_from_byte_find:
-    sla b
-    jp c, _draw_1_line_horizontal_first_byte_almost_done
-    ld a, c
-    or b
-_draw_1_line_horizontal_start_bit_end_from_byte_find_loop:
+; changes: a, hl, de, bc
+mono_draw_line_horizontal:
+    call mono_pixel_address
+    ld bc, (DRAW_W)
+    ld b, c
+    cp 1
+    jr z, _mono_draw_line_horizontal_first_bits_skip
+_mono_draw_line_horizontal_first_bits:
     ld c, a
-    dec de
-    ld a, d
-    or e
-    jp nz, _draw_1_line_horizontal_start_bit_end_from_byte_find
-_draw_1_line_horizontal_first_byte_almost_done:
-    ld a, (hl)
+    rlca
+    jr c, _mono_draw_line_horizontal_first_bits_done
     or c
-    ld (hl), a
+    djnz _mono_draw_line_horizontal_first_bits
+_mono_draw_line_horizontal_first_bits_done:
+    ld (hl), c
     inc hl
-_draw_1_line_horizontal_first_byte_done:
-    ;
-    ; now draw full 8 pixel wide blocks (bytes)
-    ;
-    ld a, e
+    dec b
+_mono_draw_line_horizontal_first_bits_skip:
+    ld a, b
+    srl b
+    srl b
+    srl b
+    jp z, _mono_draw_line_horizontal_full_bytes_done
+    ld c, $ff
+_mono_draw_line_horizontal_full_bytes:
+    ld (hl), c
+    inc hl
+    djnz _mono_draw_line_horizontal_full_bytes
+_mono_draw_line_horizontal_full_bytes_done:
     and $07
-    ld c, a
-    ; divide de by 8
-    srl d
-    rr e
-    srl d
-    rr e
-    srl d
-    rr e
-    ;
-    jp _draw_1_line_horizontal_full_bytes_start
-_draw_1_line_horizontal_full_bytes_loop:
-    ld (hl), $ff
-    inc hl
-    dec de
-_draw_1_line_horizontal_full_bytes_start:
-    ld a, d
-    or e
-    jp nz, _draw_1_line_horizontal_full_bytes_loop
-    ;
-    ld d, h
-    ld e, l
+    ret z
+    dec a
     ld b, 0
-    ld hl, FILL_BITS_LOOKUP0
-    add hl, bc
+    ld c, a
     ld a, (hl)
-    ld h, d
-    ld l, e
+    ex de, hl
+    ld hl, FILL_BITS_END_LOOKUP
+    add hl, bc
     or (hl)
-    ld (hl), a
-    pop hl
-    pop de
-    pop bc
+    ld (de), a
     ret
+
 
 ;******************************************************************************
 ; fill rectangle, mono mode
-draw_1_fill_rectangle:
-    push bc
-    push de
+; changes: a, hl, de, bc
+mono_fill_rectangle:
     ld bc, (DRAW_H)
-_draw_1_fill_rectangle_loop:
+_mono_fill_rectangle_loop:
     ld a, b
     or c
-    jp z, _draw_1_fill_rectangle_done
-    call draw_1_line_horizontal
-    dec bc
-    ld de, (DRAW_Y)
-    inc de
-    ld (DRAW_Y), de
-    jp _draw_1_fill_rectangle_loop
-_draw_1_fill_rectangle_done:
-    pop de
+    jp z, _mono_fill_rectangle_done
+    push bc
+    call mono_draw_line_horizontal
     pop bc
+    dec bc
+    ld hl, (DRAW_Y)
+    inc hl
+    ld (DRAW_Y), hl
+    jp _mono_fill_rectangle_loop
+_mono_fill_rectangle_done:
     ret
 
 
 ;******************************************************************************
 ; draw char and increase cursor position, mono mode
 ; a = character
-draw_1_char:
+mono_draw_char:
     push bc
     push de
     push hl
     ; check for newline character
     cp LF
-    jp z, _draw_1_newline
+    jp z, _mono_draw_newline
     ; get y position
     ld hl, (CURSOR_Y)
     ld h, 0
@@ -378,12 +339,12 @@ draw_1_char:
     ld a, (CURSOR_X)
     inc a
     cp 64
-    jp m, _draw_1_char_no_newline
-_draw_1_newline:
+    jp m, _mono_draw_char_no_newline
+_mono_draw_newline:
     ld a, (CURSOR_Y)
     inc a
     cp 48
-    jp m, _draw_1_char_no_scroll
+    jp m, _mono_draw_char_no_scroll
     ; scroll screen
     ld de, VRAM_START
     ld hl, VRAM_START + 8 * 64
@@ -395,9 +356,9 @@ _draw_1_newline:
     ld de, VRAM_START + 64 * 384 - 8 * 64 + 1
     ld bc, 8 * 64 - 1
     ldir
-_draw_1_char_no_scroll:
+_mono_draw_char_no_scroll:
     ld a, 0
-_draw_1_char_no_newline:
+_mono_draw_char_no_newline:
     ld (CURSOR_X), a
     pop hl
     pop de
@@ -406,6 +367,26 @@ _draw_1_char_no_newline:
 
 ;******************************************************************************
 ; draw text, mono mode
+_draw_1_text_lf:
+    ld a, (CURSOR_Y)
+    cp 47
+    jr z, _draw_1_text_lf_scroll
+    inc a
+    ld (CURSOR_Y), a
+    jp _draw_1_text_cr
+_draw_1_text_lf_scroll:
+    memcpy VRAM_START, VRAM_START + 8 * 64, 64 * 384 - 8 * 64
+    memset VRAM_START + 64 * 384 - 8 * 64, 0, 8 * 64
+_draw_1_text_cr:
+    xor a
+    ld (CURSOR_X), a
+    jp _draw_1_text_loop
+_draw_1_text_eol:
+    pop hl
+    pop de
+    pop bc
+    ret
+; actual draw routine start
 draw_1_text:
     push bc
     push de
@@ -417,12 +398,12 @@ _draw_1_text_loop:
     ld a, (bc)
     inc bc
     cp EOL
-    jp z, _draw_1_text_eol
+    jr z, _draw_1_text_eol
     push bc
     cp LF
-    jp z, _draw_1_text_lf
+    jr z, _draw_1_text_lf
     cp CR
-    jp z, _draw_1_text_cr
+    jr z, _draw_1_text_cr
     ; resolve character data position
     ld h, 0
     ld l, a
@@ -490,25 +471,6 @@ _draw_1_text_loop:
     ld a, (de)
     ld (hl), a
     jp _draw_1_text_loop
-_draw_1_text_lf:
-    ld a, (CURSOR_Y)
-    cp 47
-    jp z, _draw_1_text_lf_scroll
-    inc a
-    ld (CURSOR_Y), a
-    jp _draw_1_text_cr
-_draw_1_text_lf_scroll:
-    memcpy VRAM_START, VRAM_START + 8 * 64, 64 * 384 - 8 * 64
-    memset VRAM_START + 64 * 384 - 8 * 64, 0, 8 * 64
-_draw_1_text_cr:
-    xor a
-    ld (CURSOR_X), a
-    jp _draw_1_text_loop
-_draw_1_text_eol:
-    pop hl
-    pop de
-    pop bc
-    ret
 
 ;******************************************************************************
 ; Setup and start the ZC160 GPU OS.
@@ -531,6 +493,37 @@ reset:
     ld (CURSOR_X), bc
     ld bc, 47
     ld (CURSOR_Y), bc
+
+; line draw test
+    ld bc, 0
+    ld (DRAW_X), bc
+    ld bc, 0
+    ld (DRAW_Y), bc
+    ld bc, 8
+    ld (DRAW_W), bc
+    profile_start
+    call mono_draw_line_horizontal
+    profile_end
+
+    ld bc, 4
+    ld (DRAW_X), bc
+    ld bc, 10
+    ld (DRAW_Y), bc
+    ld bc, 8
+    ld (DRAW_W), bc
+    profile_start
+    call mono_draw_line_horizontal
+    profile_end
+
+    ld bc, 4
+    ld (DRAW_X), bc
+    ld bc, 20
+    ld (DRAW_Y), bc
+    ld bc, 80
+    ld (DRAW_W), bc
+    profile_start
+    call mono_draw_line_horizontal
+    profile_end
 
 ; draw zc160 logo
     profile_start
@@ -560,7 +553,9 @@ _draw_logo_draw_blocks_loop:
     sla a
     jp c, _draw_logo_skip_block
     push af
-    call draw_1_fill_rectangle
+    exx
+    call mono_fill_rectangle
+    exx
     pop af
 _draw_logo_skip_block:
     inc de
@@ -587,33 +582,45 @@ _draw_logo_skip_block:
 ; draw text
     ld a, 0
     ld (CURSOR_X), a
-    ld a, 45
+    ld a, 40
     ld (CURSOR_Y), a
     ld bc, S_TEST
     ld (TEXT_POINTER), bc
     ld b, 10
 scroll:
-    profile_start
     call draw_1_text
-    profile_end
     djnz scroll
 
-    ld bc, S_TEST2
-    ld (TEXT_POINTER), bc
-    call draw_1_text
+; draw sine
+    ld hl, 0
+    ld (DRAW_Y), hl
+    ld (DRAW_X), hl
+    ld de, m_lut_sin
+    ld hl, DRAW_X
+    ld b, 255
+test_sin:
+    ld a, (de)
+    cpl
+    
+    ld (DRAW_Y), a
+    push hl
+    push bc
+    push de
+    call mono_draw_pixel
+    pop de
+    pop bc
+    pop hl
+    inc (hl)
+    inc de
+    djnz test_sin
 
-    ld bc, 0
-    ld (DRAW_X), bc
-    ld (DRAW_Y), bc
-    ld bc, 512
-    ld (DRAW_W), bc
-    call draw_1_line_horizontal
+
 
 ; halt
 halt:
     halt
 
-FILL_BITS_LOOKUP0:    .db    $00, $01, $03, $07, $0f, $1f, $3f, $7f, $ff
+FILL_BITS_END_LOOKUP:       .db     $01, $03, $07, $0f, $1f, $3f, $7f
 
 LOGO_DATA:
 .db %11111111, %11110000, %00000111, %11111111
@@ -633,6 +640,8 @@ LOGO_DATA:
 .db %00000001, %11000000, %00000001, %11111111
 .db %11111111, %11111111, %11111111, %11111111
 .db %11111111, %11110000, %00000111, %11111111
+
+BIT_MASK_LOOKUP: .db $01, $02, $04, $08, $10, $20, $40, $80
 
 S_TEST: .db "Hello world!", LF, EOL
 S_TEST2: .db 32,32,31,32,30, LF, EOL

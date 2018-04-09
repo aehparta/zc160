@@ -22,16 +22,43 @@
 // 	print("Hello!");
 // }
 
-void print(char *str)
+void putpixel(uint16_t x, uint16_t y)
 {
-	for ( ; *str != '\0'; str++) {
-		int i;
-		uint8_t *from = (uint8_t *)((*str) << 3) + 0x1800;
-		uint8_t *to = (uint8_t *)0x8000;
-		for (i = 0; i < 8; i++) {
-			*to = from[i];
-			to += 64;
+
+}
+
+void drawcircle(void)
+{
+	uint16_t x0 = 100;
+	uint16_t y0 = 100;
+	uint16_t radius = 100;
+
+	uint16_t x = radius - 1;
+	uint16_t y = 0;
+	uint16_t dx = 1;
+	uint16_t dy = 1;
+	uint16_t err = dx - (radius << 1);
+
+	while (x >= y) {
+		putpixel(x0 + x, y0 + y);
+		putpixel(x0 + y, y0 + x);
+		putpixel(x0 - y, y0 + x);
+		putpixel(x0 - x, y0 + y);
+		putpixel(x0 - x, y0 - y);
+		putpixel(x0 - y, y0 - x);
+		putpixel(x0 + y, y0 - x);
+		putpixel(x0 + x, y0 - y);
+
+		if (err <= 0) {
+			y++;
+			err += dy;
+			dy += 2;
+		}
+
+		if (err > 0) {
+			x--;
+			dx += 2;
+			err += dx - (radius << 1);
 		}
 	}
 }
-

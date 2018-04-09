@@ -170,7 +170,7 @@ void vga_cpu_wr(Z80EX_CONTEXT *cpu, Z80EX_WORD addr, Z80EX_BYTE value, void *use
 	struct mem *m = vga_find_memory(addr);
 
 	if (addr == 0x0000 || addr == 0x0001) {
-		INFO_MSG("debug value: %0.4X:%0.2X", addr, value);
+		INFO_MSG("debug value: %0.4X:%0.2X (%d)", addr, value, value);
 		return;
 	}
 	if (addr == 0x0002) {
