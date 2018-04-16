@@ -111,15 +111,16 @@ delay_ms1:              ; 1ms delay
 ;******************************************************************************
 ; calculate pixel address, mono mode
 ; changes: a, hl, de, bc
+; params:
+;   de: x-coordinate
+;   hl: y-coordinate
 ; return:
 ;   a: bit mask of the pixel inside byte
 ;   b: zero
 ;   c: bit number inside the byte
 ;   hl: pixel address
 mono_pixel_address:
-    ; calculate y
-    ld hl, (DRAW_Y)
-    ; multiply by 64
+    ; multiply y by 64
     add hl, hl
     add hl, hl
     add hl, hl
@@ -127,7 +128,6 @@ mono_pixel_address:
     add hl, hl
     add hl, hl
     ; add x
-    ld de, (DRAW_X)
     ld a, e ; save lower 3 bits to a
     ; divide by 8
     srl d
@@ -154,6 +154,8 @@ mono_pixel_address:
 ;******************************************************************************
 ; draw single pixel, mono mode
 mono_draw_pixel:
+    ld de, (DRAW_X)
+    ld hl, (DRAW_Y)
     call mono_pixel_address
     or (hl)
     ld (hl), a
@@ -163,8 +165,10 @@ mono_draw_pixel:
 ;******************************************************************************
 ; erase single pixel, mono mode
 mono_erase_pixel:
+    ld de, (DRAW_X)
+    ld hl, (DRAW_Y)
     call mono_pixel_address
-    xor $ff
+    cpl
     and (hl)
     ld (hl), a
     ret
@@ -173,6 +177,8 @@ mono_erase_pixel:
 ;******************************************************************************
 ; toggle single pixel, mono mode
 mono_toggle_pixel:
+    ld de, (DRAW_X)
+    ld hl, (DRAW_Y)
     call mono_pixel_address
     xor (hl)
     ld (hl), a
@@ -180,33 +186,38 @@ mono_toggle_pixel:
 
 
 ;******************************************************************************
-; draw horizontal line, mono mode
+; skeleton of draw horizontal line, mono mode
 ; changes: a, hl, de, bc
-mono_draw_line_horizontal:
+mono_draw_line_horizontal_skeleton:
     call mono_pixel_address
     ld bc, (DRAW_W)
-    ld b, c
     cp 1
     jr z, _mono_draw_line_horizontal_first_bits_skip
 _mono_draw_line_horizontal_first_bits:
-    ld c, a
+    ld e, a
     rlca
     jr c, _mono_draw_line_horizontal_first_bits_done
-    or c
-    djnz _mono_draw_line_horizontal_first_bits
-_mono_draw_line_horizontal_first_bits_done:
-    ld (hl), c
-    inc hl
+    or e
+    dec c
+    jp po, _mono_draw_line_horizontal_first_bits
     dec b
+    jp po, _mono_draw_line_horizontal_first_bits
+    inc bc
+_mono_draw_line_horizontal_first_bits_done:
+    dec bc
+    ld (hl), e
+    inc hl
 _mono_draw_line_horizontal_first_bits_skip:
-    ld a, b
+    ld a, c
     srl b
-    srl b
-    srl b
+    rr c
+    srl c
+    srl c
+    ld b, c
     jp z, _mono_draw_line_horizontal_full_bytes_done
-    ld c, $ff
+    ld e, $ff
 _mono_draw_line_horizontal_full_bytes:
-    ld (hl), c
+    ld (hl), e
     inc hl
     djnz _mono_draw_line_horizontal_full_bytes
 _mono_draw_line_horizontal_full_bytes_done:
@@ -225,22 +236,38 @@ _mono_draw_line_horizontal_full_bytes_done:
 
 
 ;******************************************************************************
+; draw horizontal line, mono mode
+; changes: a, hl, de, bc
+mono_draw_line_horizontal:
+    ld de, (DRAW_X)
+    ld hl, (DRAW_Y)
+;     call mono_draw_line_horizontal_skeleton
+;     ld hl, (DRAW_W)
+;     dec h
+;     ret nz
+;     xor a
+;     ld (DRAW_W), a
+;     ld de, (DRAW_X)
+;     add hl, de
+;     ex de, hl
+;     ld hl, (DRAW_Y)
+    jp mono_draw_line_horizontal_skeleton
+
+
+;******************************************************************************
 ; fill rectangle, mono mode
 ; changes: a, hl, de, bc
 mono_fill_rectangle:
-    ld bc, (DRAW_H)
-_mono_fill_rectangle_loop:
-    ld a, b
-    or c
-    jp z, _mono_fill_rectangle_done
-    push bc
-    call mono_draw_line_horizontal
-    pop bc
-    dec bc
     ld hl, (DRAW_Y)
+_mono_fill_rectangle_loop:
+    push hl
+    ld de, (DRAW_X)
+    call mono_draw_line_horizontal_skeleton
+    pop hl
     inc hl
-    ld (DRAW_Y), hl
-    jp _mono_fill_rectangle_loop
+    dec (ix + DRAW_I_H)
+    jp nz, _mono_fill_rectangle_loop
+;     djnz _mono_fill_rectangle_loop
 _mono_fill_rectangle_done:
     ret
 
@@ -487,8 +514,10 @@ reset:
     profile_start
     memset VRAM_START, 0, $6000
     profile_end
+; ix points to x-coordinate as default
+    ld ix, DRAW_X
 
-; position cursor to bottom
+; position cursor to bottom as default
     ld bc, 0
     ld (CURSOR_X), bc
     ld bc, 47
@@ -497,29 +526,74 @@ reset:
 ; line draw test
     ld bc, 0
     ld (DRAW_X), bc
-    ld bc, 0
-    ld (DRAW_Y), bc
-    ld bc, 8
-    ld (DRAW_W), bc
-    profile_start
-    call mono_draw_line_horizontal
-    profile_end
-
-    ld bc, 4
-    ld (DRAW_X), bc
-    ld bc, 10
-    ld (DRAW_Y), bc
-    ld bc, 8
-    ld (DRAW_W), bc
-    profile_start
-    call mono_draw_line_horizontal
-    profile_end
-
-    ld bc, 4
-    ld (DRAW_X), bc
     ld bc, 20
     ld (DRAW_Y), bc
-    ld bc, 80
+    ld bc, $ff
+    ld (DRAW_W), bc
+    call mono_draw_line_horizontal
+    ld bc, 21
+    ld (DRAW_Y), bc
+    ld bc, $100
+    ld (DRAW_W), bc
+    call mono_draw_line_horizontal
+    ld bc, 22
+    ld (DRAW_Y), bc
+    ld bc, $101
+    ld (DRAW_W), bc
+    call mono_draw_line_horizontal
+
+    ld bc, 4
+    ld (DRAW_X), bc
+    ld bc, 40
+    ld (DRAW_Y), bc
+    ld bc, $ff
+    ld (DRAW_W), bc
+    call mono_draw_line_horizontal
+    ld bc, 41
+    ld (DRAW_Y), bc
+    ld bc, $100
+    ld (DRAW_W), bc
+    call mono_draw_line_horizontal
+    ld bc, 42
+    ld (DRAW_Y), bc
+    ld bc, $101
+    ld (DRAW_W), bc
+    call mono_draw_line_horizontal
+
+    halt
+
+    ld bc, 0
+    ld (DRAW_X), bc
+    ld bc, 384
+loopping:
+    ld (DRAW_W), bc
+    dec bc
+    ld (DRAW_Y), bc
+    push bc
+    profile_start
+    call mono_draw_line_horizontal
+    profile_end
+    pop bc
+    ld a, b
+    or c
+    jp nz, loopping
+    halt
+
+    ld bc, 4
+    ld (DRAW_X), bc
+    ld bc, 60
+    ld (DRAW_Y), bc
+    ld bc, 8
+    ld (DRAW_W), bc
+    profile_start
+    call mono_draw_line_horizontal
+    profile_end
+
+    ld bc, 4
+    ld (DRAW_X), bc
+    ld bc, 70
+    ld (DRAW_Y), bc
+    ld bc, 3
     ld (DRAW_W), bc
     profile_start
     call mono_draw_line_horizontal
@@ -554,6 +628,7 @@ _draw_logo_draw_blocks_loop:
     jp c, _draw_logo_skip_block
     push af
     exx
+    ld (ix + 6), 8
     call mono_fill_rectangle
     exx
     pop af
@@ -614,7 +689,16 @@ test_sin:
     inc de
     djnz test_sin
 
+    halt
 
+xxx:
+    inc a
+    and $3f
+    or $40
+    out (IO_LATCH), a
+    ld bc, 50
+    call delay_ms
+    jp xxx
 
 ; halt
 halt:

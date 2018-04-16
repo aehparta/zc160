@@ -131,18 +131,23 @@ void vga_screen_update(SDL_Surface *screen)
 	int x, y;
 	SDL_Rect rect;
 
-	rect.w = 1;
-	rect.h = 1;
+	SDL_FillRect(screen, NULL, 0x0000003f);
+	rect.w = 512 * 2;
+	rect.h = 384 * 2;
+	rect.x = 64 * 2;
+	rect.y = 48 * 2;
+	SDL_FillRect(screen, &rect, 0x00000000);
 
-	SDL_FillRect(screen, NULL, 0x00000000);
+	rect.w = 2;
+	rect.h = 2;
 	for (y = 0; y < 384; y++) {
 		int row_addr = (y * 512) >> 3;
 		for (x = 0; x < 512; x++) {
 			unsigned char mask = 1 << (x & 0x07);
 			unsigned char b = mem_read8(vga_vram, 0x8000 + row_addr + (x >> 3));
 			if (b & mask) {
-				rect.x = x + 64;
-				rect.y = y + 48;
+				rect.x = (x + 64) * 2;
+				rect.y = (y + 48) * 2;
 				SDL_FillRect(screen, &rect, vga_custom_color);
 			}
 		}

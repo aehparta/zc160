@@ -35,6 +35,13 @@ DRAW_H              .equ    $7406
 DRAW_X2             .equ    $7408
 DRAW_Y2             .equ    $740a
 
+DRAW_I_X            .equ    0
+DRAW_I_Y            .equ    2
+DRAW_I_W            .equ    4
+DRAW_I_H            .equ    6
+DRAW_I_X2           .equ    8
+DRAW_I_Y2           .equ    10
+
 CURSOR_X            .equ    $7420
 CURSOR_Y            .equ    $7421
 CURSOR_FLAGS        .equ    $7422

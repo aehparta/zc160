@@ -135,7 +135,7 @@ int p_init(int argc, char *argv[])
 
 	/* init display */
 	IF_ERR(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0, -1, "SDL_Init() failed");
-	window = SDL_CreateWindow("ZC160 VGA emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_SHOWN);
+	window = SDL_CreateWindow("ZC160 VGA emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640 * 2, 480 * 2, SDL_WINDOW_SHOWN);
 	IF_ERR(window == NULL, -1, "SDL_CreateWindow() failed");
 	screen = SDL_GetWindowSurface(window);
 	SDL_FillRect(screen, NULL, 0x00000000);
