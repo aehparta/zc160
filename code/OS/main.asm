@@ -10,7 +10,7 @@
 ;******************************************************************************
 
 
-.include "zc160.def"
+.include "system.def"
 
 
 ;******************************************************************************
@@ -188,8 +188,8 @@ lcd_puts_ret:
 lcd_addr:
     push af
     push bc
-    ld a, h
-    cp $00
+    xor a
+    cp h
     jp z, lcd_addr_line_selected
     ld a, 40
 lcd_addr_line_selected:
@@ -200,8 +200,8 @@ lcd_addr_line_selected:
     pop bc
     pop af
     ret
-    
-    
+
+
 ;******************************************************************************
 ; Memory copy using DMA. Will override even NMI, but will keep memory
 ; refresh up.
@@ -261,7 +261,7 @@ reset:
 
 ;******************************************************************************
 ; Strings
-POWERON0:       .db "  ZC160 OS v1.0 ", EOL
-POWERON1:       .db "   booting...   ", EOL
+POWERON0:       .db "ZC160 OS v1.0       ", EOL
+POWERON1:       .db "booting...          ", EOL
 
 

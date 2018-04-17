@@ -10,7 +10,7 @@
 ;******************************************************************************
 
 
-.include "zc160_vga.def"
+.include "system.def"
 
 
 ;******************************************************************************
@@ -511,9 +511,9 @@ reset:
     ld a, $00
     out (IO_VRAM_BANK), a
 ; clear screen, first 24 kB (mono display)
-    profile_start
+;     profile_start
     memset VRAM_START, 0, $6000
-    profile_end
+;     profile_end
 ; ix points to x-coordinate as default
     ld ix, DRAW_X
 
@@ -524,83 +524,83 @@ reset:
     ld (CURSOR_Y), bc
 
 ; line draw test
-    ld bc, 0
-    ld (DRAW_X), bc
-    ld bc, 20
-    ld (DRAW_Y), bc
-    ld bc, $ff
-    ld (DRAW_W), bc
-    call mono_draw_line_horizontal
-    ld bc, 21
-    ld (DRAW_Y), bc
-    ld bc, $100
-    ld (DRAW_W), bc
-    call mono_draw_line_horizontal
-    ld bc, 22
-    ld (DRAW_Y), bc
-    ld bc, $101
-    ld (DRAW_W), bc
-    call mono_draw_line_horizontal
+;     ld bc, 0
+;     ld (DRAW_X), bc
+;     ld bc, 20
+;     ld (DRAW_Y), bc
+;     ld bc, $ff
+;     ld (DRAW_W), bc
+;     call mono_draw_line_horizontal
+;     ld bc, 21
+;     ld (DRAW_Y), bc
+;     ld bc, $100
+;     ld (DRAW_W), bc
+;     call mono_draw_line_horizontal
+;     ld bc, 22
+;     ld (DRAW_Y), bc
+;     ld bc, $101
+;     ld (DRAW_W), bc
+;     call mono_draw_line_horizontal
 
-    ld bc, 4
-    ld (DRAW_X), bc
-    ld bc, 40
-    ld (DRAW_Y), bc
-    ld bc, $ff
-    ld (DRAW_W), bc
-    call mono_draw_line_horizontal
-    ld bc, 41
-    ld (DRAW_Y), bc
-    ld bc, $100
-    ld (DRAW_W), bc
-    call mono_draw_line_horizontal
-    ld bc, 42
-    ld (DRAW_Y), bc
-    ld bc, $101
-    ld (DRAW_W), bc
-    call mono_draw_line_horizontal
+;     ld bc, 4
+;     ld (DRAW_X), bc
+;     ld bc, 40
+;     ld (DRAW_Y), bc
+;     ld bc, $ff
+;     ld (DRAW_W), bc
+;     call mono_draw_line_horizontal
+;     ld bc, 41
+;     ld (DRAW_Y), bc
+;     ld bc, $100
+;     ld (DRAW_W), bc
+;     call mono_draw_line_horizontal
+;     ld bc, 42
+;     ld (DRAW_Y), bc
+;     ld bc, $101
+;     ld (DRAW_W), bc
+;     call mono_draw_line_horizontal
 
-    halt
+;     halt
 
-    ld bc, 0
-    ld (DRAW_X), bc
-    ld bc, 384
-loopping:
-    ld (DRAW_W), bc
-    dec bc
-    ld (DRAW_Y), bc
-    push bc
-    profile_start
-    call mono_draw_line_horizontal
-    profile_end
-    pop bc
-    ld a, b
-    or c
-    jp nz, loopping
-    halt
+;     ld bc, 0
+;     ld (DRAW_X), bc
+;     ld bc, 384
+; loopping:
+;     ld (DRAW_W), bc
+;     dec bc
+;     ld (DRAW_Y), bc
+;     push bc
+;     profile_start
+;     call mono_draw_line_horizontal
+;     profile_end
+;     pop bc
+;     ld a, b
+;     or c
+;     jp nz, loopping
+;     halt
 
-    ld bc, 4
-    ld (DRAW_X), bc
-    ld bc, 60
-    ld (DRAW_Y), bc
-    ld bc, 8
-    ld (DRAW_W), bc
-    profile_start
-    call mono_draw_line_horizontal
-    profile_end
+;     ld bc, 4
+;     ld (DRAW_X), bc
+;     ld bc, 60
+;     ld (DRAW_Y), bc
+;     ld bc, 8
+;     ld (DRAW_W), bc
+;     profile_start
+;     call mono_draw_line_horizontal
+;     profile_end
 
-    ld bc, 4
-    ld (DRAW_X), bc
-    ld bc, 70
-    ld (DRAW_Y), bc
-    ld bc, 3
-    ld (DRAW_W), bc
-    profile_start
-    call mono_draw_line_horizontal
-    profile_end
+;     ld bc, 4
+;     ld (DRAW_X), bc
+;     ld bc, 70
+;     ld (DRAW_Y), bc
+;     ld bc, 3
+;     ld (DRAW_W), bc
+;     profile_start
+;     call mono_draw_line_horizontal
+;     profile_end
 
 ; draw zc160 logo
-    profile_start
+;     profile_start
 draw_logo:
     ld bc, 8
     ld (DRAW_W), bc
@@ -652,7 +652,7 @@ _draw_logo_skip_block:
     jp nz, _draw_logo_loop
     ;
     pop bc
-    profile_end
+;     profile_end
 
 ; draw text
     ld a, 0
@@ -689,14 +689,12 @@ test_sin:
     inc de
     djnz test_sin
 
-    halt
-
 xxx:
     inc a
     and $3f
     or $40
     out (IO_LATCH), a
-    ld bc, 50
+    ld bc, 200
     call delay_ms
     jp xxx
 
