@@ -394,43 +394,43 @@ _mono_draw_char_no_newline:
 
 ;******************************************************************************
 ; draw text, mono mode
-_draw_1_text_lf:
+_mono_put_string_lf:
     ld a, (CURSOR_Y)
     cp 47
-    jr z, _draw_1_text_lf_scroll
+    jr z, _mono_put_string_lf_scroll
     inc a
     ld (CURSOR_Y), a
-    jp _draw_1_text_cr
-_draw_1_text_lf_scroll:
+    jp _mono_put_string_cr
+_mono_put_string_lf_scroll:
     memcpy VRAM_START, VRAM_START + 8 * 64, 64 * 384 - 8 * 64
     memset VRAM_START + 64 * 384 - 8 * 64, 0, 8 * 64
-_draw_1_text_cr:
+_mono_put_string_cr:
     xor a
     ld (CURSOR_X), a
-    jp _draw_1_text_loop
-_draw_1_text_eol:
+    jp _mono_put_string_loop
+_mono_put_string_eol:
     pop hl
     pop de
     pop bc
     ret
 ; actual draw routine start
-draw_1_text:
+mono_put_string:
     push bc
     push de
     push hl
     ld bc, (TEXT_POINTER)
     push bc
-_draw_1_text_loop:
+_mono_put_string_loop:
     pop bc
     ld a, (bc)
     inc bc
     cp EOL
-    jr z, _draw_1_text_eol
+    jr z, _mono_put_string_eol
     push bc
     cp LF
-    jr z, _draw_1_text_lf
+    jr z, _mono_put_string_lf
     cp CR
-    jr z, _draw_1_text_cr
+    jr z, _mono_put_string_cr
     ; resolve character data position
     ld h, 0
     ld l, a
@@ -497,7 +497,7 @@ _draw_1_text_loop:
     add hl, bc
     ld a, (de)
     ld (hl), a
-    jp _draw_1_text_loop
+    jp _mono_put_string_loop
 
 ;******************************************************************************
 ; Setup and start the ZC160 GPU OS.
@@ -654,17 +654,12 @@ _draw_logo_skip_block:
     pop bc
 ;     profile_end
 
-; draw text
-    ld a, 0
-    ld (CURSOR_X), a
-    ld a, 40
-    ld (CURSOR_Y), a
-    ld bc, S_TEST
+; print bootup string
+    ld bc, S_BOOTUP
     ld (TEXT_POINTER), bc
-    ld b, 10
-scroll:
-    call draw_1_text
-    djnz scroll
+    call mono_put_string
+
+    halt
 
 ; draw sine
     ld hl, 0
@@ -725,5 +720,4 @@ LOGO_DATA:
 
 BIT_MASK_LOOKUP: .db $01, $02, $04, $08, $10, $20, $40, $80
 
-S_TEST: .db "Hello world!", LF, EOL
-S_TEST2: .db 32,32,31,32,30, LF, EOL
+S_BOOTUP: .db "Bootup OK.", LF, "Waiting for commands...", LF, EOL
