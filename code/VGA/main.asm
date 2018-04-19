@@ -599,6 +599,13 @@ reset:
 ;     call mono_draw_line_horizontal
 ;     profile_end
 
+    ld bc, S_UP
+    ld (TEXT_POINTER), bc
+    call mono_put_string
+
+    halt
+
+
 ; draw zc160 logo
 ;     profile_start
 draw_logo:
@@ -721,3 +728,49 @@ LOGO_DATA:
 BIT_MASK_LOOKUP: .db $01, $02, $04, $08, $10, $20, $40, $80
 
 S_BOOTUP: .db "Bootup OK.", LF, "Waiting for commands...", LF, EOL
+
+S_UP:
+.db "                                ", LF
+.db "                               /\", LF
+.db "                              /##\", LF
+.db "                             /####\", LF
+.db "                            /######\", LF
+.db "                           /########\", LF
+.db "                          /##########\", LF
+.db "                         /############\", LF
+.db "                        /##############\", LF
+.db "                       /################\", LF
+.db "                      /##################\", LF
+.db "                     /####################\", LF
+.db "                    /######################\", LF
+.db "                   /########################\", LF
+.db "                  /##########################\", LF
+.db "                 /############################\", LF
+.db "                /##############################\", LF
+.db "               /################################\", LF
+.db "              /##################################\", LF
+.db "             /####################################\", LF
+.db "             ----------|################|----------", LF
+.db "                       |################|", LF
+.db "                       |################|", LF
+.db "                       |################|", LF
+.db "                       |################|", LF
+.db "                       |################|", LF
+.db "                       |################|", LF
+.db "                       |################|", LF
+.db "                       |################|", LF
+.db "                       |################|", LF
+.db "                       |################|", LF
+.db "                       |################|", LF
+.db "                       |################|", LF
+.db "                       |################|", LF
+.db "                       |################|", LF
+.db "                       |################|", LF
+.db "                       ------------------", LF
+.db LF, LF, LF, LF, LF, LF, LF, LF, LF, LF, LF
+.db LF, LF, LF, LF, LF, LF, LF, LF, LF, LF, LF
+.db LF, LF, LF, LF, LF, LF, LF, LF, LF, LF, LF
+.db LF, LF, LF, LF, LF, LF, LF, LF, LF, LF, LF
+.db LF, LF, LF, LF, LF, LF, LF, LF, LF, LF, LF
+.db LF, LF, LF, LF, LF, LF, LF, LF, LF, LF, LF
+.db EOL
