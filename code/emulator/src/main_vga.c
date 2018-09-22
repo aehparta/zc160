@@ -138,10 +138,10 @@ int p_init(int argc, char *argv[])
 	window = SDL_CreateWindow("ZC160 VGA emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640 * 2, 480 * 2, SDL_WINDOW_SHOWN);
 	IF_ERR(window == NULL, -1, "SDL_CreateWindow() failed");
 	screen = SDL_GetWindowSurface(window);
-	SDL_FillRect(screen, NULL, 0x00000000);
+	SDL_FillRect(screen, NULL, 0);
 
 	/* setup timer that is called 60 times per second (60 Hz) */
-	timer_id = SDL_AddTimer(17, p_run_cpu, NULL);
+	timer_id = SDL_AddTimer(17, p_timer_60hz, NULL);
 
 out_err:
 	return err;
@@ -166,11 +166,31 @@ void p_exit(int return_code)
 	exit(return_code);
 }
 
+/**
+ * Timer is run in a separate thread which causes problems so just queue a user event here.
+ */
+uint32_t p_timer_60hz(uint32_t interval, void *data)
+{
+	SDL_Event event;
+	SDL_UserEvent userevent;
+
+	userevent.type = SDL_USEREVENT;
+	userevent.code = 0;
+	userevent.data1 = NULL;
+	userevent.data2 = NULL;
+
+	event.type = SDL_USEREVENT;
+	event.user = userevent;
+
+	SDL_PushEvent(&event);
+
+	return interval;
+}
 
 /**
  * Run CPU at specified interval (60 Hz).
  */
-uint32_t p_run_cpu(uint32_t interval, void *data)
+void p_run_cpu(void)
 {
 	SDL_Surface *screen = NULL;
 	int i = FRAME_FREE_TIME_NS / 1000 * cpu_frequency_mhz;
@@ -183,8 +203,6 @@ uint32_t p_run_cpu(uint32_t interval, void *data)
 	screen = SDL_GetWindowSurface(window);
 	vga_screen_update(screen);
 	SDL_UpdateWindowSurface(window);
-
-	return interval;
 }
 
 
@@ -213,6 +231,8 @@ int main(int argc, char *argv[])
 				if (event_key->keysym.sym == SDLK_r) {
 					z80cpu_dump_registers();
 				}
+			} else if (event.type == SDL_USEREVENT) {
+				p_run_cpu();
 			}
 		}
 	}

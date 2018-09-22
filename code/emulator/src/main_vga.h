@@ -40,7 +40,8 @@ void p_defaults(int argc, char *argv[]);
 int p_options(int argc, char *argv[]);
 int p_init(int argc, char *argv[]);
 void p_exit(int return_code);
-Uint32 p_run_cpu(Uint32 interval, void *data);
+uint32_t p_timer_60hz(uint32_t interval, void *data);
+void p_run_cpu(void);
 
 
 #endif /* MAIN_VGA_H */
