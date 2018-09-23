@@ -500,6 +500,21 @@ _mono_put_string_loop:
     jp _mono_put_string_loop
 
 ;******************************************************************************
+; clear screen, mono mode
+mono_clear_screen:
+    push bc
+    push de
+    push hl
+    memset VRAM_START, 0, $6000
+; position cursor to top
+    ld hl, 0
+    ld (CURSOR_X), hl
+    pop hl
+    pop de
+    pop bc
+    ret
+
+;******************************************************************************
 ; Setup and start the ZC160 GPU OS.
 reset:
 ; setup stack pointer
@@ -507,104 +522,29 @@ reset:
 ; green foreground, blank off, mode 0
     ld a, $4c
     out (IO_LATCH), a
+; reset IRAM
+    ld a, $00
+    ld (IRAM_START), a
+    ld (IRAM_START + $100), a
+    ld (IRAM_START + $200), a
+    ld (IRAM_START + $300), a
+    ld (IRAM_START + $400), a
+    ld (IRAM_START + $500), a
+    ld (IRAM_START + $600), a
+    ld (IRAM_START + $700), a
 ; reset to start of video ram
     ld a, $00
     out (IO_VRAM_BANK), a
 ; clear screen, first 24 kB (mono display)
 ;     profile_start
-    memset VRAM_START, 0, $6000
+    call mono_clear_screen
 ;     profile_end
 ; ix points to x-coordinate as default
     ld ix, DRAW_X
 
-; position cursor to bottom as default
-    ld bc, 0
-    ld (CURSOR_X), bc
-    ld bc, 47
-    ld (CURSOR_Y), bc
-
-; line draw test
-;     ld bc, 0
-;     ld (DRAW_X), bc
-;     ld bc, 20
-;     ld (DRAW_Y), bc
-;     ld bc, $ff
-;     ld (DRAW_W), bc
-;     call mono_draw_line_horizontal
-;     ld bc, 21
-;     ld (DRAW_Y), bc
-;     ld bc, $100
-;     ld (DRAW_W), bc
-;     call mono_draw_line_horizontal
-;     ld bc, 22
-;     ld (DRAW_Y), bc
-;     ld bc, $101
-;     ld (DRAW_W), bc
-;     call mono_draw_line_horizontal
-
-;     ld bc, 4
-;     ld (DRAW_X), bc
-;     ld bc, 40
-;     ld (DRAW_Y), bc
-;     ld bc, $ff
-;     ld (DRAW_W), bc
-;     call mono_draw_line_horizontal
-;     ld bc, 41
-;     ld (DRAW_Y), bc
-;     ld bc, $100
-;     ld (DRAW_W), bc
-;     call mono_draw_line_horizontal
-;     ld bc, 42
-;     ld (DRAW_Y), bc
-;     ld bc, $101
-;     ld (DRAW_W), bc
-;     call mono_draw_line_horizontal
-
-;     halt
-
-;     ld bc, 0
-;     ld (DRAW_X), bc
-;     ld bc, 384
-; loopping:
-;     ld (DRAW_W), bc
-;     dec bc
-;     ld (DRAW_Y), bc
-;     push bc
-;     profile_start
-;     call mono_draw_line_horizontal
-;     profile_end
-;     pop bc
-;     ld a, b
-;     or c
-;     jp nz, loopping
-;     halt
-
-;     ld bc, 4
-;     ld (DRAW_X), bc
-;     ld bc, 60
-;     ld (DRAW_Y), bc
-;     ld bc, 8
-;     ld (DRAW_W), bc
-;     profile_start
-;     call mono_draw_line_horizontal
-;     profile_end
-
-;     ld bc, 4
-;     ld (DRAW_X), bc
-;     ld bc, 70
-;     ld (DRAW_Y), bc
-;     ld bc, 3
-;     ld (DRAW_W), bc
-;     profile_start
-;     call mono_draw_line_horizontal
-;     profile_end
-
-    ld bc, S_UP
-    ld (TEXT_POINTER), bc
-    call mono_put_string
-
-    halt
-
+; position cursor to bottom in boot
+    ld hl, $2f00
+    ld (CURSOR_X), hl
 
 ; draw zc160 logo
 ;     profile_start
@@ -662,43 +602,84 @@ _draw_logo_skip_block:
 ;     profile_end
 
 ; print bootup string
-    ld bc, S_BOOTUP
+    ld bc, S_STARTUP
+    ld (TEXT_POINTER), bc
+    call mono_put_string
+; check iram
+    ld bc, S_STARTUP_E_IRAM
+    ld hl, IRAM_START + $701
+    ld a, $5a
+    ld (hl), a
+    cp (hl)
+    jp nz, system_check_error
+    ld a, $a5
+    ld (hl), a
+    cp (hl)
+    jp nz, system_check_error
+    jp system_check_ok
+system_check_error:
+    ld (TEXT_POINTER), bc
+    call mono_put_string
+; done checking
+system_check_ok:
+    ld bc, S_STARTUP_DONE
     ld (TEXT_POINTER), bc
     call mono_put_string
 
-    halt
+; wait for commands
+    ld h, IRAM_START / $100
+    ld l, 0
+    jp cmd_loop
+cmd_next:
+    ld l, 0
+    ld (hl), 0
+    inc h
+    ld a, IRAM_START / $100 + 7
+    cp h
+    jp nz, cmd_loop
+    ld h, IRAM_START / $100
+cmd_loop:
+    ld a, (hl)
+    dec a ; 1 is nop
+    jp z, cmd_next
+    dec a ; 2 is set mode
+    jp z, cmd_mode
+    dec a ; 3 is put string in mono mode
+    jp z, cmd_mono_put_string
+    dec a ; 4 is clear screen in mono mode
+    jp z, cmd_mono_clear_screen
+    dec a ; 5 is set text coordinates in mono mode
+    jp z, cmd_mono_set_coordinates
+    jp cmd_loop
 
-; draw sine
-    ld hl, 0
-    ld (DRAW_Y), hl
-    ld (DRAW_X), hl
-    ld de, m_lut_sin
-    ld hl, DRAW_X
-    ld b, 255
-test_sin:
-    ld a, (de)
-    cpl
-    
-    ld (DRAW_Y), a
-    push hl
-    push bc
-    push de
-    call mono_draw_pixel
-    pop de
-    pop bc
-    pop hl
-    inc (hl)
-    inc de
-    djnz test_sin
-
-xxx:
-    inc a
-    and $3f
-    or $40
+; set mode command
+cmd_mode:
+    inc l
+    ld a, (hl)
     out (IO_LATCH), a
-    ld bc, 200
-    call delay_ms
-    jp xxx
+    jp cmd_next
+
+; put string command in mono mode
+cmd_mono_put_string:
+    inc l
+    ld (TEXT_POINTER), hl
+    call mono_put_string
+    jp cmd_next
+
+; clear screen command in mono mode
+cmd_mono_clear_screen:
+    call mono_clear_screen
+    jp cmd_next
+
+; set text coordinates command in mono mode
+cmd_mono_set_coordinates:
+    inc l
+    ld a, (hl)
+    ld (CURSOR_X), a
+    inc l
+    ld a, (hl)
+    ld (CURSOR_Y), a
+    jp cmd_next
 
 ; halt
 halt:
@@ -727,50 +708,6 @@ LOGO_DATA:
 
 BIT_MASK_LOOKUP: .db $01, $02, $04, $08, $10, $20, $40, $80
 
-S_BOOTUP: .db "Bootup OK.", LF, "Waiting for commands...", LF, EOL
-
-S_UP:
-.db "                                ", LF
-.db "                               /\", LF
-.db "                              /##\", LF
-.db "                             /####\", LF
-.db "                            /######\", LF
-.db "                           /########\", LF
-.db "                          /##########\", LF
-.db "                         /############\", LF
-.db "                        /##############\", LF
-.db "                       /################\", LF
-.db "                      /##################\", LF
-.db "                     /####################\", LF
-.db "                    /######################\", LF
-.db "                   /########################\", LF
-.db "                  /##########################\", LF
-.db "                 /############################\", LF
-.db "                /##############################\", LF
-.db "               /################################\", LF
-.db "              /##################################\", LF
-.db "             /####################################\", LF
-.db "             ----------|################|----------", LF
-.db "                       |################|", LF
-.db "                       |################|", LF
-.db "                       |################|", LF
-.db "                       |################|", LF
-.db "                       |################|", LF
-.db "                       |################|", LF
-.db "                       |################|", LF
-.db "                       |################|", LF
-.db "                       |################|", LF
-.db "                       |################|", LF
-.db "                       |################|", LF
-.db "                       |################|", LF
-.db "                       |################|", LF
-.db "                       |################|", LF
-.db "                       |################|", LF
-.db "                       ------------------", LF
-.db LF, LF, LF, LF, LF, LF, LF, LF, LF, LF, LF
-.db LF, LF, LF, LF, LF, LF, LF, LF, LF, LF, LF
-.db LF, LF, LF, LF, LF, LF, LF, LF, LF, LF, LF
-.db LF, LF, LF, LF, LF, LF, LF, LF, LF, LF, LF
-.db LF, LF, LF, LF, LF, LF, LF, LF, LF, LF, LF
-.db LF, LF, LF, LF, LF, LF, LF, LF, LF, LF, LF
-.db EOL
+S_STARTUP:          .db "Checking system...", LF, EOL
+S_STARTUP_E_IRAM:   .db "Interface RAM failed!", LF, EOL
+S_STARTUP_DONE:     .db "System check done.", LF, LF, "Waiting for commands...", LF, LF, EOL

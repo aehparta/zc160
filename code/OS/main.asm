@@ -201,6 +201,30 @@ lcd_addr_line_selected:
     pop af
     ret
 
+;******************************************************************************
+; Write string to display
+display_puts:
+    push bc
+    push de
+    push hl
+
+    ld bc, 253
+    ld hl, (TEXT_POINTER)
+    ld de, (DISPLAY_CMD_POINTER)
+    inc e
+    ldir
+    ld (hl), 0
+
+    ld e, 0
+    ld a, 3
+    ld (de), a
+    inc d
+    ld (DISPLAY_CMD_POINTER), de
+
+    pop hl
+    pop de
+    pop bc
+    ret
 
 ;******************************************************************************
 ; Memory copy using DMA. Will override even NMI, but will keep memory
@@ -250,18 +274,34 @@ reset:
     call lcd_init
     ld hl, $0000
     call lcd_addr
-    ld hl, POWERON0
+    ld hl, S_LCD_POWERON0
     call lcd_puts
     ld hl, $0100
     call lcd_addr
-    ld hl, POWERON1
+    ld hl, S_LCD_POWERON1
     call lcd_puts
+; setup display
+    ld bc, 2000 ; small delay to make sure display controller has booted up
+    call delay_ms
+    ld bc, IRAM_START
+    ld (DISPLAY_CMD_POINTER), bc
+
+    ld bc, S_STARTUP
+    ld (TEXT_POINTER), bc
+    call display_puts
+    ld bc, S_STARTUP_OK
+    ld (TEXT_POINTER), bc
+    call display_puts
+
     halt
 
 
 ;******************************************************************************
 ; Strings
-POWERON0:       .db "ZC160 OS v1.0       ", EOL
-POWERON1:       .db "booting...          ", EOL
+S_STARTUP:          .db "ZC160 OS v1.0", LF, LF, "Initializing operating system...", LF, EOL
+S_STARTUP_OK:       .db "Everything OK", LF, LF, "> ", EOL
+
+S_LCD_POWERON0:     .db "ZC160 OS v1.0       ", EOL
+S_LCD_POWERON1:     .db "booting...          ", EOL
 
 

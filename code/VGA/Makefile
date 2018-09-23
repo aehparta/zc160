@@ -22,6 +22,6 @@ dasm:
 	z80dasm --origin=0x0000 -a -t -l $(BIN) > $(DASM)
 
 emulate: bin
-	../emulator/src/zc160vgaemu -K $(BIN)
+	../emulator/src/zc160vgaemu -K $(BIN) -I iram.bin
 
 .PHONY: all build

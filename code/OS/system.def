@@ -15,11 +15,19 @@
 
 ; End of line char for strings
 EOL                 .equ    $00
+; line feed
+LF                  .equ    $a
+; carriage return
+CR                  .equ    $d
 
 
 ;******************************************************************************
 ; memory constants
 OS_STACK            .equ    ($4000 - $100)
+IRAM_START          .equ    $7800
+
+TEXT_POINTER        .equ    $2100
+DISPLAY_CMD_POINTER .equ    $2102
 
 
 ;******************************************************************************
