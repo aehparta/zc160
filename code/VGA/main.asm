@@ -625,7 +625,7 @@ system_check_ok:
     ld bc, S_STARTUP_DONE
     ld (TEXT_POINTER), bc
     call mono_put_string
-
+    
 ; wait for commands
     ld h, IRAM_START / $100
     ld l, 0
