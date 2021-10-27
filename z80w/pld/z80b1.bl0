@@ -1,0 +1,137 @@
+#$ TOOL ispLEVER 2.0
+#$ DATE Sat Jul 31 18:06:55 2004
+#$ TITLE z80b1.bls 
+#$ MODULE z80b1
+#$ PINS 16 IORQ:5 A7:4 A6:3 A5:2 IOCE0:20'o'  CE47:18'o'  CE23:17'o'  MREQ:11 CE1:19'o'  CE0:15'o'  A15:9 A14:10 A13:14 RST:23 RESET:21'o'  INV_RESET:22'o' 
+#$ NODES 16 N_17'o'  N_18'o'  N_19'o'  N_12'o'  N_13'o'  N_14'o'  N_15'o'  N_16'o'  N_10'o'  N_11'o'  N_3'o'  N_4'o'  N_5'o'  N_6'o'  N_7'o'  N_8'o' 
+
+.model z80b1
+.inputs N_5.BLIF N_6.BLIF N_4.BLIF N_13.BLIF N_14.BLIF N_16.BLIF N_15.BLIF N_3.BLIF \
+N_19.BLIF MREQ.BLIF A13.BLIF A14.BLIF A15.BLIF A7.BLIF A5.BLIF IORQ.BLIF \
+A6.BLIF RST.BLIF N_17.BLIF N_11.BLIF N_10.BLIF N_18.BLIF N_12.BLIF N_8.BLIF \
+N_7.BLIF
+.outputs N_11 N_10 N_12 N_7 N_8 N_18 N_6 N_3 N_4 N_5 N_14 N_15 N_13 N_16 N_19 \
+N_17 RESET CE47 CE23 INV_RESET IOCE0 CE1 CE0
+
+.subckt g_2or1 AN.BLIF=N_5.BLIF B.BLIF=N_6.BLIF Y=N_11
+
+.subckt g_3or1 AN.BLIF=N_4.BLIF B.BLIF=N_6.BLIF C.BLIF=N_5.BLIF Y=N_10
+\
+
+.subckt g_4or A.BLIF=N_13.BLIF B.BLIF=N_14.BLIF C.BLIF=N_16.BLIF D.BLIF=N_15.BLIF Y=N_12
+\
+
+.subckt g_4or A.BLIF=N_3.BLIF B.BLIF=N_4.BLIF C.BLIF=N_5.BLIF D.BLIF=N_6.BLIF Y=N_7
+\
+
+.subckt g_4or1 AN.BLIF=N_3.BLIF B.BLIF=N_4.BLIF C.BLIF=N_5.BLIF D.BLIF=N_6.BLIF Y=N_8
+
+.subckt g_buf A.BLIF=N_19.BLIF Y=N_18
+
+.subckt g_input I.BLIF=MREQ.BLIF O=N_6
+
+.subckt g_input I.BLIF=A13.BLIF O=N_3
+
+.subckt g_input I.BLIF=A14.BLIF O=N_4
+
+.subckt g_input I.BLIF=A15.BLIF O=N_5
+
+.subckt g_input I.BLIF=A7.BLIF O=N_14
+
+.subckt g_input I.BLIF=A5.BLIF O=N_15
+
+.subckt g_input I.BLIF=IORQ.BLIF O=N_13
+
+.subckt g_input I.BLIF=A6.BLIF O=N_16
+
+.subckt g_input I.BLIF=RST.BLIF O=N_19
+
+.subckt g_inv A.BLIF=N_19.BLIF YN=N_17
+
+.subckt g_output I.BLIF=N_17.BLIF O=RESET
+
+.subckt g_output I.BLIF=N_11.BLIF O=CE47
+
+.subckt g_output I.BLIF=N_10.BLIF O=CE23
+
+.subckt g_output I.BLIF=N_18.BLIF O=INV_RESET
+
+.subckt g_output I.BLIF=N_12.BLIF O=IOCE0
+
+.subckt g_output I.BLIF=N_8.BLIF O=CE1
+
+.subckt g_output I.BLIF=N_7.BLIF O=CE0
+.end
+
+.model g_2or1
+.inputs AN.BLIF B.BLIF
+.outputs Y
+.names AN.BLIF B.BLIF Y
+0- 1
+-1 1
+10 0
+.end
+
+.model g_3or1
+.inputs AN.BLIF B.BLIF C.BLIF
+.outputs Y
+.names AN.BLIF C.BLIF B.BLIF Y
+-1- 1
+0-- 1
+--1 1
+100 0
+.end
+
+.model g_4or
+.inputs A.BLIF B.BLIF C.BLIF D.BLIF
+.outputs Y
+.names D.BLIF C.BLIF B.BLIF A.BLIF Y
+--1- 1
+-1-- 1
+1--- 1
+---1 1
+0000 0
+.end
+
+.model g_4or1
+.inputs AN.BLIF B.BLIF C.BLIF D.BLIF
+.outputs Y
+.names AN.BLIF D.BLIF C.BLIF B.BLIF Y
+--1- 1
+-1-- 1
+0--- 1
+---1 1
+1000 0
+.end
+
+.model g_buf
+.inputs A.BLIF
+.outputs Y
+.names A.BLIF Y
+1 1
+0 0
+.end
+
+.model g_input
+.inputs I.BLIF
+.outputs O
+.names I.BLIF O
+1 1
+0 0
+.end
+
+.model g_inv
+.inputs A.BLIF
+.outputs YN
+.names A.BLIF YN
+0 1
+1 0
+.end
+
+.model g_output
+.inputs I.BLIF
+.outputs O
+.names I.BLIF O
+1 1
+0 0
+.end

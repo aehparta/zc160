@@ -1,0 +1,186 @@
+
+
+                                                                      Page 1
+ispLEVER 2.0  -  Device Utilization Chart         Sat Jul 31 18:07:09 2004
+
+z80e1.bls 
+
+
+
+--------------------------------------------------------------------------------
+
+Module                   : 'z80e1'
+
+--------------------------------------------------------------------------------
+
+Input files:
+
+    ABEL PLA file        : z80w_exp.tt3
+    Device library       : P20V8AS.dev
+
+Output files:
+
+    Report file          : z80w_exp.rpt
+    Programmer load file : z80w_exp.jed
+
+--------------------------------------------------------------------------------
+
+
+                                                                      Page 2
+ispLEVER 2.0  -  Device Utilization Chart         Sat Jul 31 18:07:09 2004
+
+z80e1.bls 
+
+P20V8AS Programmed Logic:
+--------------------------------------------------------------------------------
+
+
+
+IOR     = (  !A0 & !RD & !A7 & A5 & A6 );
+
+LW     = (  A0 & !WR & !A7 & A5 & A6 );
+
+IOR_INV     = !(  !A0 & !RD & !A7 & A5 & A6 );
+
+IOW_INV     = !(  !A0 & !WR & !A7 & A5 & A6 );
+
+LR     = !(  A0 & !RD & !A7 & A5 & A6 );
+
+IOCE2     = (  !A7 & !IORQ & !A5 & A6 );
+
+IOCE1     = !(  !A7 & !IORQ & A5 & !A6 );
+
+
+
+                                                                      Page 3
+ispLEVER 2.0  -  Device Utilization Chart         Sat Jul 31 18:07:09 2004
+
+z80e1.bls 
+
+P20V8AS Chip Diagram:
+--------------------------------------------------------------------------------
+
+
+
+
+                                   P20V8AS
+
+                         +---------\       /---------+
+                         |          \     /          |
+                         |           -----           |
+                         |  1                    24  | Vcc                     
+                         |                           |
+                      A0 |  2                    23  |                         
+                         |                           |
+                         |  3                    22  | !LR                     
+                         |                           |
+                         |  4                    21  | !IOW_INV                
+                         |                           |
+                      A5 |  5                    20  | !IOR                    
+                         |                           |
+                      A6 |  6                    19  | !IOR_INV                
+                         |                           |
+                      A7 |  7                    18  | !LW                     
+                         |                           |
+                         |  8                    17  | !IOCE1                  
+                         |                           |
+                    IORQ |  9                    16  |                         
+                         |                           |
+                      RD | 10                    15  | !IOCE2                  
+                         |                           |
+                      WR | 11                    14  |                         
+                         |                           |
+                     GND | 12                    13  |                         
+                         |                           |
+                         |                           |
+                         `---------------------------'
+
+                        SIGNATURE: N/A
+
+
+                                                                      Page 4
+ispLEVER 2.0  -  Device Utilization Chart         Sat Jul 31 18:07:09 2004
+
+z80e1.bls 
+
+P20V8AS Resource Allocations:
+--------------------------------------------------------------------------------
+
+
+
+        Device        | Resource  |   Design    |
+       Resources      | Available | Requirement | Unused
+======================|===========|=============|==============
+                      |           |             |
+Input Pins:           |           |             |
+                      |           |             |
+          Input:      |     14    |      7      |    7 ( 50 %)
+                      |           |             |
+Output Pins:          |           |             |
+                      |           |             |
+          In/Out:     |      6    |      5      |    1 ( 16 %)
+          Output:     |      2    |      2      |    0 (  0 %)
+                      |           |             |
+Buried Nodes:         |           |             |
+                      |           |             |
+          Input Reg:  |      -    |      -      |    -
+            Pin Reg:  |      -    |      -      |    -
+          Buried Reg: |      -    |      -      |    -
+
+
+                                                                      Page 5
+ispLEVER 2.0  -  Device Utilization Chart         Sat Jul 31 18:07:09 2004
+
+z80e1.bls 
+
+P20V8AS Product Terms Distribution:
+--------------------------------------------------------------------------------
+
+
+
+            Signal                       |    Pin   | Terms | Terms | Terms
+             Name                        | Assigned | Used  |  Max  | Unused
+=========================================|==========|=======|=======|=======
+IOR                                      |   20     |   1   |   8   |   7
+LW                                       |   18     |   1   |   8   |   7
+IOR_INV                                  |   19     |   1   |   8   |   7
+IOW_INV                                  |   21     |   1   |   8   |   7
+LR                                       |   22     |   1   |   8   |   7
+IOCE2                                    |   15     |   1   |   8   |   7
+IOCE1                                    |   17     |   1   |   8   |   7
+
+
+     ==== List of Inputs/Feedbacks ====
+
+Signal Name                              | Pin      | Pin Type
+=========================================|==========|=========
+A0                                       |    2     | INPUT
+WR                                       |   11     | INPUT
+RD                                       |   10     | INPUT
+A7                                       |    7     | INPUT
+IORQ                                     |    9     | INPUT
+A5                                       |    5     | INPUT
+A6                                       |    6     | INPUT
+
+
+                                                                      Page 6
+ispLEVER 2.0  -  Device Utilization Chart         Sat Jul 31 18:07:09 2004
+
+z80e1.bls 
+
+P20V8AS Unused Resources:
+--------------------------------------------------------------------------------
+
+
+
+ Pin   |  Pin   |   Product   | Flip-flop
+Number |  Type  |   Terms     |   Type
+=======|========|=============|==========
+    1  |  INPUT |      -      |    -   
+    3  |  INPUT |      -      |    -   
+    4  |  INPUT |      -      |    -   
+    8  |  INPUT |      -      |    -   
+   13  |  INPUT |      -      |    -   
+   14  |  INPUT |      -      |    -   
+   16  |  BIDIR | NORMAL  8   |    -   
+   23  |  INPUT |      -      |    -   

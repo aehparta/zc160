@@ -1,0 +1,2233 @@
+0001   0000             ;**************************************************************
+0002   0000             ;
+0003   0000             ;                       The Z80 WestOS
+0004   0000             ;
+0005   0000             ;                 Operating System for Z80 board
+0006   0000             ;                       West 17 Designs
+0007   0000             ;                        - by Duge -
+0008   0000             ;
+0009   0000             ;**************************************************************
+0010   0000             ; Misc information:
+0011   0000             ; The LCD-display mentioned in the code should be 2x20
+0012   0000             ; characters LCD-display module using hd44780-based
+0013   0000             ; controller.
+0014   0000             ;
+0015   0000             ;**************************************************************
+0016   0000             
+0017   0000             #define equ .equ
+0018   0000             
+0019   0000             ; Operating system reserves memory are between $fc00-$ffff
+0020   0000             ; Stack Pointer's start value
+0021   0000             StackPointerOrigin: equ $feff
+0022   0000             ; Variables
+0023   0000             SRM             equ $fc00       ; Here are OS's variables
+0024   0000             UMO             equ $e000       ; Here starts the 'User's Memory'
+0025   0000             ; Temporary values
+0026   0000             T0              equ SRM+0       ; These values are bytes
+0027   0000             T1              equ SRM+1
+0028   0000             T2              equ SRM+2
+0029   0000             T3              equ SRM+3
+0030   0000             T4              equ SRM+4
+0031   0000             T5              equ SRM+5
+0032   0000             ; Hex editor
+0033   0000             w_he_address    equ SRM+6       ;word
+0034   0000             b_he_addset     equ SRM+8       ;byte
+0035   0000             b_he_undovalue  equ SRM+9       ;byte
+0036   0000             w_he_undoaddr   equ SRM+10      ;word
+0037   0000             b_he_undoset    equ SRM+12      ;byte
+0038   0000             b_he_nibble     equ SRM+13      ;byte
+0039   0000             b_he_output     equ SRM+14      ;byte
+0040   0000             b_he_input      equ SRM+15      ;byte
+0041   0000             w_he_jumpaddr   equ SRM+16      ;word
+0042   0000             b_he_calljump   equ SRM+18      ;byte
+0043   0000             w_he_calladdr   equ SRM+19      ;word
+0044   0000             ; key-routines
+0045   0000             key_pressed     equ SRM+30      ;byte
+0046   0000             key_timer       equ SRM+31      ;byte
+0047   0000             key_delay       equ SRM+32      ;byte
+0048   0000             key_press       equ SRM+33      ;byte
+0049   0000             key_repeatdelay equ SRM+34      ;word
+0050   0000             key_repeatrate  equ SRM+36      ;word
+0051   0000             key_rd          equ SRM+38      ;word
+0052   0000             key_rr          equ SRM+40      ;word
+0053   0000             key_rset        equ SRM+42      ;byte
+0054   0000             ; Default repeat delay and rate for keyboard
+0055   0000             RepeatDelay     equ SRM+50      ;word
+0056   0000             RepeatRate      equ SRM+52      ;word
+0057   0000             RepeatSet       equ SRM+54      ;byte
+0058   0000             ;**************************************************************
+0059   0000             ; LEDs, 7segments and keyboard io-addresses
+0060   0000             SSeg1:          equ $01
+0061   0000             SSeg2:          equ $02
+0062   0000             SSeg3:          equ $03
+0063   0000             SSeg4:          equ $04
+0064   0000             KeyS:           equ $05
+0065   0000             KeyR:           equ $06
+0066   0000             LEDs:           equ $07
+0067   0000             ; 8255 PIO -chip registers
+0068   0000             ;  LCD-display
+0069   0000             PortA:          equ $20
+0070   0000             PortB:          equ $21
+0071   0000             PortC:          equ $22
+0072   0000             PIOCtrl:        equ $23
+0073   0000             LCDd:           equ PortB
+0074   0000             LCDi:           equ PortC
+0075   0000             
+0076   0000             ; Keyboard
+0077   0000             ; These values are returned by key-routines
+0078   0000             key0    equ $00
+0079   0000             key1    equ $01
+0080   0000             key2    equ $02
+0081   0000             key3    equ $03
+0082   0000             
+0083   0000             key4    equ $04
+0084   0000             key5    equ $05
+0085   0000             key6    equ $06
+0086   0000             key7    equ $07
+0087   0000             
+0088   0000             key8    equ $08
+0089   0000             key9    equ $09
+0090   0000             keya    equ $0a
+0091   0000             keyb    equ $0b
+0092   0000             
+0093   0000             keyc    equ $0c
+0094   0000             keyd    equ $0d
+0095   0000             keye    equ $0e
+0096   0000             keyf    equ $0f
+0097   0000             
+0098   0000             CK0     equ $10
+0099   0000             CK1     equ $11
+0100   0000             CK2     equ $12
+0101   0000             CK3     equ $13
+0102   0000             
+0103   0000             CK4     equ $14
+0104   0000             CK5     equ $15
+0105   0000             Shift   equ $16
+0106   0000             Enter   equ $17
+0107   0000             
+0108   0000             none    equ $ff
+0109   0000             
+0110   0000             ; other equs
+0111   0000             Line1           equ $00
+0112   0000             Line2           equ $40
+0113   0000             _RepeatDelay    equ $0aff       ;default value
+0114   0000             _RepeatRate     equ $02ff       ;default value
+0115   0000             FastKeyDelay    equ $20
+0116   0000             NormalKeyDelay  equ $50
+0117   0000             
+0118   0000             ;**************************************************************
+0119   0000             ; Code origin
+0120   0000             .org $0000
+0121   0000             
+0122   0000             ;**************************************************************
+0123   0000             ; RST $00
+0124   0000 C3 1D 05     jp RESET ; 3bytes
+0125   0003 00           nop      
+0126   0004 00           nop
+0127   0005 00           nop
+0128   0006 00           nop      ; 5 times 1byte makes 5bytes
+0129   0007 00           nop      ; 3b+5b=8b :)
+0130   0008             ; RST $08
+0131   0008             ; This RST routine writes 'HALT' into 7segments and halt's the cpu
+0132   0008             .org $0008
+0133   0008 C3 6A 00     jp HALT
+0134   000B 76           halt
+0135   000C 76           halt
+0136   000D 76           halt
+0137   000E 76           halt
+0138   000F 76           halt
+0139   0010             ; RST $10
+0140   0010             .org $0010
+0141   0010 76           halt
+0142   0011 00           nop
+0143   0012 00           nop
+0144   0013 00           nop
+0145   0014 00           nop
+0146   0015 00           nop
+0147   0016 00           nop
+0148   0017 00           nop
+0149   0018             ; RST $18
+0150   0018             .org $0018
+0151   0018 76           halt
+0152   0019 00           nop
+0153   001A 00           nop
+0154   001B 00           nop
+0155   001C 00           nop
+0156   001D 00           nop
+0157   001E 00           nop
+0158   001F 00           nop
+0159   0020             ; RST $20
+0160   0020             .org $0020
+0161   0020 76           halt
+0162   0021 00           nop
+0163   0022 00           nop
+0164   0023 00           nop
+0165   0024 00           nop
+0166   0025 00           nop
+0167   0026 00           nop
+0168   0027 00           nop
+0169   0028             ; RST $28
+0170   0028             .org $0028
+0171   0028 76           halt
+0172   0029 00           nop
+0173   002A 00           nop
+0174   002B 00           nop
+0175   002C 00           nop
+0176   002D 00           nop
+0177   002E 00           nop
+0178   002F 00           nop
+0179   0030             ; RST $30
+0180   0030             .org $0030
+0181   0030 76           halt
+0182   0031 00           nop
+0183   0032 00           nop
+0184   0033 00           nop
+0185   0034 00           nop
+0186   0035 00           nop
+0187   0036 00           nop
+0188   0037 00           nop
+0189   0038             ; RST $38 or /INT-signal in interrupt mode 1
+0190   0038             ; reti for now, becose INT not in use
+0191   0038             .org $0038
+0192   0038 ED 4D        reti
+0193   003A 00           nop
+0194   003B 00           nop
+0195   003C 00           nop
+0196   003D 00           nop
+0197   003E 00           nop
+0198   003F 00           nop
+0199   0040             ;**************************************************************
+0200   0040             ; Empty space for the NMI-interrupt point
+0201   0040             ; Here are three default delay routines
+0202   0040             ; and little string ;)
+0203   0040             ; $40
+0204   0040             .org $0040
+0205   0040             DelayBC:
+0206   0040 04           inc b          ; 1byte
+0207   0041 0C           inc c          ; 1byte
+0208   0042             DelayBC0:
+0209   0042 0D           dec c          ; 1byte
+0210   0043 20 FD        jr nz,DelayBC0 ; 2bytes
+0211   0045 05           dec b          ; 1byte
+0212   0046 20 FA        jr nz,DelayBC0 ; 2bytes
+0213   0048 C9           ret            ; 1byte
+0214   0049             DelayDE:
+0215   0049 14           inc d          ; 1byte
+0216   004A 1C           inc e          ; 1byte
+0217   004B             DelayDE0:
+0218   004B 1D           dec e          ; 1byte
+0219   004C 20 FD        jr nz,DelayDE0 ; 2bytes
+0220   004E 15           dec d          ; 1byte
+0221   004F 20 FA        jr nz,DelayDE0 ; 2bytes
+0222   0051 C9           ret            ; 1byte
+0223   0052             DelayHL:
+0224   0052 24           inc h          ; 1byte
+0225   0053 2C           inc l          ; 1byte
+0226   0054             DelayHL0:
+0227   0054 2D           dec l          ; 1byte
+0228   0055 20 FD        jr nz,DelayHL0 ; 2bytes
+0229   0057 25           dec h          ; 1byte
+0230   0058 20 FA        jr nz,DelayHL0 ; 2bytes
+0231   005A C9           ret            ; 1byte
+0232   005B             ;
+0233   005B             
+0234   005B 627920447567.db "by Duge"
+0234   0061 65
+0235   0062             
+0236   0062             ;**************************************************************
+0237   0062             ; This is the point where the processor goes when NMI-interrupt
+0238   0062             ; is signalled
+0239   0062             ; 0066H or $66
+0240   0066             .org $0066
+0241   0066             ; retn for now, becose NMI not in use yet
+0242   0066 ED 45        retn
+0243   0068 76           halt
+0244   0069 76           halt
+0245   006A             
+0246   006A             ;**************************************************************
+0247   006A             ; Here starts the 'REAL' code
+0248   006A             ; First routines, then the main code
+0249   006A             ; and then misc data like strings and such
+0250   006A             ;**************************************************************
+0251   006A             ; Routines
+0252   006A             ;
+0253   006A             ; Three delay routines have already been written in earlier
+0254   006A             ; addresses
+0255   006A             
+0256   006A             ; *** HALT
+0257   006A             ; Writes 'HALT' into 7segments and then halt's the cpu
+0258   006A             HALT:
+0259   006A 3E A4        ld a,%10100100
+0260   006C D3 01        out (SSeg1),a
+0261   006E 3E A0        ld a,%10100000
+0262   0070 D3 02        out (SSeg2),a
+0263   0072 3E CD        ld a,%11001101
+0264   0074 D3 03        out (SSeg3),a
+0265   0076 3E E9        ld a,%11101001
+0266   0078 D3 04        out (SSeg4),a
+0267   007A 76           halt
+0268   007B             ; end of HALT
+0269   007B             
+0270   007B             ; *** n_as_7seg
+0271   007B             ; This routine converts the hex value of lower 4bits of reg a
+0272   007B             ; as 7segment value and returns the result in reg a
+0273   007B             ; The 7bit of reg a is leaved unchanged for use of dot
+0274   007B             n_as_7seg:
+0275   007B E5           push hl
+0276   007C C5           push bc
+0277   007D             
+0278   007D 21 4C 0F     ld hl,hexto7segment
+0279   0080 47           ld b,a
+0280   0081 E6 0F        and $0f
+0281   0083 4F           ld c,a
+0282   0084 78           ld a,b
+0283   0085 06 00        ld b,0
+0284   0087 09           add hl,bc
+0285   0088 E6 80        and $80
+0286   008A A6           and (hl)
+0287   008B             
+0288   008B C1           pop bc
+0289   008C E1           pop hl
+0290   008D C9           ret
+0291   008E             ; end of n_as_7seg
+0292   008E             
+0293   008E             ; *** n_to_7seg
+0294   008E             ; This routine outputs the hex value of lower 4bits of reg a
+0295   008E             ; into 7segment display which io-address is specified in
+0296   008E             ; reg c
+0297   008E             ; Carry flag defines if the dot is on or off
+0298   008E             ; reg a and flags are changed
+0299   008E             n_to_7seg:
+0300   008E E5           push hl
+0301   008F C5           push bc
+0302   0090             
+0303   0090 06 FF        ld b,$ff
+0304   0092 30 02        jr nc,nto7_nocarry
+0305   0094 CB B8        res 7,b
+0306   0096             nto7_nocarry:
+0307   0096 21 4C 0F     ld hl,hexto7segment
+0308   0099 C5           push bc
+0309   009A 06 00        ld b,0
+0310   009C E6 0F        and $0f
+0311   009E 4F           ld c,a
+0312   009F 09           add hl,bc
+0313   00A0 C1           pop bc
+0314   00A1 78           ld a,b
+0315   00A2 A6           and (hl)
+0316   00A3 ED 79        out (c),a
+0317   00A5             
+0318   00A5 C1           pop bc
+0319   00A6 E1           pop hl
+0320   00A7 C9           ret
+0321   00A8             ; end of n_to_7seg
+0322   00A8             
+0323   00A8             ; *** b_to_7seg
+0324   00A8             ; This routine outputs the hex value of reg a into
+0325   00A8             ; two 7segment display
+0326   00A8             ; First display io-address is specified in reg c
+0327   00A8             ; The most valuable nibble of reg a will be outed
+0328   00A8             ; into the address of c, then c's value is increased
+0329   00A8             ; and the lower nibble is outed into that address
+0330   00A8             ; Carry flag defines if the dot is on or off
+0331   00A8             ; reg a and flags are changed
+0332   00A8             b_to_7seg:
+0333   00A8 E5           push hl
+0334   00A9 C5           push bc
+0335   00AA             
+0336   00AA 06 FF        ld b,$ff
+0337   00AC 30 02        jr nc,bto7_nocarry
+0338   00AE CB B8        res 7,b
+0339   00B0             bto7_nocarry:
+0340   00B0             ; Upper 4bits of reg a
+0341   00B0 21 4C 0F     ld hl,hexto7segment
+0342   00B3 F5           push af
+0343   00B4 C5           push bc
+0344   00B5 06 00        ld b,0
+0345   00B7 CB 2F        sra a
+0346   00B9 CB 2F        sra a
+0347   00BB CB 2F        sra a
+0348   00BD CB 2F        sra a
+0349   00BF E6 0F        and $0f
+0350   00C1 4F           ld c,a
+0351   00C2 09           add hl,bc
+0352   00C3 C1           pop bc
+0353   00C4 7E           ld a,(hl)
+0354   00C5 ED 79        out (c),a
+0355   00C7 0C           inc c
+0356   00C8 F1           pop af
+0357   00C9             ; Lower 4bits of reg a
+0358   00C9 C5           push bc
+0359   00CA 21 4C 0F     ld hl,hexto7segment
+0360   00CD 06 00        ld b,0
+0361   00CF E6 0F        and $0f
+0362   00D1 4F           ld c,a
+0363   00D2 09           add hl,bc
+0364   00D3 C1           pop bc
+0365   00D4 78           ld a,b
+0366   00D5 A6           and (hl)
+0367   00D6 ED 79        out (c),a
+0368   00D8             
+0369   00D8 C1           pop bc
+0370   00D9 E1           pop hl
+0371   00DA C9           ret
+0372   00DB             ; end of b_to_7seg
+0373   00DB             
+0374   00DB             ; *** byte2lcd
+0375   00DB             ; This routine outputs the hex value of reg a into
+0376   00DB             ; LCD-display
+0377   00DB             byte2lcd:
+0378   00DB E5           push hl
+0379   00DC C5           push bc
+0380   00DD             ; Upper 4bits of reg a
+0381   00DD 21 3C 0F     ld hl,hextolcd
+0382   00E0 F5           push af
+0383   00E1 06 00        ld b,0
+0384   00E3 CB 2F        sra a
+0385   00E5 CB 2F        sra a
+0386   00E7 CB 2F        sra a
+0387   00E9 CB 2F        sra a
+0388   00EB E6 0F        and $0f
+0389   00ED 4F           ld c,a
+0390   00EE 09           add hl,bc
+0391   00EF 46           ld b,(hl)
+0392   00F0 CD 1E 01     call char2lcd
+0393   00F3 F1           pop af
+0394   00F4             ; Lower 4bits of reg a
+0395   00F4 21 3C 0F     ld hl,hextolcd
+0396   00F7 06 00        ld b,0
+0397   00F9 E6 0F        and $0f
+0398   00FB 4F           ld c,a
+0399   00FC 09           add hl,bc
+0400   00FD 46           ld b,(hl)
+0401   00FE CD 1E 01     call char2lcd
+0402   0101             ;
+0403   0101 C1           pop bc
+0404   0102 E1           pop hl
+0405   0103 C9           ret
+0406   0104             ; end of byte2lcd
+0407   0104             
+0408   0104             ; *** set_lcd
+0409   0104             ; Sets value to LCDs instruction register
+0410   0104             set_lcd:
+0411   0104 F5           push af
+0412   0105 3E 01        ld a,%00000001
+0413   0107 D3 22        out (LCDi),a
+0414   0109 78           ld a,b
+0415   010A D3 21        out (LCDd),a
+0416   010C 3E 00        ld a,%00000000
+0417   010E D3 22        out (LCDi),a
+0418   0110 C5           push bc
+0419   0111 01 AF 00     ld bc,$00af
+0420   0114 CD 40 00     call DelayBC
+0421   0117 C1           pop bc
+0422   0118 3E 01        ld a,%00000001
+0423   011A D3 22        out (LCDi),a
+0424   011C F1           pop af
+0425   011D C9           ret
+0426   011E             ; end of set_lcd
+0427   011E             
+0428   011E             ; *** char2lcd
+0429   011E             ; Outs character to LCD-display
+0430   011E             char2lcd:
+0431   011E F5           push af
+0432   011F 3E 05        ld a,%00000101
+0433   0121 D3 22        out (LCDi),a
+0434   0123 78           ld a,b
+0435   0124 D3 21        out (LCDd),a
+0436   0126 3E 04        ld a,%00000100
+0437   0128 D3 22        out (LCDi),a
+0438   012A C5           push bc
+0439   012B 01 AF 00     ld bc,$00af
+0440   012E CD 40 00     call DelayBC
+0441   0131 C1           pop bc
+0442   0132 3E 01        ld a,%00000001
+0443   0134 D3 22        out (LCDi),a
+0444   0136 F1           pop af
+0445   0137 C9           ret
+0446   0138             ; end of char2lcd
+0447   0138             
+0448   0138             ; *** reset_lcd
+0449   0138             ; Resets the LCD-diplay
+0450   0138             ; Clears the LCD, returns cursor to home, sets cursor move
+0451   0138             ; direction to incremental, sets display shifting off,
+0452   0138             ; sets dosplay on, cursor on, cursor blinking off, sets
+0453   0138             ; cursor-move mode on, shift direction left, interface
+0454   0138             ; data lenght to 8bits, number of display lines to 2lines
+0455   0138             ; and character font to 5x7.
+0456   0138             ; none of the regs or flags are changed
+0457   0138             reset_lcd:
+0458   0138 F5           push af
+0459   0139 C5           push bc
+0460   013A             
+0461   013A 06 01        ld b,%00000001
+0462   013C CD 04 01     call set_lcd
+0463   013F 06 06        ld b,%00000110
+0464   0141 CD 04 01     call set_lcd
+0465   0144 06 0C        ld b,%00001100
+0466   0146 CD 04 01     call set_lcd
+0467   0149 06 10        ld b,%00010000
+0468   014B CD 04 01     call set_lcd
+0469   014E 06 38        ld b,%00111000
+0470   0150 CD 04 01     call set_lcd
+0471   0153 06 80        ld b,%10000000
+0472   0155 CD 04 01     call set_lcd
+0473   0158             
+0474   0158 C1           pop bc
+0475   0159 F1           pop af
+0476   015A C9           ret
+0477   015B             ; end of reset_lcd
+0478   015B             
+0479   015B             ; *** clear_lcd
+0480   015B             ; Clears the LCD
+0481   015B             clear_lcd:
+0482   015B C5           push bc
+0483   015C 06 01        ld b,%00000001
+0484   015E CD 04 01     call set_lcd
+0485   0161 C1           pop bc
+0486   0162 C9           ret
+0487   0163             ; end of clear_lcd
+0488   0163             
+0489   0163             ; *** str2lcd
+0490   0163             ; Outputs a string into LCD-display
+0491   0163             ; The string start address should be stored into hl and
+0492   0163             ; end of the string should be marked with byte $17
+0493   0163             ; The string is just added to displays previous
+0494   0163             ; contents
+0495   0163             ; hl and flags are changed
+0496   0163             str2lcd:
+0497   0163 F5           push af
+0498   0164 C5           push bc
+0499   0165             s2l_loop:
+0500   0165 7E           ld a,(hl)
+0501   0166 FE 17        cp $17
+0502   0168 28 07        jr z,s2l_end
+0503   016A 47           ld b,a
+0504   016B CD 1E 01     call char2lcd
+0505   016E 23           inc hl
+0506   016F 18 F4        jr s2l_loop
+0507   0171             s2l_end:
+0508   0171 C1           pop bc
+0509   0172 F1           pop af
+0510   0173 C9           ret
+0511   0174             ; end of str2lcd
+0512   0174             
+0513   0174             ; *** strd2lcd
+0514   0174             ; Outputs a string into LCD-display with delay
+0515   0174             ; The string start address should be stored into hl and
+0516   0174             ; end of the string should be marked with byte $17
+0517   0174             ; The string is just added to displays previous
+0518   0174             ; contents
+0519   0174             ; de, hl and flags are changed
+0520   0174             strd2lcd:
+0521   0174 F5           push af
+0522   0175 C5           push bc
+0523   0176             sd2l_loop:
+0524   0176 7E           ld a,(hl)
+0525   0177 FE 17        cp $17
+0526   0179 28 0C        jr z,sd2l_end
+0527   017B 47           ld b,a
+0528   017C CD 1E 01     call char2lcd
+0529   017F 23           inc hl
+0530   0180 D5           push de
+0531   0181 CD 49 00     call DelayDE
+0532   0184 D1           pop de
+0533   0185 18 EF        jr sd2l_loop
+0534   0187             sd2l_end:
+0535   0187 C1           pop bc
+0536   0188 F1           pop af
+0537   0189 C9           ret
+0538   018A             ; end of strd2lcd
+0539   018A              
+0540   018A             ; *** setDDRAMa
+0541   018A             ; Sets LCDs DDRAM address
+0542   018A             setDDRAMa:
+0543   018A C5           push bc
+0544   018B F6 80        or $80
+0545   018D 47           ld b,a
+0546   018E CD 04 01     call set_lcd
+0547   0191 C1           pop bc
+0548   0192 C9           ret
+0549   0193             ; end of setDDRAMa
+0550   0193             
+0551   0193             ; *** key_scan
+0552   0193             ; Tests all keys on keyboard and if finds a pressed key
+0553   0193             ; then aborts the loop and returns that key's value
+0554   0193             ; in reg a
+0555   0193             key_scan:
+0556   0193 3E FE        ld a,%11111110
+0557   0195 D3 05        out (KeyS),a
+0558   0197 DB 06        in a,(KeyR)
+0559   0199 CB 47        bit 0,a
+0560   019B CA 1A 05     jp z,key_Enter
+0561   019E CB 4F        bit 1,a
+0562   01A0 CA 14 05     jp z,key_CK5
+0563   01A3 CB 57        bit 2,a
+0564   01A5 CA 0E 05     jp z,key_CK3
+0565   01A8 CB 5F        bit 3,a
+0566   01AA CA 08 05     jp z,key_CK1
+0567   01AD 3E FD        ld a,%11111101
+0568   01AF D3 05        out (KeyS),a
+0569   01B1 DB 06        in a,(KeyR)
+0570   01B3             ; bit 0,a
+0571   01B3             ; jp z,key_Shift
+0572   01B3 CB 4F        bit 1,a
+0573   01B5 CA 11 05     jp z,key_CK4
+0574   01B8 CB 57        bit 2,a
+0575   01BA CA 0B 05     jp z,key_CK2
+0576   01BD CB 5F        bit 3,a
+0577   01BF CA 05 05     jp z,key_CK0
+0578   01C2 3E FB        ld a,%11111011
+0579   01C4 D3 05        out (KeyS),a
+0580   01C6 DB 06        in a,(KeyR)
+0581   01C8 CB 47        bit 0,a
+0582   01CA CA 02 05     jp z,key_f
+0583   01CD CB 4F        bit 1,a
+0584   01CF CA F6 04     jp z,key_b
+0585   01D2 CB 57        bit 2,a
+0586   01D4 CA EA 04     jp z,key_7
+0587   01D7 CB 5F        bit 3,a
+0588   01D9 CA DE 04     jp z,key_3
+0589   01DC 3E F7        ld a,%11110111
+0590   01DE D3 05        out (KeyS),a
+0591   01E0 DB 06        in a,(KeyR)
+0592   01E2 CB 47        bit 0,a
+0593   01E4 CA FF 04     jp z,key_e
+0594   01E7 CB 4F        bit 1,a
+0595   01E9 CA F3 04     jp z,key_a
+0596   01EC CB 57        bit 2,a
+0597   01EE CA E7 04     jp z,key_6
+0598   01F1 CB 5F        bit 3,a  
+0599   01F3 CA DB 04     jp z,key_2
+0600   01F6 3E EF        ld a,%11101111
+0601   01F8 D3 05        out (KeyS),a
+0602   01FA DB 06        in a,(KeyR)
+0603   01FC CB 47        bit 0,a
+0604   01FE CA FC 04     jp z,key_d
+0605   0201 CB 4F        bit 1,a
+0606   0203 CA F0 04     jp z,key_9
+0607   0206 CB 57        bit 2,a
+0608   0208 CA E4 04     jp z,key_5
+0609   020B CB 5F        bit 3,a
+0610   020D CA D8 04     jp z,key_1
+0611   0210 3E DF        ld a,%11011111
+0612   0212 D3 05        out (KeyS),a
+0613   0214 DB 06        in a,(KeyR)
+0614   0216 CB 47        bit 0,a
+0615   0218 CA F9 04     jp z,key_c
+0616   021B CB 4F        bit 1,a
+0617   021D CA ED 04     jp z,key_8
+0618   0220 CB 57        bit 2,a
+0619   0222 CA E1 04     jp z,key_4
+0620   0225 CB 5F        bit 3,a  
+0621   0227 CA D5 04     jp z,key_0
+0622   022A             ; no key was pressed, load $ff into reg a
+0623   022A             ; for mark of that
+0624   022A 3E FF        ld a,$ff
+0625   022C C9           ret
+0626   022D             ; end of key_scan
+0627   022D             
+0628   022D             ; *** key_testshift
+0629   022D             ; Test Shift's current status
+0630   022D             ; Result is returned in Z-flag
+0631   022D             key_testshift:
+0632   022D C5           push bc
+0633   022E 47           ld b,a
+0634   022F 3E FD        ld a,%11111101
+0635   0231 D3 05        out (KeyS),a
+0636   0233 DB 06        in a,(KeyR)
+0637   0235 CB 47        bit 0,a
+0638   0237 78           ld a,b
+0639   0238 C1           pop bc
+0640   0239 C9           ret
+0641   023A             ; end of key_testshift
+0642   023A             
+0643   023A             ; *** key_getkey
+0644   023A             key_getkey:
+0645   023A E5           push hl
+0646   023B 3A 20 FC     ld a,(key_delay)
+0647   023E 32 1F FC     ld (key_timer),a
+0648   0241 3A 2A FC     ld a,(key_rset)
+0649   0244 FE FF        cp $ff
+0650   0246 20 11        jr nz,gk_loop
+0651   0248 3E 00        ld a,$00
+0652   024A 32 2A FC     ld (key_rset),a
+0653   024D 2A 22 FC     ld hl,(key_repeatdelay)
+0654   0250 22 26 FC     ld (key_rd),hl
+0655   0253 2A 24 FC     ld hl,(key_repeatrate)
+0656   0256 22 28 FC     ld (key_rr),hl
+0657   0259             gk_loop:
+0658   0259 CD 93 01     call key_scan
+0659   025C FE FF        cp none
+0660   025E 20 29        jr nz,gk_key        ; Some key was pressed
+0661   0260 3A 1E FC     ld a,(key_pressed)
+0662   0263 FE FF        cp none
+0663   0265 28 F2        jr z,gk_loop
+0664   0267 2A 22 FC     ld hl,(key_repeatdelay)
+0665   026A 22 26 FC     ld (key_rd),hl
+0666   026D 2A 24 FC     ld hl,(key_repeatrate)
+0667   0270 22 28 FC     ld (key_rr),hl
+0668   0273 3A 1F FC     ld a,(key_timer)
+0669   0276 3D           dec a
+0670   0277 32 1F FC     ld (key_timer),a
+0671   027A 20 DD        jr nz,gk_loop
+0672   027C 3E FF        ld a,none
+0673   027E 32 1E FC     ld (key_pressed),a
+0674   0281 3A 20 FC     ld a,(key_delay)
+0675   0284 32 1F FC     ld (key_timer),a
+0676   0287 18 D0        jr gk_loop
+0677   0289             ;
+0678   0289             gk_key:
+0679   0289 32 21 FC     ld (key_press),a    ;
+0680   028C 3A 1E FC     ld a,(key_pressed)  ; Test if this key was pressed earlier
+0681   028F 21 21 FC     ld hl,key_press     ;
+0682   0292 BE           cp (hl)             ;
+0683   0293 20 30        jr nz,gk_nkey
+0684   0295 2A 22 FC     ld hl,(key_repeatdelay)
+0685   0298 3E 00        ld a,0
+0686   029A BC           cp h
+0687   029B 20 06        jr nz,gk_delay
+0688   029D BD           cp l
+0689   029E 20 03        jr nz,gk_delay
+0690   02A0 C3 59 02     jp gk_loop
+0691   02A3             gk_delay:
+0692   02A3 2A 26 FC     ld hl,(key_rd)
+0693   02A6 BC           cp h
+0694   02A7 20 0E        jr nz,gk_dntr
+0695   02A9 BD           cp l
+0696   02AA 20 0B        jr nz,gk_dntr
+0697   02AC 2A 28 FC     ld hl,(key_rr)
+0698   02AF BC           cp h
+0699   02B0 20 0C        jr nz,gk_rntr
+0700   02B2 BD           cp l
+0701   02B3 20 09        jr nz,gk_rntr
+0702   02B5 18 0E        jr gk_nkey
+0703   02B7             gk_dntr:
+0704   02B7 2B           dec hl
+0705   02B8 22 26 FC     ld (key_rd),hl
+0706   02BB C3 59 02     jp gk_loop
+0707   02BE             gk_rntr:
+0708   02BE 2B           dec hl
+0709   02BF 22 28 FC     ld (key_rr),hl
+0710   02C2 C3 59 02     jp gk_loop
+0711   02C5             ;
+0712   02C5             gk_nkey:
+0713   02C5 3A 21 FC     ld a,(key_press)
+0714   02C8 32 1E FC     ld (key_pressed),a
+0715   02CB E1           pop hl
+0716   02CC C9           ret
+0717   02CD             ; end of key_getkey
+0718   02CD             
+0719   02CD             ; *** key_getbyte
+0720   02CD             ; Uses the LCD to get word-value from the user
+0721   02CD             ; Default value should be stored into b, value
+0722   02CD             ; given is also returned in b
+0723   02CD             ; In a is the key which was pressed to get here
+0724   02CD             key_getbyte:
+0725   02CD F5           push af
+0726   02CE E5           push hl
+0727   02CF CD 5B 01     call clear_lcd
+0728   02D2 3E 00        ld a,Line1
+0729   02D4 CD 8A 01     call setDDRAMa
+0730   02D7 21 13 0F     ld hl,s_inputbyte
+0731   02DA CD 63 01     call str2lcd
+0732   02DD E1           pop hl
+0733   02DE F1           pop af
+0734   02DF             ; If there is need for own start string, then
+0735   02DF             ; jump here after setting that
+0736   02DF             key_getbvalue:
+0737   02DF D5           push de
+0738   02E0 E5           push hl
+0739   02E1 50           ld d,b
+0740   02E2 58           ld e,b
+0741   02E3 32 1E FC     ld (key_pressed),a
+0742   02E6 3E 40        ld a,Line2
+0743   02E8 CD 8A 01     call setDDRAMa
+0744   02EB 06 3E        ld b,'>'
+0745   02ED CD 1E 01     call char2lcd
+0746   02F0 7A           ld a,d
+0747   02F1 CD DB 00     call byte2lcd
+0748   02F4 3E 41        ld a,Line2+1
+0749   02F6 CD 8A 01     call setDDRAMa
+0750   02F9 06 01        ld b,1
+0751   02FB 3E 20        ld a,FastKeyDelay
+0752   02FD 32 20 FC     ld (key_delay),a
+0753   0300             ;
+0754   0300             gb_loop:
+0755   0300 CD 3A 02     call key_getkey
+0756   0303             ;
+0757   0303 FE 10        cp $10
+0758   0305 DA 4E 03     jp c,gb_number
+0759   0308 FE 17        cp Enter
+0760   030A 20 06        jr nz,gb_nEnter
+0761   030C 42           ld b,d
+0762   030D 3E 17        ld a,Enter
+0763   030F C3 A3 03     jp gb_end
+0764   0312             gb_nEnter:
+0765   0312 FE 15        cp CK5
+0766   0314 C2 1D 03     jp nz,gb_nundo
+0767   0317 53           ld d,e
+0768   0318 3E 15        ld a,CK5
+0769   031A C3 A3 03     jp gb_end
+0770   031D             gb_nundo:
+0771   031D FE 10        cp CK0
+0772   031F CA 2A 03     jp z,gb_left
+0773   0322 FE 11        cp CK1
+0774   0324 CA 3C 03     jp z,gb_right
+0775   0327 C3 00 03     jp gb_loop
+0776   032A             ;
+0777   032A             gb_left:
+0778   032A 3E 01        ld a,1
+0779   032C B8           cp b
+0780   032D CA 00 03     jp z,gb_loop
+0781   0330 04           inc b
+0782   0331 3E 01        ld a,1
+0783   0333 90           sub b
+0784   0334 C6 41        add a,Line2+1
+0785   0336 CD 8A 01     call setDDRAMa
+0786   0339 C3 00 03     jp gb_loop
+0787   033C             ;
+0788   033C             gb_right:
+0789   033C 3E 00        ld a,0
+0790   033E B8           cp b
+0791   033F CA 00 03     jp z,gb_loop
+0792   0342 05           dec b
+0793   0343 3E 01        ld a,1
+0794   0345 90           sub b
+0795   0346 C6 41        add a,Line2+1
+0796   0348 CD 8A 01     call setDDRAMa
+0797   034B C3 00 03     jp gb_loop
+0798   034E             ;
+0799   034E             gb_number:
+0800   034E 6F           ld l,a
+0801   034F 78           ld a,b
+0802   0350             ;
+0803   0350 FE 01        cp 1
+0804   0352 20 23        jr nz,gb_n1
+0805   0354 7D           ld a,l
+0806   0355 CB 27        sla a
+0807   0357 CB 27        sla a
+0808   0359 CB 27        sla a
+0809   035B CB 27        sla a
+0810   035D E6 F0        and $f0
+0811   035F 6F           ld l,a
+0812   0360 7A           ld a,d
+0813   0361 E6 0F        and $0f
+0814   0363 B5           or l
+0815   0364 57           ld d,a
+0816   0365 7D           ld a,l
+0817   0366 CB 2F        sra a
+0818   0368 CB 2F        sra a
+0819   036A CB 2F        sra a
+0820   036C CB 2F        sra a
+0821   036E E6 0F        and $0f
+0822   0370 05           dec b
+0823   0371 CD 90 03     call gb_setadda
+0824   0374 C3 00 03     jp gb_loop
+0825   0377             ;
+0826   0377             gb_n1:
+0827   0377 FE 00        cp 0
+0828   0379 20 25        jr nz,gb_n0
+0829   037B 7D           ld a,l
+0830   037C E6 0F        and $0f
+0831   037E 6F           ld l,a
+0832   037F 7A           ld a,d
+0833   0380 E6 F0        and $f0
+0834   0382 B5           or l
+0835   0383 57           ld d,a
+0836   0384 7D           ld a,l
+0837   0385 CD 90 03     call gb_setadda
+0838   0388 3E 42        ld a,Line2+2
+0839   038A CD 8A 01     call setDDRAMa
+0840   038D C3 00 03     jp gb_loop
+0841   0390             ;
+0842   0390             gb_setadda:
+0843   0390 C5           push bc
+0844   0391 06 00        ld b,0
+0845   0393 E5           push hl
+0846   0394 21 3C 0F     ld hl,hextolcd
+0847   0397 4F           ld c,a
+0848   0398 09           add hl,bc
+0849   0399 46           ld b,(hl)
+0850   039A CD 1E 01     call char2lcd
+0851   039D E1           pop hl
+0852   039E C1           pop bc
+0853   039F C9           ret
+0854   03A0             ;
+0855   03A0             gb_n0:
+0856   03A0 C3 A3 03     jp gb_end
+0857   03A3             ;
+0858   03A3             gb_end:
+0859   03A3 E1           pop hl
+0860   03A4 D1           pop de
+0861   03A5 C9           ret
+0862   03A6             ; end of key_getbyte
+0863   03A6             
+0864   03A6             ; *** key_getaddress
+0865   03A6             ; Uses the LCD to get word-value from the user
+0866   03A6             ; Default value should be stored into hl, value
+0867   03A6             ; given is also returned in hl
+0868   03A6             ; In a is the key which was pressed to get here
+0869   03A6             key_getaddress:
+0870   03A6 F5           push af
+0871   03A7 E5           push hl
+0872   03A8 CD 5B 01     call clear_lcd
+0873   03AB 3E 00        ld a,Line1
+0874   03AD CD 8A 01     call setDDRAMa
+0875   03B0 21 FA 0E     ld hl,s_inputaddress
+0876   03B3 CD 63 01     call str2lcd
+0877   03B6 E1           pop hl
+0878   03B7 F1           pop af
+0879   03B8 CD CE 03     call key_getwvalue
+0880   03BB C9           ret
+0881   03BC             ; end of key_getaddress
+0882   03BC             
+0883   03BC             ; *** key_getword
+0884   03BC             ; Uses the LCD to get word-value from the user
+0885   03BC             ; Default value should be stored into hl, value
+0886   03BC             ; given is also returned in hl
+0887   03BC             ; In a is the key which was pressed to get here
+0888   03BC             key_getword:
+0889   03BC F5           push af
+0890   03BD E5           push hl
+0891   03BE CD 5B 01     call clear_lcd
+0892   03C1 3E 00        ld a,Line1
+0893   03C3 CD 8A 01     call setDDRAMa
+0894   03C6 21 08 0F     ld hl,s_inputword
+0895   03C9 CD 63 01     call str2lcd
+0896   03CC E1           pop hl
+0897   03CD F1           pop af
+0898   03CE             ; If there is need for own start string, then
+0899   03CE             ; jump here after setting that
+0900   03CE             key_getwvalue:
+0901   03CE C5           push bc
+0902   03CF D5           push de
+0903   03D0 54           ld d,h
+0904   03D1 5D           ld e,l
+0905   03D2 32 1E FC     ld (key_pressed),a
+0906   03D5 3E 40        ld a,Line2
+0907   03D7 CD 8A 01     call setDDRAMa
+0908   03DA 06 3E        ld b,'>'
+0909   03DC CD 1E 01     call char2lcd
+0910   03DF 7C           ld a,h
+0911   03E0 CD DB 00     call byte2lcd
+0912   03E3 7D           ld a,l
+0913   03E4 CD DB 00     call byte2lcd
+0914   03E7 3E 41        ld a,Line2+1
+0915   03E9 CD 8A 01     call setDDRAMa
+0916   03EC 06 03        ld b,3
+0917   03EE 3E 20        ld a,FastKeyDelay
+0918   03F0 32 20 FC     ld (key_delay),a
+0919   03F3             ;
+0920   03F3             gw_loop:
+0921   03F3 CD 3A 02     call key_getkey
+0922   03F6             ;
+0923   03F6 FE 10        cp $10
+0924   03F8 DA 41 04     jp c,gw_number
+0925   03FB FE 17        cp Enter
+0926   03FD 20 05        jr nz,gw_nEnter
+0927   03FF 3E 17        ld a,Enter
+0928   0401 C3 D2 04     jp gw_end
+0929   0404             gw_nEnter:
+0930   0404 FE 15        cp CK5
+0931   0406 C2 10 04     jp nz,gw_nundo
+0932   0409 62           ld h,d
+0933   040A 6B           ld l,e
+0934   040B 3E 15        ld a,CK5
+0935   040D C3 D2 04     jp gw_end
+0936   0410             gw_nundo:
+0937   0410 FE 10        cp CK0
+0938   0412 CA 1D 04     jp z,gw_left
+0939   0415 FE 11        cp CK1
+0940   0417 CA 2F 04     jp z,gw_right
+0941   041A C3 F3 03     jp gw_loop
+0942   041D             ;
+0943   041D             gw_left:
+0944   041D 3E 03        ld a,3
+0945   041F B8           cp b
+0946   0420 CA F3 03     jp z,gw_loop
+0947   0423 04           inc b
+0948   0424 3E 03        ld a,3
+0949   0426 90           sub b
+0950   0427 C6 41        add a,Line2+1
+0951   0429 CD 8A 01     call setDDRAMa
+0952   042C C3 F3 03     jp gw_loop
+0953   042F             ;
+0954   042F             gw_right:
+0955   042F 3E 00        ld a,0
+0956   0431 B8           cp b
+0957   0432 CA F3 03     jp z,gw_loop
+0958   0435 05           dec b
+0959   0436 3E 03        ld a,3
+0960   0438 90           sub b
+0961   0439 C6 41        add a,Line2+1
+0962   043B CD 8A 01     call setDDRAMa
+0963   043E C3 F3 03     jp gw_loop
+0964   0441             ;
+0965   0441             gw_number:
+0966   0441 4F           ld c,a
+0967   0442 78           ld a,b
+0968   0443             ;
+0969   0443 FE 03        cp 3
+0970   0445 20 23        jr nz,gw_n3
+0971   0447 79           ld a,c
+0972   0448 CB 27        sla a
+0973   044A CB 27        sla a
+0974   044C CB 27        sla a
+0975   044E CB 27        sla a
+0976   0450 E6 F0        and $f0
+0977   0452 4F           ld c,a
+0978   0453 7C           ld a,h
+0979   0454 E6 0F        and $0f
+0980   0456 B1           or c
+0981   0457 67           ld h,a
+0982   0458 79           ld a,c
+0983   0459 CB 2F        sra a
+0984   045B CB 2F        sra a
+0985   045D CB 2F        sra a
+0986   045F CB 2F        sra a
+0987   0461 E6 0F        and $0f
+0988   0463 05           dec b
+0989   0464 CD BF 04     call gw_setadda
+0990   0467 C3 F3 03     jp gw_loop
+0991   046A             ;
+0992   046A             gw_n3:
+0993   046A FE 02        cp 2
+0994   046C 20 11        jr nz,gw_n2
+0995   046E 79           ld a,c
+0996   046F E6 0F        and $0f
+0997   0471 4F           ld c,a
+0998   0472 7C           ld a,h
+0999   0473 E6 F0        and $f0
+1000   0475 B1           or c
+1001   0476 67           ld h,a
+1002   0477 79           ld a,c
+1003   0478 05           dec b
+1004   0479 CD BF 04     call gw_setadda
+1005   047C C3 F3 03     jp gw_loop
+1006   047F             ;
+1007   047F             gw_n2:
+1008   047F FE 01        cp 1
+1009   0481 20 23        jr nz,gw_n1
+1010   0483 79           ld a,c
+1011   0484 CB 27        sla a
+1012   0486 CB 27        sla a
+1013   0488 CB 27        sla a
+1014   048A CB 27        sla a
+1015   048C E6 F0        and $f0
+1016   048E 4F           ld c,a
+1017   048F 7D           ld a,l
+1018   0490 E6 0F        and $0f
+1019   0492 B1           or c
+1020   0493 6F           ld l,a
+1021   0494 79           ld a,c
+1022   0495 CB 2F        sra a
+1023   0497 CB 2F        sra a
+1024   0499 CB 2F        sra a
+1025   049B CB 2F        sra a
+1026   049D E6 0F        and $0f
+1027   049F 05           dec b
+1028   04A0 CD BF 04     call gw_setadda
+1029   04A3 C3 F3 03     jp gw_loop
+1030   04A6             ;
+1031   04A6             gw_n1:
+1032   04A6 FE 00        cp 0
+1033   04A8 20 25        jr nz,gw_n0
+1034   04AA 79           ld a,c
+1035   04AB E6 0F        and $0f
+1036   04AD 4F           ld c,a
+1037   04AE 7D           ld a,l
+1038   04AF E6 F0        and $f0
+1039   04B1 B1           or c
+1040   04B2 6F           ld l,a
+1041   04B3 79           ld a,c
+1042   04B4 CD BF 04     call gw_setadda
+1043   04B7 3E 44        ld a,Line2+4
+1044   04B9 CD 8A 01     call setDDRAMa
+1045   04BC C3 F3 03     jp gw_loop
+1046   04BF             ;
+1047   04BF             gw_setadda:
+1048   04BF C5           push bc
+1049   04C0 06 00        ld b,0
+1050   04C2 E5           push hl
+1051   04C3 21 3C 0F     ld hl,hextolcd
+1052   04C6 4F           ld c,a
+1053   04C7 09           add hl,bc
+1054   04C8 46           ld b,(hl)
+1055   04C9 CD 1E 01     call char2lcd
+1056   04CC E1           pop hl
+1057   04CD C1           pop bc
+1058   04CE C9           ret
+1059   04CF             ;
+1060   04CF             gw_n0:
+1061   04CF C3 D2 04     jp gw_end
+1062   04D2             ;
+1063   04D2             gw_end:
+1064   04D2 D1           pop de
+1065   04D3 C1           pop bc
+1066   04D4 C9           ret
+1067   04D5             ; end of key_getword
+1068   04D5             
+1069   04D5             ; Jump-table for key-routines to get the key value into reg a
+1070   04D5             key_0:
+1071   04D5 3E 00        ld a,key0
+1072   04D7 C9           ret
+1073   04D8             key_1:
+1074   04D8 3E 01        ld a,key1
+1075   04DA C9           ret
+1076   04DB             key_2:
+1077   04DB 3E 02        ld a,key2
+1078   04DD C9           ret
+1079   04DE             key_3:
+1080   04DE 3E 03        ld a,key3
+1081   04E0 C9           ret
+1082   04E1             key_4:
+1083   04E1 3E 04        ld a,key4
+1084   04E3 C9           ret
+1085   04E4             key_5:
+1086   04E4 3E 05        ld a,key5
+1087   04E6 C9           ret
+1088   04E7             key_6:
+1089   04E7 3E 06        ld a,key6
+1090   04E9 C9           ret
+1091   04EA             key_7:
+1092   04EA 3E 07        ld a,key7
+1093   04EC C9           ret
+1094   04ED             key_8:
+1095   04ED 3E 08        ld a,key8
+1096   04EF C9           ret
+1097   04F0             key_9:
+1098   04F0 3E 09        ld a,key9
+1099   04F2 C9           ret
+1100   04F3             key_a:
+1101   04F3 3E 0A        ld a,keya
+1102   04F5 C9           ret
+1103   04F6             key_b:
+1104   04F6 3E 0B        ld a,keyb
+1105   04F8 C9           ret
+1106   04F9             key_c:
+1107   04F9 3E 0C        ld a,keyc
+1108   04FB C9           ret
+1109   04FC             key_d:
+1110   04FC 3E 0D        ld a,keyd
+1111   04FE C9           ret
+1112   04FF             key_e:
+1113   04FF 3E 0E        ld a,keye
+1114   0501 C9           ret
+1115   0502             key_f:
+1116   0502 3E 0F        ld a,keyf
+1117   0504 C9           ret
+1118   0505             key_CK0:
+1119   0505 3E 10        ld a,CK0
+1120   0507 C9           ret
+1121   0508             key_CK1:
+1122   0508 3E 11        ld a,CK1
+1123   050A C9           ret
+1124   050B             key_CK2:
+1125   050B 3E 12        ld a,CK2
+1126   050D C9           ret
+1127   050E             key_CK3:
+1128   050E 3E 13        ld a,CK3
+1129   0510 C9           ret
+1130   0511             key_CK4:
+1131   0511 3E 14        ld a,CK4
+1132   0513 C9           ret
+1133   0514             key_CK5:
+1134   0514 3E 15        ld a,CK5
+1135   0516 C9           ret
+1136   0517             key_Shift:
+1137   0517 3E 16        ld a,Shift
+1138   0519 C9           ret
+1139   051A             key_Enter:
+1140   051A 3E 17        ld a,Enter
+1141   051C C9           ret
+1142   051D             ; end of key-jump-table
+1143   051D             
+1144   051D             ;**************************************************************
+1145   051D             ; OS's main code start location
+1146   051D             RESET:
+1147   051D             ; After Reset we come here
+1148   051D             ; Disable interrupts and couple of nops just for safe ;)
+1149   051D F3           di
+1150   051E 00           nop
+1151   051F 00           nop
+1152   0520 00           nop
+1153   0521              
+1154   0521             ; Testing the 8kB RAM at address $e000-$ffff
+1155   0521             ; Address $c000-$dfff can also contain a 8kb RAM..
+1156   0521             ; Should not be using stack in any way, becose don't
+1157   0521             ; know if the memory is OK, or even exists really
+1158   0521             ; The error test won't affect on running the os
+1159   0521             ; really in any way. It just will inform the user
+1160   0521             ; that there is bad memory in the system.
+1161   0521 06 FF        ld b,$ff
+1162   0523 21 00 20     ld hl,$2000
+1163   0526 11 00 E0     ld de,$e000
+1164   0529             ; Address pointer de and counter hl have now been set up
+1165   0529             ; Start testing:
+1166   0529             fill_loop0:
+1167   0529 1A           ld a,(de)              ; store the original value into reg c
+1168   052A 4F           ld c,a                 ;
+1169   052B 3E AA        ld a,%10101010         ; first test pattern
+1170   052D 12           ld (de),a
+1171   052E 1A           ld a,(de)
+1172   052F FE AA        cp %10101010
+1173   0531 79           ld a,c                 ; save the original value back
+1174   0532 12           ld (de),a              ;
+1175   0533 28 47        jr z,fill0             ; If OK then continue
+1176   0535 7A           ld a,d                 ; Otherwise check where the error was found
+1177   0536 E6 1C        and %00011100
+1178   0538 CB 2F        sra a
+1179   053A CB 2F        sra a
+1180   053C             ; Here is checked which 1kB page of the 8kB has faulty memory
+1181   053C             ; The result is stored in register b
+1182   053C FE 00        cp 0
+1183   053E 28 1C        jr z,z00
+1184   0540 FE 01        cp 1
+1185   0542 28 1C        jr z,z01
+1186   0544 FE 02        cp 2
+1187   0546 28 1C        jr z,z02
+1188   0548 FE 03        cp 3
+1189   054A 28 1C        jr z,z03
+1190   054C FE 04        cp 4
+1191   054E 28 1C        jr z,z04
+1192   0550 FE 05        cp 5
+1193   0552 28 1C        jr z,z05
+1194   0554 FE 06        cp 6
+1195   0556 28 1C        jr z,z06
+1196   0558 FE 07        cp 7
+1197   055A 28 1C        jr z,z07
+1198   055C             z00:
+1199   055C CB 80        res 0,b
+1200   055E 18 1C        jr fill0
+1201   0560             z01:
+1202   0560 CB 88        res 1,b
+1203   0562 18 18        jr fill0
+1204   0564             z02:
+1205   0564 CB 90        res 2,b
+1206   0566 18 14        jr fill0
+1207   0568             z03:
+1208   0568 CB 98        res 3,b
+1209   056A 18 10        jr fill0
+1210   056C             z04:
+1211   056C CB A0        res 4,b
+1212   056E 18 0C        jr fill0
+1213   0570             z05:
+1214   0570 CB A8        res 5,b
+1215   0572 18 08        jr fill0
+1216   0574             z06:
+1217   0574 CB B0        res 6,b
+1218   0576 18 04        jr fill0
+1219   0578             z07:
+1220   0578 CB B8        res 7,b
+1221   057A 18 00        jr fill0
+1222   057C             
+1223   057C             fill0:
+1224   057C 1A           ld a,(de)              ; store the original value into reg c
+1225   057D 4F           ld c,a                 ;
+1226   057E 3E 55        ld a,%01010101         ; Second test pattern
+1227   0580 12           ld (de),a
+1228   0581 1A           ld a,(de)
+1229   0582 FE 55        cp %01010101
+1230   0584 79           ld a,c                 ; save the original value back
+1231   0585 12           ld (de),a              ;
+1232   0586 28 47        jr z,fill1             ; If OK then continue
+1233   0588 7A           ld a,d                 ; Otherwise check where the error was found
+1234   0589 E6 1C        and %00011100
+1235   058B CB 2F        sra a
+1236   058D CB 2F        sra a
+1237   058F             ; Again checking the 1kB page
+1238   058F FE 00        cp 0
+1239   0591 28 1C        jr z,z10
+1240   0593 FE 01        cp 1
+1241   0595 28 1C        jr z,z11
+1242   0597 FE 02        cp 2
+1243   0599 28 1C        jr z,z12
+1244   059B FE 03        cp 3
+1245   059D 28 1C        jr z,z13
+1246   059F FE 04        cp 4
+1247   05A1 28 1C        jr z,z14
+1248   05A3 FE 05        cp 5
+1249   05A5 28 1C        jr z,z15
+1250   05A7 FE 06        cp 6
+1251   05A9 28 1C        jr z,z16
+1252   05AB FE 07        cp 7
+1253   05AD 28 1C        jr z,z17
+1254   05AF             z10:
+1255   05AF CB 80        res 0,b
+1256   05B1 18 1C        jr fill1
+1257   05B3             z11:
+1258   05B3 CB 88        res 1,b
+1259   05B5 18 18        jr fill1
+1260   05B7             z12:
+1261   05B7 CB 90        res 2,b
+1262   05B9 18 14        jr fill1
+1263   05BB             z13:
+1264   05BB CB 98        res 3,b
+1265   05BD 18 10        jr fill1
+1266   05BF             z14:
+1267   05BF CB A0        res 4,b
+1268   05C1 18 0C        jr fill1
+1269   05C3             z15:
+1270   05C3 CB A8        res 5,b
+1271   05C5 18 08        jr fill1
+1272   05C7             z16:
+1273   05C7 CB B0        res 6,b
+1274   05C9 18 04        jr fill1
+1275   05CB             z17:
+1276   05CB CB B8        res 7,b
+1277   05CD 18 00        jr fill1
+1278   05CF              
+1279   05CF             fill1:
+1280   05CF 13           inc de
+1281   05D0 2D           dec l
+1282   05D1 C2 29 05     jp nz,fill_loop0
+1283   05D4             ; Show the current position of test with the 8 LEDs
+1284   05D4             ; This just for fun ;)
+1285   05D4 78           ld a,b
+1286   05D5 CB 2F        sra a
+1287   05D7 CB 2F        sra a
+1288   05D9 CB 2F        sra a
+1289   05DB CB 2F        sra a
+1290   05DD E6 0F        and $0f
+1291   05DF 4F           ld c,a
+1292   05E0 78           ld a,b
+1293   05E1 CB 27        sla a
+1294   05E3 CB 27        sla a
+1295   05E5 CB 27        sla a
+1296   05E7 CB 27        sla a
+1297   05E9 E6 F0        and $f0
+1298   05EB B1           or c
+1299   05EC 4F           ld c,a
+1300   05ED 7A           ld a,d
+1301   05EE E6 1C        and %00011100
+1302   05F0 CB 2F        sra a
+1303   05F2 CB 2F        sra a
+1304   05F4             ; Find out the 1kB page
+1305   05F4 FE 00        cp 0
+1306   05F6 28 2C        jr z,z24
+1307   05F8 FE 01        cp 1
+1308   05FA 28 2C        jr z,z25
+1309   05FC FE 02        cp 2
+1310   05FE 28 2C        jr z,z26
+1311   0600 FE 03        cp 3
+1312   0602 28 2C        jr z,z27
+1313   0604 FE 04        cp 4
+1314   0606 28 0C        jr z,z20
+1315   0608 FE 05        cp 5
+1316   060A 28 0C        jr z,z21
+1317   060C FE 06        cp 6
+1318   060E 28 0C        jr z,z22
+1319   0610 FE 07        cp 7
+1320   0612 28 0C        jr z,z23
+1321   0614             z20:
+1322   0614 CB 81        res 0,c
+1323   0616 18 1C        jr test_position_end
+1324   0618             z21:
+1325   0618 CB 89        res 1,c
+1326   061A 18 18        jr test_position_end
+1327   061C             z22:
+1328   061C CB 91        res 2,c
+1329   061E 18 14        jr test_position_end
+1330   0620             z23:
+1331   0620 CB 99        res 3,c
+1332   0622 18 10        jr test_position_end
+1333   0624             z24:
+1334   0624 CB A1        res 4,c
+1335   0626 18 0C        jr test_position_end
+1336   0628             z25:
+1337   0628 CB A9        res 5,c
+1338   062A 18 08        jr test_position_end
+1339   062C             z26:
+1340   062C CB B1        res 6,c
+1341   062E 18 04        jr test_position_end
+1342   0630             z27:
+1343   0630 CB B9        res 7,c
+1344   0632 18 00        jr test_position_end
+1345   0634             
+1346   0634             test_position_end:
+1347   0634 79           ld a,c
+1348   0635 D3 07        out (LEDs),a
+1349   0637 25           dec h
+1350   0638 C2 29 05     jp nz,fill_loop0
+1351   063B             
+1352   063B             ; End of memory test
+1353   063B             ; Show the result of the test with the 8 LEDs
+1354   063B 78           ld a,b
+1355   063C D3 07        out (LEDs),a
+1356   063E             ; If there was found an error from memory in the test
+1357   063E             ; then show 'EEEE'-string in the default 7segments
+1358   063E FE FF        cp $ff
+1359   0640 28 14        jr z,no_error_in_memory
+1360   0642 3E C8        ld a,%11001000
+1361   0644 D3 01        out (SSeg1),a
+1362   0646 D3 02        out (SSeg2),a
+1363   0648 D3 03        out (SSeg3),a
+1364   064A D3 04        out (SSeg4),a
+1365   064C 21 FF FF     ld hl,$ffff
+1366   064F             error_delay_loop:
+1367   064F 00           nop
+1368   0650 2D           dec l
+1369   0651 20 FC        jr nz,error_delay_loop
+1370   0653 25           dec h
+1371   0654 20 F9        jr nz,error_delay_loop
+1372   0656             no_error_in_memory:
+1373   0656             
+1374   0656             ; Now we set up the stack pointer
+1375   0656 31 FF FE     ld sp,StackPointerOrigin 
+1376   0659             ; Start by  initializing and blinking the default 7segments
+1377   0659 3E FF        ld a,$ff
+1378   065B D3 01        out (SSeg1),a
+1379   065D D3 02        out (SSeg2),a
+1380   065F D3 03        out (SSeg3),a
+1381   0661 D3 04        out (SSeg4),a
+1382   0663             ; Also reset the keyboard, just for safe
+1383   0663 D3 05        out (KeyS),a
+1384   0665             ; Let's do some blinking
+1385   0665 21 00 40     ld hl,$4000
+1386   0668 CD 52 00     call DelayHL   ; Wait a bit when the 7segments are off
+1387   066B 3E 00        ld a,0
+1388   066D D3 01        out (SSeg1),a
+1389   066F D3 02        out (SSeg2),a
+1390   0671 D3 03        out (SSeg3),a
+1391   0673 D3 04        out (SSeg4),a
+1392   0675 21 00 70     ld hl,$7000
+1393   0678 CD 52 00     call DelayHL   ; Wait a bit when the 7segments are on
+1394   067B 3E FF        ld a,$ff       ; Then reset the 7segments off
+1395   067D D3 01        out (SSeg1),a
+1396   067F D3 02        out (SSeg2),a
+1397   0681 D3 03        out (SSeg3),a
+1398   0683 D3 04        out (SSeg4),a
+1399   0685             ; Now the memory error message in the LEDs should have been seeable
+1400   0685             ; enough long time so reset the LEDs also
+1401   0685 3E EF        ld a,%11101111 ; This pattern lights up the fifth LED for mark of
+1402   0687 D3 07        out (LEDs),a   ; 'power up'
+1403   0689             ; Set keyboard's default repeat delay and rate,
+1404   0689             ; if not already set
+1405   0689 3A 36 FC     ld a,(RepeatSet)
+1406   068C FE 17        cp $17
+1407   068E 28 11        jr z,j_RepeatSet
+1408   0690 21 FF 0A     ld hl,_RepeatDelay
+1409   0693 22 32 FC     ld (RepeatDelay),hl
+1410   0696 21 FF 02     ld hl,_RepeatRate
+1411   0699 22 34 FC     ld (RepeatRate),hl
+1412   069C 3E 17        ld a,$17
+1413   069E 32 36 FC     ld (RepeatSet),a
+1414   06A1             j_RepeatSet:
+1415   06A1             ; Some settings for hexedit
+1416   06A1 3E FF        ld a,$ff
+1417   06A3 32 0C FC     ld (b_he_undoset),a
+1418   06A6             ; Set default interrupt mode and enable interrupts
+1419   06A6 ED 56        im 1
+1420   06A8 FB           ei
+1421   06A9             ; Init 8255 PIO
+1422   06A9             ; Port B and port C lower 4bits to LCD-diplay
+1423   06A9             ; Port A and port C upper 4bits as inputs for now
+1424   06A9             ; Mode for 8255 is 0 for now
+1425   06A9 3E 98        ld a,%10011000
+1426   06AB D3 23        out (PIOCtrl),a
+1427   06AD 3E 00        ld a,$0
+1428   06AF D3 21        out (LCDd),a
+1429   06B1 3E 01        ld a,%00000001
+1430   06B3 D3 22        out (LCDi),a
+1431   06B5             ; Init the LCD-display
+1432   06B5 CD 38 01     call reset_lcd
+1433   06B8             ; Put a string to the LCD
+1434   06B8 06 0E        ld b,%00001110         ; This sets cursor on and cursor blinking off
+1435   06BA CD 04 01     call set_lcd
+1436   06BD 21 87 0B     ld hl,s_OSstring
+1437   06C0 11 00 30     ld de,$3000
+1438   06C3 CD 74 01     call strd2lcd
+1439   06C6 3E 40        ld a,Line2
+1440   06C8 CD 8A 01     call setDDRAMa
+1441   06CB 21 9B 0B     ld hl,s_version
+1442   06CE 11 00 30     ld de,$3000
+1443   06D1 CD 74 01     call strd2lcd
+1444   06D4 06 0F        ld b,%00001111         ; This sets cursor and cursor blinking on
+1445   06D6 CD 04 01     call set_lcd
+1446   06D9 06 20        ld b,' '
+1447   06DB CD 1E 01     call char2lcd
+1448   06DE             ; Wait for user to push Enter-button
+1449   06DE 3E FE        ld a,%11111110
+1450   06E0 D3 05        out (KeyS),a
+1451   06E2             sup_waitEnter:
+1452   06E2 DB 06        in a,(KeyR)
+1453   06E4 CB 47        bit 0,a
+1454   06E6 20 FA        jr nz,sup_waitEnter
+1455   06E8             ; Start the default command prompt
+1456   06E8             mcp_start:
+1457   06E8 CD 5B 01     call clear_lcd         ; This clears the LCD and returns cursor to home
+1458   06EB 06 0F        ld b,%00001111         ; This sets cursor and cursor blinking on
+1459   06ED CD 04 01     call set_lcd           ;
+1460   06F0 3E 00        ld a,Line1
+1461   06F2 CD 8A 01     call setDDRAMa
+1462   06F5 21 B5 0B     ld hl,s_defprompt
+1463   06F8 CD 63 01     call str2lcd
+1464   06FB 3E 40        ld a,Line2
+1465   06FD CD 8A 01     call setDDRAMa
+1466   0700 06 3E        ld b,'>'
+1467   0702 CD 1E 01     call char2lcd
+1468   0705             ; Wait for user to give a command
+1469   0705             mcp_command:
+1470   0705 3E FF        ld a,none
+1471   0707 32 1E FC     ld (key_pressed),a
+1472   070A 3E 40        ld a,$40
+1473   070C 32 20 FC     ld (key_delay),a
+1474   070F 21 00 00     ld hl,$0000
+1475   0712 22 22 FC     ld (key_repeatdelay),hl
+1476   0715 21 00 00     ld hl,$0000
+1477   0718 22 24 FC     ld (key_repeatrate),hl
+1478   071B 3E FF        ld a,$ff
+1479   071D 32 2A FC     ld (key_rset),a
+1480   0720             ;
+1481   0720             mcp_comloop:
+1482   0720 CD 3A 02     call key_getkey
+1483   0723             ; Now test which key was pressed
+1484   0723 FE 17        cp Enter
+1485   0725 CA 65 07     jp z,mcp_Enter
+1486   0728             
+1487   0728 FE 10        cp CK0
+1488   072A C2 35 07     jp nz,mcp_nhelp
+1489   072D 21 C5 0B     ld hl,s_help
+1490   0730 0E 10        ld c,CK0
+1491   0732 C3 5A 07     jp mcp_str2lcd
+1492   0735             mcp_nhelp:
+1493   0735 FE 11        cp CK1
+1494   0737 C2 42 07     jp nz,mcp_nhexedit
+1495   073A 21 DA 0B     ld hl,s_hexedit
+1496   073D 0E 11        ld c,CK1
+1497   073F C3 5A 07     jp mcp_str2lcd
+1498   0742             mcp_nhexedit:
+1499   0742 FE 15        cp CK5
+1500   0744 C2 57 07     jp nz,mcp_ncopy
+1501   0747 CD 2D 02     call key_testshift
+1502   074A 20 08        jr nz,mcp_copy_nshift
+1503   074C 21 EF 0B     ld hl,s_copy_system
+1504   074F 0E B5        ld c,CK5+$a0
+1505   0751 C3 5A 07     jp mcp_str2lcd
+1506   0754             mcp_copy_nshift:
+1507   0754 C3 20 07     jp mcp_comloop
+1508   0757             mcp_ncopy:
+1509   0757             ;
+1510   0757 C3 20 07     jp mcp_comloop
+1511   075A             ;
+1512   075A             mcp_str2lcd:
+1513   075A 3E 40        ld a,Line2
+1514   075C CD 8A 01     call setDDRAMa
+1515   075F CD 63 01     call str2lcd
+1516   0762 C3 20 07     jp mcp_comloop
+1517   0765             ; ***
+1518   0765             mcp_Enter
+1519   0765 79           ld a,c
+1520   0766 FE FF        cp none
+1521   0768 CA 05 07     jp z,mcp_command
+1522   076B 0E FF        ld c,none
+1523   076D FE 10        cp CK0
+1524   076F CA 7F 07     jp z,mcp_help
+1525   0772 FE 11        cp CK1
+1526   0774 CA 88 07     jp z,mcp_hexedit
+1527   0777 FE B5        cp CK5+$a0
+1528   0779 CA 8E 07     jp z,mcp_cs
+1529   077C C3 20 07     jp mcp_comloop
+1530   077F             ; ***
+1531   077F             mcp_help:
+1532   077F 21 43 0C     ld hl,s_helptext
+1533   0782 CD 94 07     call help_read
+1534   0785 C3 E8 06     jp mcp_start
+1535   0788             mcp_hexedit:
+1536   0788 CD 50 08     call hexedit
+1537   078B C3 E8 06     jp mcp_start
+1538   078E             mcp_cs:
+1539   078E CD 2E 0B     call copy_system
+1540   0791 C3 E8 06     jp mcp_start
+1541   0794             ; *** help_read
+1542   0794             ; Help reader
+1543   0794             help_read:
+1544   0794 CD 38 01     call reset_lcd
+1545   0797 F5           push af
+1546   0798 D5           push de
+1547   0799 22 00 FC     ld (T0),hl
+1548   079C             ;
+1549   079C 3E 00        ld a,Line1
+1550   079E CD 8A 01     call setDDRAMa
+1551   07A1 CD 63 01     call str2lcd
+1552   07A4 23           inc hl
+1553   07A5 7E           ld a,(hl)
+1554   07A6 16 02        ld d,$02
+1555   07A8 FE 17        cp $17
+1556   07AA 28 13        jr z,hr_start
+1557   07AC 3E 40        ld a,Line2
+1558   07AE CD 8A 01     call setDDRAMa
+1559   07B1 CD 63 01     call str2lcd
+1560   07B4 23           inc hl
+1561   07B5 7E           ld a,(hl)
+1562   07B6 CD 46 08     call hr_dec21hl
+1563   07B9 FE 17        cp $17
+1564   07BB 28 02        jr z,hr_start
+1565   07BD 16 01        ld d,$01
+1566   07BF             hr_start:
+1567   07BF 3E 17        ld a,Enter
+1568   07C1 32 1E FC     ld (key_pressed),a
+1569   07C4 3E 20        ld a,$20
+1570   07C6 32 20 FC     ld (key_delay),a
+1571   07C9 E5           push hl
+1572   07CA 2A 32 FC     ld hl,(RepeatDelay)
+1573   07CD 22 22 FC     ld (key_repeatdelay),hl
+1574   07D0 2A 34 FC     ld hl,(RepeatRate)
+1575   07D3 22 24 FC     ld (key_repeatrate),hl
+1576   07D6 E1           pop hl
+1577   07D7 3E FF        ld a,$ff
+1578   07D9 32 2A FC     ld (key_rset),a
+1579   07DC             ;
+1580   07DC             hr_loop:
+1581   07DC CD 3A 02     call key_getkey
+1582   07DF             ; Now test which key was pressed
+1583   07DF FE 17        cp Enter
+1584   07E1 CA 4D 08     jp z,hr_end
+1585   07E4 FE 11        cp CK1
+1586   07E6 CA 2B 08     jp z,hr_rollup
+1587   07E9 FE 13        cp CK3
+1588   07EB CA F1 07     jp z,hr_rolldown
+1589   07EE C3 DC 07     jp hr_loop
+1590   07F1             ;
+1591   07F1             hr_rolldown:
+1592   07F1 3E 02        ld a,$02
+1593   07F3 BA           cp d
+1594   07F4 28 32        jr z,hr_rd_end
+1595   07F6             hr_rd_ru:
+1596   07F6 3E 00        ld a,Line1
+1597   07F8 CD 8A 01     call setDDRAMa
+1598   07FB CD 63 01     call str2lcd
+1599   07FE 23           inc hl
+1600   07FF 7E           ld a,(hl)
+1601   0800 16 02        ld d,$02
+1602   0802 FE 17        cp $17
+1603   0804 20 0F        jr nz,hr_rd_jp
+1604   0806 E5           push hl
+1605   0807 21 19 0C     ld hl,s_endof
+1606   080A 3E 40        ld a,Line2
+1607   080C CD 8A 01     call setDDRAMa
+1608   080F CD 63 01     call str2lcd
+1609   0812 E1           pop hl
+1610   0813 18 13        jr hr_rd_end
+1611   0815             hr_rd_jp:
+1612   0815 3E 40        ld a,Line2
+1613   0817 CD 8A 01     call setDDRAMa
+1614   081A CD 63 01     call str2lcd
+1615   081D 23           inc hl
+1616   081E 7E           ld a,(hl)
+1617   081F CD 46 08     call hr_dec21hl
+1618   0822 FE 17        cp $17
+1619   0824 28 02        jr z,hr_rd_end
+1620   0826 16 01        ld d,$01
+1621   0828             hr_rd_end:
+1622   0828 C3 DC 07     jp hr_loop
+1623   082B             ;
+1624   082B             hr_rollup:
+1625   082B 1E 02        ld e,2
+1626   082D             hr_ru_uploop:
+1627   082D 3A 01 FC     ld a,(T1)
+1628   0830 BC           cp h
+1629   0831 20 07        jr nz,hr_ru_nu
+1630   0833 3A 00 FC     ld a,(T0)
+1631   0836 BD           cp l
+1632   0837 CA 43 08     jp z,hr_ru_end
+1633   083A             hr_ru_nu:
+1634   083A CD 46 08     call hr_dec21hl
+1635   083D 1D           dec e
+1636   083E 20 ED        jr nz,hr_ru_uploop
+1637   0840 C3 F6 07     jp hr_rd_ru
+1638   0843             hr_ru_end:
+1639   0843 C3 DC 07     jp hr_loop
+1640   0846             hr_dec21hl:
+1641   0846 3E 15        ld a,21
+1642   0848             hr_dec21hl_loop:
+1643   0848 2B           dec hl
+1644   0849 3D           dec a
+1645   084A 20 FC        jr nz,hr_dec21hl_loop
+1646   084C C9           ret
+1647   084D             ;
+1648   084D             hr_end:
+1649   084D D1           pop de
+1650   084E F1           pop af
+1651   084F C9           ret
+1652   0850             ; end of help_read
+1653   0850             
+1654   0850             ; *** hexedit
+1655   0850             ; Hex editor
+1656   0850             hexedit:
+1657   0850 F5           push af
+1658   0851 C5           push bc
+1659   0852 D5           push de
+1660   0853 E5           push hl
+1661   0854             ;
+1662   0854 3A 08 FC     ld a,(b_he_addset)
+1663   0857 FE 17        cp $17
+1664   0859 28 1D        jr z,he_addset
+1665   085B 21 00 E0     ld hl,UMO
+1666   085E 22 10 FC     ld (w_he_jumpaddr),hl
+1667   0861 22 13 FC     ld (w_he_calladdr),hl
+1668   0864 2B           dec hl
+1669   0865 2B           dec hl
+1670   0866 22 06 FC     ld (w_he_address),hl
+1671   0869 3E 17        ld a,$17
+1672   086B 32 08 FC     ld (b_he_addset),a
+1673   086E 3E 00        ld a,$00
+1674   0870 32 0F FC     ld (b_he_input),a
+1675   0873 3E 00        ld a,$00
+1676   0875 32 0E FC     ld (b_he_output),a
+1677   0878             he_addset:
+1678   0878 CD 5B 01     call clear_lcd
+1679   087B 3E 00        ld a,Line1
+1680   087D CD 8A 01     call setDDRAMa
+1681   0880 21 E5 0E     ld hl,s_he_string
+1682   0883 CD 63 01     call str2lcd
+1683   0886 3E 40        ld a,Line2
+1684   0888 CD 8A 01     call setDDRAMa
+1685   088B 21 2E 0C     ld hl,s_enter
+1686   088E CD 63 01     call str2lcd
+1687   0891             ; Wait for Enter-key be pressed
+1688   0891 3E 17        ld a,Enter
+1689   0893 32 1E FC     ld (key_pressed),a
+1690   0896 3E 10        ld a,$10
+1691   0898 32 20 FC     ld (key_delay),a
+1692   089B 21 00 00     ld hl,$0000
+1693   089E 22 22 FC     ld (key_repeatdelay),hl
+1694   08A1 21 00 00     ld hl,$0000
+1695   08A4 22 24 FC     ld (key_repeatrate),hl
+1696   08A7 3E FF        ld a,$ff
+1697   08A9 32 2A FC     ld (key_rset),a
+1698   08AC             he_swaitEnter:
+1699   08AC CD 3A 02     call key_getkey
+1700   08AF FE 17        cp Enter
+1701   08B1 20 F9        jr nz,he_swaitEnter
+1702   08B3 3E 17        ld a,Enter
+1703   08B5             he_start:
+1704   08B5 32 1E FC     ld (key_pressed),a
+1705   08B8 3E 01        ld a,1
+1706   08BA 32 0D FC     ld (b_he_nibble),a
+1707   08BD CD 5B 01     call clear_lcd
+1708   08C0 06 0E        ld b,%00001110         ; This sets cursor on and cursor blinking off
+1709   08C2 CD 04 01     call set_lcd
+1710   08C5 2A 06 FC     ld hl,(w_he_address)
+1711   08C8 CD CD 0A     call he_showmemory
+1712   08CB 3E 10        ld a,$10
+1713   08CD 32 20 FC     ld (key_delay),a
+1714   08D0 2A 32 FC     ld hl,(RepeatDelay)
+1715   08D3 22 22 FC     ld (key_repeatdelay),hl
+1716   08D6 2A 34 FC     ld hl,(RepeatRate)
+1717   08D9 22 24 FC     ld (key_repeatrate),hl
+1718   08DC 3E FF        ld a,$ff
+1719   08DE 32 2A FC     ld (key_rset),a
+1720   08E1             ;
+1721   08E1             he_loop:
+1722   08E1 CD 3A 02     call key_getkey
+1723   08E4             ; Now test which key was pressed
+1724   08E4 FE 10        cp $10
+1725   08E6 DA 0C 0A     jp c,he_change
+1726   08E9 FE 17        cp Enter
+1727   08EB CA 29 0B     jp z,he_end
+1728   08EE FE 10        cp CK0
+1729   08F0 C2 FC 08     jp nz,he_nhelp
+1730   08F3 CD 2D 02     call key_testshift
+1731   08F6 CA AB 09     jp z,he_help
+1732   08F9 C3 89 0A     jp he_setaddress
+1733   08FC             he_nhelp:
+1734   08FC FE 11        cp CK1
+1735   08FE C2 0A 09     jp nz,he_nrollup
+1736   0901 CD 2D 02     call key_testshift
+1737   0904 CA DE 09     jp z,he_rollup4
+1738   0907 C3 B6 09     jp he_rollup
+1739   090A             he_nrollup:
+1740   090A FE 13        cp CK3
+1741   090C C2 18 09     jp nz,he_nrolldown
+1742   090F CD 2D 02     call key_testshift
+1743   0912 CA F5 09     jp z,he_rolldown4
+1744   0915 C3 CA 09     jp he_rolldown
+1745   0918             he_nrolldown:
+1746   0918 FE 15        cp CK5
+1747   091A CA 62 0A     jp z,he_undo
+1748   091D FE 12        cp CK2
+1749   091F C2 2B 09     jp nz,he_noutput
+1750   0922 CD 2D 02     call key_testshift
+1751   0925 CA 9B 0A     jp z,he_jump
+1752   0928 C3 3C 09     jp he_output
+1753   092B             he_noutput:
+1754   092B FE 14        cp CK4
+1755   092D C2 39 09     jp nz,he_ninput
+1756   0930 CD 2D 02     call key_testshift
+1757   0933 CA AD 0A     jp z,he_call
+1758   0936 C3 72 09     jp he_input
+1759   0939             he_ninput:
+1760   0939 C3 E1 08     jp he_loop
+1761   093C             ; Ouput given value to given I/O-address
+1762   093C             he_output:
+1763   093C C5           push bc
+1764   093D 4F           ld c,a
+1765   093E 3A 0E FC     ld a,(b_he_output)
+1766   0941 47           ld b,a
+1767   0942 79           ld a,c
+1768   0943 F5           push af
+1769   0944 E5           push hl
+1770   0945 CD 5B 01     call clear_lcd
+1771   0948 3E 00        ld a,Line1
+1772   094A CD 8A 01     call setDDRAMa
+1773   094D 21 1E 0F     ld hl,s_inputioaddr
+1774   0950 CD 63 01     call str2lcd
+1775   0953 E1           pop hl
+1776   0954 F1           pop af
+1777   0955 CD DF 02     call key_getbvalue
+1778   0958 FE 15        cp CK5
+1779   095A 28 12        jr z,he_op_end
+1780   095C 48           ld c,b
+1781   095D F5           push af
+1782   095E 78           ld a,b
+1783   095F 32 0E FC     ld (b_he_output),a
+1784   0962 F1           pop af
+1785   0963 06 00        ld b,$00
+1786   0965 CD CD 02     call key_getbyte
+1787   0968 FE 15        cp CK5
+1788   096A 28 02        jr z,he_op_end
+1789   096C ED 41        out (c),b
+1790   096E             he_op_end:
+1791   096E C1           pop bc
+1792   096F C3 B5 08     jp he_start
+1793   0972             ; Input value from given I/O-address
+1794   0972             he_input:
+1795   0972 C5           push bc
+1796   0973 4F           ld c,a
+1797   0974 3A 0F FC     ld a,(b_he_input)
+1798   0977 47           ld b,a
+1799   0978 79           ld a,c
+1800   0979 F5           push af
+1801   097A E5           push hl
+1802   097B CD 5B 01     call clear_lcd
+1803   097E 3E 00        ld a,Line1
+1804   0980 CD 8A 01     call setDDRAMa
+1805   0983 21 1E 0F     ld hl,s_inputioaddr
+1806   0986 CD 63 01     call str2lcd
+1807   0989 E1           pop hl
+1808   098A F1           pop af
+1809   098B CD DF 02     call key_getbvalue
+1810   098E FE 15        cp CK5
+1811   0990 28 15        jr z,he_ip_end
+1812   0992 48           ld c,b
+1813   0993 47           ld b,a
+1814   0994 79           ld a,c
+1815   0995 32 0F FC     ld (b_he_input),a
+1816   0998 ED 78        in a,(c)
+1817   099A 0E 03        ld c,SSeg3
+1818   099C B7           or a
+1819   099D CD A8 00     call b_to_7seg
+1820   09A0 3E FF        ld a,$ff
+1821   09A2 D3 01        out (SSeg1),a
+1822   09A4 D3 02        out (SSeg2),a
+1823   09A6 78           ld a,b
+1824   09A7             he_ip_end:
+1825   09A7 C1           pop bc
+1826   09A8 C3 B5 08     jp he_start
+1827   09AB             ; Show Hex editor's help
+1828   09AB             he_help:
+1829   09AB 21 40 0D     ld hl,s_he_help
+1830   09AE CD 94 07     call help_read
+1831   09B1 3E 17        ld a,Enter
+1832   09B3 C3 B5 08     jp he_start
+1833   09B6             ; Roll memory up
+1834   09B6             he_rollup:
+1835   09B6 E5           push hl
+1836   09B7 2A 06 FC     ld hl,(w_he_address)
+1837   09BA 2B           dec hl
+1838   09BB 22 06 FC     ld (w_he_address),hl
+1839   09BE 3E 01        ld a,1
+1840   09C0 32 0D FC     ld (b_he_nibble),a
+1841   09C3 CD CD 0A     call he_showmemory
+1842   09C6 E1           pop hl
+1843   09C7 C3 E1 08     jp he_loop
+1844   09CA             ; Roll memory down
+1845   09CA             he_rolldown:
+1846   09CA E5           push hl
+1847   09CB 2A 06 FC     ld hl,(w_he_address)
+1848   09CE 23           inc hl
+1849   09CF 22 06 FC     ld (w_he_address),hl
+1850   09D2 3E 01        ld a,1
+1851   09D4 32 0D FC     ld (b_he_nibble),a
+1852   09D7 CD CD 0A     call he_showmemory
+1853   09DA E1           pop hl
+1854   09DB C3 E1 08     jp he_loop
+1855   09DE             ; Roll memory up by 4
+1856   09DE             he_rollup4:
+1857   09DE E5           push hl
+1858   09DF 2A 06 FC     ld hl,(w_he_address)
+1859   09E2 2B           dec hl
+1860   09E3 2B           dec hl
+1861   09E4 2B           dec hl
+1862   09E5 2B           dec hl
+1863   09E6 22 06 FC     ld (w_he_address),hl
+1864   09E9 3E 01        ld a,1
+1865   09EB 32 0D FC     ld (b_he_nibble),a
+1866   09EE CD CD 0A     call he_showmemory
+1867   09F1 E1           pop hl
+1868   09F2 C3 E1 08     jp he_loop
+1869   09F5             ; Roll memory down by 4
+1870   09F5             he_rolldown4:
+1871   09F5 E5           push hl
+1872   09F6 2A 06 FC     ld hl,(w_he_address)
+1873   09F9 23           inc hl
+1874   09FA 23           inc hl
+1875   09FB 23           inc hl
+1876   09FC 23           inc hl
+1877   09FD 22 06 FC     ld (w_he_address),hl
+1878   0A00 3E 01        ld a,1
+1879   0A02 32 0D FC     ld (b_he_nibble),a
+1880   0A05 CD CD 0A     call he_showmemory
+1881   0A08 E1           pop hl
+1882   0A09 C3 E1 08     jp he_loop
+1883   0A0C             ; Change memory
+1884   0A0C             he_change:
+1885   0A0C E5           push hl
+1886   0A0D C5           push bc
+1887   0A0E 2A 06 FC     ld hl,(w_he_address)
+1888   0A11 23           inc hl
+1889   0A12 23           inc hl
+1890   0A13 46           ld b,(hl)
+1891   0A14 4F           ld c,a
+1892   0A15             ;
+1893   0A15 3A 0D FC     ld a,(b_he_nibble)
+1894   0A18 FE 00        cp 0
+1895   0A1A 20 18        jr nz,he_ch_n0
+1896   0A1C 78           ld a,b
+1897   0A1D 32 09 FC     ld (b_he_undovalue),a
+1898   0A20 22 0A FC     ld (w_he_undoaddr),hl
+1899   0A23 E6 F0        and $f0
+1900   0A25 47           ld b,a
+1901   0A26 79           ld a,c
+1902   0A27 E6 0F        and $0f
+1903   0A29 B0           or b
+1904   0A2A 77           ld (hl),a
+1905   0A2B 3E 01        ld a,1
+1906   0A2D 32 0D FC     ld (b_he_nibble),a
+1907   0A30 23           inc hl
+1908   0A31 C3 50 0A     jp he_ch_end
+1909   0A34             he_ch_n0:
+1910   0A34 78           ld a,b
+1911   0A35 32 09 FC     ld (b_he_undovalue),a
+1912   0A38 22 0A FC     ld (w_he_undoaddr),hl
+1913   0A3B E6 0F        and $0f
+1914   0A3D 47           ld b,a
+1915   0A3E 79           ld a,c
+1916   0A3F CB 27        sla a
+1917   0A41 CB 27        sla a
+1918   0A43 CB 27        sla a
+1919   0A45 CB 27        sla a
+1920   0A47 E6 F0        and $f0
+1921   0A49 B0           or b
+1922   0A4A 77           ld (hl),a
+1923   0A4B 3E 00        ld a,0
+1924   0A4D 32 0D FC     ld (b_he_nibble),a
+1925   0A50             he_ch_end:
+1926   0A50 3E 00        ld a,$00
+1927   0A52 32 0C FC     ld (b_he_undoset),a
+1928   0A55 2B           dec hl
+1929   0A56 2B           dec hl
+1930   0A57 22 06 FC     ld (w_he_address),hl
+1931   0A5A CD CD 0A     call he_showmemory
+1932   0A5D C1           pop bc
+1933   0A5E E1           pop hl
+1934   0A5F C3 E1 08     jp he_loop
+1935   0A62             ; Undo
+1936   0A62             he_undo
+1937   0A62 E5           push hl
+1938   0A63 2A 0A FC     ld hl,(w_he_undoaddr)
+1939   0A66 3A 0C FC     ld a,(b_he_undoset)
+1940   0A69 FE FF        cp $ff
+1941   0A6B 28 10        jr z,he_un_end
+1942   0A6D C5           push bc
+1943   0A6E 3A 09 FC     ld a,(b_he_undovalue)
+1944   0A71 46           ld b,(hl)
+1945   0A72 77           ld (hl),a
+1946   0A73 78           ld a,b
+1947   0A74 32 09 FC     ld (b_he_undovalue),a
+1948   0A77 3E 01        ld a,1
+1949   0A79 32 0D FC     ld (b_he_nibble),a
+1950   0A7C C1           pop bc
+1951   0A7D             he_un_end
+1952   0A7D 2B           dec hl
+1953   0A7E 2B           dec hl
+1954   0A7F 22 06 FC     ld (w_he_address),hl
+1955   0A82 CD CD 0A     call he_showmemory
+1956   0A85 E1           pop hl
+1957   0A86 C3 E1 08     jp he_loop
+1958   0A89             ; Set address
+1959   0A89             he_setaddress:
+1960   0A89 E5           push hl
+1961   0A8A 2A 06 FC     ld hl,(w_he_address)
+1962   0A8D 23           inc hl
+1963   0A8E 23           inc hl
+1964   0A8F CD A6 03     call key_getaddress
+1965   0A92 2B           dec hl
+1966   0A93 2B           dec hl
+1967   0A94 22 06 FC     ld (w_he_address),hl
+1968   0A97 E1           pop hl
+1969   0A98 C3 B5 08     jp he_start
+1970   0A9B             ; Jump to address
+1971   0A9B             he_jump:
+1972   0A9B 2A 10 FC     ld hl,(w_he_jumpaddr)
+1973   0A9E CD A6 03     call key_getaddress
+1974   0AA1 FE 15        cp CK5
+1975   0AA3 CA B5 08     jp z,he_start
+1976   0AA6 22 10 FC     ld (w_he_jumpaddr),hl
+1977   0AA9 21 10 FC     ld hl,w_he_jumpaddr
+1978   0AAC E9           jp (hl)
+1979   0AAD             ; Call to address
+1980   0AAD             he_call:
+1981   0AAD F5           push af
+1982   0AAE E5           push hl
+1983   0AAF 2A 13 FC     ld hl,(w_he_calladdr)
+1984   0AB2 CD A6 03     call key_getaddress
+1985   0AB5 FE 15        cp CK5
+1986   0AB7 28 0C        jr z,he_call_end
+1987   0AB9 22 13 FC     ld (w_he_calladdr),hl
+1988   0ABC 3A CA 0A     ld a,(he_call_jumpcmd)
+1989   0ABF 32 12 FC     ld (b_he_calljump),a
+1990   0AC2 CD 12 FC     call b_he_calljump
+1991   0AC5             he_call_end:
+1992   0AC5 E1           pop hl
+1993   0AC6 F1           pop af
+1994   0AC7 C3 B5 08     jp he_start
+1995   0ACA             he_call_jumpcmd
+1996   0ACA C3 00 00     jp $0000
+1997   0ACD             ; Show 4bytes of memory contents, start address in hl
+1998   0ACD             he_showmemory:
+1999   0ACD F5           push af
+2000   0ACE C5           push bc
+2001   0ACF             ;
+2002   0ACF CD 5B 01     call clear_lcd
+2003   0AD2 3E 00        ld a,Line1
+2004   0AD4 CD 8A 01     call setDDRAMa
+2005   0AD7 CD FB 0A     call he_sm_show
+2006   0ADA 2B           dec hl
+2007   0ADB 2B           dec hl
+2008   0ADC 46           ld b,(hl)
+2009   0ADD CD 1E 01     call char2lcd
+2010   0AE0 23           inc hl
+2011   0AE1 46           ld b,(hl)
+2012   0AE2 CD 1E 01     call char2lcd
+2013   0AE5 23           inc hl
+2014   0AE6 46           ld b,(hl)
+2015   0AE7 CD 1E 01     call char2lcd
+2016   0AEA 23           inc hl
+2017   0AEB 46           ld b,(hl)
+2018   0AEC CD 1E 01     call char2lcd
+2019   0AEF 2B           dec hl
+2020   0AF0             
+2021   0AF0 3E 40        ld a,Line2
+2022   0AF2 CD 8A 01     call setDDRAMa
+2023   0AF5 CD FB 0A     call he_sm_show
+2024   0AF8             
+2025   0AF8 C3 18 0B     jp he_sm_end
+2026   0AFB             ;
+2027   0AFB             he_sm_show:
+2028   0AFB 0E 02        ld c,2
+2029   0AFD             he_sm_loop:
+2030   0AFD 7C           ld a,h
+2031   0AFE CD DB 00     call byte2lcd
+2032   0B01 7D           ld a,l
+2033   0B02 CD DB 00     call byte2lcd
+2034   0B05 06 3A        ld b,':'
+2035   0B07 CD 1E 01     call char2lcd
+2036   0B0A 7E           ld a,(hl)
+2037   0B0B CD DB 00     call byte2lcd
+2038   0B0E 06 20        ld b,' '
+2039   0B10 CD 1E 01     call char2lcd
+2040   0B13 23           inc hl
+2041   0B14 0D           dec c
+2042   0B15 20 E6        jr nz,he_sm_loop
+2043   0B17 C9           ret
+2044   0B18             ;
+2045   0B18             he_sm_end
+2046   0B18 3A 0D FC     ld a,(b_he_nibble)
+2047   0B1B 47           ld b,a
+2048   0B1C 3E 46        ld a,Line2+6
+2049   0B1E 90           sub b
+2050   0B1F CD 8A 01     call setDDRAMa
+2051   0B22 2B           dec hl
+2052   0B23 2B           dec hl
+2053   0B24 2B           dec hl
+2054   0B25 2B           dec hl
+2055   0B26 C1           pop bc
+2056   0B27 F1           pop af
+2057   0B28 C9           ret
+2058   0B29             ;
+2059   0B29             he_end:
+2060   0B29 E1           pop hl
+2061   0B2A D1           pop de
+2062   0B2B C1           pop bc
+2063   0B2C F1           pop af
+2064   0B2D C9           ret
+2065   0B2E             ; end of hexedit
+2066   0B2E             
+2067   0B2E             ; *** copy_system
+2068   0B2E             ; Copy's 8KB system ROM ($0000-$2000) to given address
+2069   0B2E             copy_system:
+2070   0B2E F5           push af
+2071   0B2F C5           push bc
+2072   0B30 D5           push de
+2073   0B31 E5           push hl
+2074   0B32 F3           di
+2075   0B33 CD 5B 01     call clear_lcd
+2076   0B36 3E 00        ld a,Line1
+2077   0B38 CD 8A 01     call setDDRAMa
+2078   0B3B 21 30 0F     ld hl,s_inputdelay
+2079   0B3E CD 63 01     call str2lcd
+2080   0B41 3E 17        ld a,Enter
+2081   0B43 21 00 05     ld hl,$0500
+2082   0B46 CD CE 03     call key_getwvalue
+2083   0B49 FE 15        cp CK5
+2084   0B4B 28 34        jr z,cs_end
+2085   0B4D 22 00 FC     ld (T0),hl
+2086   0B50 21 00 C0     ld hl,$c000
+2087   0B53 CD A6 03     call key_getaddress
+2088   0B56 FE 15        cp CK5
+2089   0B58 28 27        jr z,cs_end
+2090   0B5A             ;
+2091   0B5A 54           ld d,h
+2092   0B5B 5D           ld e,l
+2093   0B5C CD 5B 01     call clear_lcd
+2094   0B5F 21 00 00     ld hl,$0000
+2095   0B62             cs_loop:
+2096   0B62 7E           ld a,(hl)
+2097   0B63 12           ld (de),a
+2098   0B64 E5           push hl
+2099   0B65 2A 00 FC     ld hl,(T0)
+2100   0B68 CD 52 00     call DelayHL
+2101   0B6B E1           pop hl
+2102   0B6C 23           inc hl
+2103   0B6D 13           inc de
+2104   0B6E 3E 20        ld a,$20
+2105   0B70 BC           cp h
+2106   0B71 28 0E        jr z,cs_end
+2107   0B73 7C           ld a,h
+2108   0B74 0E 01        ld c,SSeg1
+2109   0B76 CD A8 00     call b_to_7seg
+2110   0B79 7D           ld a,l
+2111   0B7A 0E 03        ld c,SSeg3
+2112   0B7C CD A8 00     call b_to_7seg
+2113   0B7F 18 E1        jr cs_loop
+2114   0B81             cs_end:
+2115   0B81 FB           ei
+2116   0B82 E1           pop hl
+2117   0B83 D1           pop de
+2118   0B84 C1           pop bc
+2119   0B85 F1           pop af
+2120   0B86 C9           ret
+2121   0B87             ; end of copy_system
+2122   0B87             
+2123   0B87             ;**************************************************************
+2124   0B87             ; Misc data, example character strings
+2125   0B87 5A3830205765s_OSstring      .db "Z80 WestOS, by Duge",$17
+2125   0B8D 73744F532C206279204475676517
+2126   0B9B 76657273696Fs_version       .db "version b0.61",$17
+2126   0BA1 6E2062302E363117
+2127   0BA9 435055206861s_halted        .db "CPU halted.",$17
+2127   0BAF 6C7465642E17
+2128   0BB5 496E70757420s_defprompt     .db "Input  command:",$17
+2128   0BBB 20636F6D6D616E643A17
+2129   0BC5 3E68656C7020s_help          .db ">help               ",$17
+2129   0BCB 202020202020202020202020202017
+2130   0BDA 3E6865786564s_hexedit       .db ">hexedit            ",$17
+2130   0BE0 697420202020202020202020202017
+2131   0BEF 3E636F707920s_copy_system   .db ">copy system        ",$17
+2131   0BF5 73797374656D202020202020202017
+2132   0C04 202020202020s_clearline     .db "                    ",$17
+2132   0C0A 202020202020202020202020202017
+2133   0C19 2A2D2D2D2D2Ds_endof         .db "*-------end--------*",$17
+2133   0C1F 2D2D656E642D2D2D2D2D2D2D2D2A17
+2134   0C2E 507265737320s_enter         .db "Press Enter.........",$17
+2134   0C34 456E7465722E2E2E2E2E2E2E2E2E17
+2135   0C43 235573652043s_helptext      .db "#Use CK1 and CK3 to ",$17
+2135   0C49 4B3120616E6420434B3320746F2017
+2136   0C58 23726F6C6C20                .db "#roll up and down   ",$17
+2136   0C5E 757020616E6420646F776E20202017
+2137   0C6D 434B303A2048                .db "CK0: Help           ",$17
+2137   0C73 656C70202020202020202020202017
+2138   0C82 53686F772074                .db "Show this help      ",$17
+2138   0C88 6869732068656C7020202020202017
+2139   0C97 434B313A2048                .db "CK1: Hexedit        ",$17
+2139   0C9D 657865646974202020202020202017
+2140   0CAC 4D656D6F7279                .db "Memory hex editor   ",$17
+2140   0CB2 2068657820656469746F7220202017
+2141   0CC1 416C736F2066                .db "Also for I/O-usage  ",$17
+2141   0CC7 6F7220492F4F2D7573616765202017
+2142   0CD6 53686966743A                .db "Shift:              ",$17
+2142   0CDC 202020202020202020202020202017
+2143   0CEB 557361676520                .db "Usage of Shift is   ",$17
+2143   0CF1 6F6620536869667420697320202017
+2144   0D00 6D61726B6564                .db "marked with ^X,     ",$17
+2144   0D06 2077697468205E582C202020202017
+2145   0D15 776865726520                .db "where X is some key ",$17
+2145   0D1B 5820697320736F6D65206B65792017
+2146   0D2A 235072657373                .db "#Press Enter to exit",$17
+2146   0D30 20456E74657220746F206578697417
+2147   0D3F 17                          .db $17
+2148   0D40 2355703A434Bs_he_help       .db "#Up:CK1 Down:CK3    ",$17
+2148   0D46 3120446F776E3A434B332020202017
+2149   0D55 456E7465723A                .db "Enter: Exit hexedit ",$17
+2149   0D5B 204578697420686578656469742017
+2150   0D6A 434B303A2043                .db "CK0: Choose address ",$17
+2150   0D70 686F6F736520616464726573732017
+2151   0D7F 434B323A2049                .db "CK2: I/O output     ",$17
+2151   0D85 2F4F206F7574707574202020202017
+2152   0D94 5E434B323A20                .db "^CK2: Jump to n     ",$17
+2152   0D9A 4A756D7020746F206E202020202017
+2153   0DA9 434B343A2049                .db "CK4: I/O input      ",$17
+2153   0DAF 2F4F20696E70757420202020202017
+2154   0DBE 5E434B343A20                .db "^CK4: Call to n     ",$17
+2154   0DC4 43616C6C20746F206E202020202017
+2155   0DD3 416674657220                .db "After this command  ",$17
+2155   0DD9 7468697320636F6D6D616E64202017
+2156   0DE8 746865207661                .db "the value read from ",$17
+2156   0DEE 6C756520726561642066726F6D2017
+2157   0DFD 676976656E20                .db "given port is seen  ",$17
+2157   0E03 706F7274206973207365656E202017
+2158   0E12 696E20377365                .db "in 7segments as hex.",$17
+2158   0E18 676D656E7473206173206865782E17
+2159   0E27 434B313A2052                .db "CK1: Roll memory up ",$17
+2159   0E2D 6F6C6C206D656D6F72792075702017
+2160   0E3C 5E434B313A20                .db "^CK1: Up by 4       ",$17
+2160   0E42 557020627920342020202020202017
+2161   0E51 434B333A2052                .db "CK3: Roll mem. down ",$17
+2161   0E57 6F6C6C206D656D2E20646F776E2017
+2162   0E66 5E434B333A20                .db "^CK3: Down by 4     ",$17
+2162   0E6C 446F776E2062792034202020202017
+2163   0E7B 434B353A2055                .db "CK5: Undo           ",$17
+2163   0E81 6E646F202020202020202020202017
+2164   0E90 556E646F2069                .db "Undo in most cases. ",$17
+2164   0E96 6E206D6F73742063617365732E2017
+2165   0EA5 302D463A2043                .db "0-F: Change memory  ",$17
+2165   0EAB 68616E6765206D656D6F7279202017
+2166   0EBA 5E434B303A20                .db "^CK0: Help          ",$17
+2166   0EC0 48656C702020202020202020202017
+2167   0ECF 235072657373                .db "#Press Enter to exit",$17
+2167   0ED5 20456E74657220746F206578697417
+2168   0EE4 17                          .db $17
+2169   0EE5 576573744F53s_he_string     .db "WestOS Hexedit v0.24",$17
+2169   0EEB 20486578656469742076302E323417
+2170   0EFA 476976652061s_inputaddress  .db "Give address:",$17
+2170   0F00 6464726573733A17
+2171   0F08 476976652077s_inputword     .db "Give word:",$17
+2171   0F0E 6F72643A17
+2172   0F13 476976652062s_inputbyte     .db "Give byte:",$17
+2172   0F19 7974653A17
+2173   0F1E 476976652049s_inputioaddr   .db "Give I/O-address:",$17
+2173   0F24 2F4F2D616464726573733A17
+2174   0F30 476976652064s_inputdelay    .db "Give delay:",$17
+2174   0F36 656C61793A17
+2175   0F3C 303132333435hextolcd        .db '0','1','2','3','4','5','6','7','8','9'
+2175   0F42 36373839
+2176   0F46 414243444546                .db 'A','B','C','D','E','F'
+2177   0F4C 81 B7 C2 92 hexto7segment   .db %10000001,%10110111,%11000010,%10010010
+2178   0F50 B4 98 88 B3                 .db %10110100,%10011000,%10001000,%10110011
+2179   0F54 80 90 A0 8C                 .db %10000000,%10010000,%10100000,%10001100
+2180   0F58 C9 86 C8 E8                 .db %11001001,%10000110,%11001000,%11101000
+2181   0F5C             ;**************************************************************
+2182   0F5C             .end
+tasm: Number of errors = 0

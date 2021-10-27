@@ -1,0 +1,9 @@
+JDF B
+// Created by Version 2.0 
+PROJECT Z80W exp logic
+DESIGN z80w_exp Normal
+DEVKIT GAL20V8B-10LP
+ENTRY ABEL/Schematic
+MODULE z80e1.sch
+MODSTYLE z80e1 Normal
+SYNTHESIS_TOOL Exemplar

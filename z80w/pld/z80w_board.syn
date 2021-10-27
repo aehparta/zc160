@@ -1,0 +1,9 @@
+JDF B
+// Created by Version 2.0 
+PROJECT Z80W board logic
+DESIGN z80w Normal
+DEVKIT GAL20V8B-10LP
+ENTRY Schematic/VHDL
+MODULE z80b1.sch
+MODSTYLE z80b1 Normal
+SYNTHESIS_TOOL Exemplar

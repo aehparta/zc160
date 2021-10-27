@@ -1,0 +1,41 @@
+#$ TOOL SCH2BLF 2.0.15.29 
+#$ TITLE z80b1.bls 
+#$ MODULE z80b1 
+#$ PINS 16  IORQ:5 A7:4 A6:3 A5:2 IOCE0:20 CE47:18 CE23:17 MREQ:11 \
+#   CE1:19 CE0:15 A15:9 A14:10 A13:14 RST:23 RESET:21 INV_RESET:22
+#$ NODES 16 N_17 N_18 N_19 N_12 N_13 N_14 N_15 N_16 N_10 N_11 N_3 N_4  \
+#  N_5 N_6 N_7 N_8 
+#$ INTERFACE g_2or1 3 AN'i' B'i' Y'o'
+#$ INTERFACE g_3or1 4 AN'i' B'i' C'i' Y'o'
+#$ INTERFACE g_4or 5 A'i' B'i' C'i' D'i' Y'o'
+#$ INTERFACE g_4or1 5 AN'i' B'i' C'i' D'i' Y'o'
+#$ INTERFACE g_buf 2 A'i' Y'o'
+#$ INTERFACE g_input 2 I'i' O'o'
+#$ INTERFACE g_inv 2 A'i' YN'o'
+#$ INTERFACE g_output 2 I'i' O'o'
+#$ PRIMITIVE I14 g_2or1 3 N_5 N_6 N_11
+#$ PRIMITIVE I18 g_3or1 4 N_4 N_6 N_5 N_10
+#$ PRIMITIVE I19 g_4or 5 N_13 N_14 N_16 N_15 N_12
+#$ PRIMITIVE I7 g_4or 5 N_3 N_4 N_5 N_6 N_7
+#$ PRIMITIVE I6 g_4or1 5 N_3 N_4 N_5 N_6 N_8
+#$ PRIMITIVE I4 g_buf 2 N_19 N_18
+#$ PRIMITIVE I10 g_input 2 MREQ N_6
+#$ PRIMITIVE I11 g_input 2 A13 N_3
+#$ PRIMITIVE I12 g_input 2 A14 N_4
+#$ PRIMITIVE I13 g_input 2 A15 N_5
+#$ PRIMITIVE I21 g_input 2 A7 N_14
+#$ PRIMITIVE I22 g_input 2 A5 N_15
+#$ PRIMITIVE I23 g_input 2 IORQ N_13
+#$ PRIMITIVE I24 g_input 2 A6 N_16
+#$ PRIMITIVE I3 g_input 2 RST N_19
+#$ PRIMITIVE I5 g_inv 2 N_19 N_17
+#$ PRIMITIVE I1 g_output 2 N_17 RESET
+#$ PRIMITIVE I16 g_output 2 N_11 CE47
+#$ PRIMITIVE I17 g_output 2 N_10 CE23
+#$ PRIMITIVE I2 g_output 2 N_18 INV_RESET
+#$ PRIMITIVE I20 g_output 2 N_12 IOCE0
+#$ PRIMITIVE I8 g_output 2 N_8 CE1
+#$ PRIMITIVE I9 g_output 2 N_7 CE0
+.model z80b1
+
+.end

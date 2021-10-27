@@ -1,0 +1,57 @@
+#$ TOOL ispLEVER 2.0
+#$ DATE Sat Jul 31 18:07:08 2004
+#$ TITLE z80e1.bls 
+#$ MODULE z80e1
+#$ PINS 14 A0:2 WR:11 RD:10 IORQ:9 A7:7 A6:6 A5:5 IOR:20'o'  IOR_INV:19'o'  IOW_INV:21'o'  LW:18'o'  LR:22'o'  IOCE1:17'o'  IOCE2:15'o' 
+
+.model z80e1
+.inputs A0.BLIF WR.BLIF RD.BLIF A7.BLIF IORQ.BLIF A5.BLIF A6.BLIF
+.outputs IOR LW IOR_INV IOW_INV LR IOCE2 IOCE1
+.names A0.BLIF RD.BLIF A7.BLIF A5.BLIF A6.BLIF IOR
+00011 1
+---0- 0
+--1-- 0
+-1--- 0
+1---- 0
+----0 0
+.names A0.BLIF WR.BLIF A7.BLIF A5.BLIF A6.BLIF LW
+10011 1
+---0- 0
+--1-- 0
+-1--- 0
+0---- 0
+----0 0
+.names A0.BLIF RD.BLIF A7.BLIF A5.BLIF A6.BLIF IOR_INV
+---0- 1
+--1-- 1
+-1--- 1
+1---- 1
+----0 1
+00011 0
+.names A0.BLIF WR.BLIF A7.BLIF A5.BLIF A6.BLIF IOW_INV
+---0- 1
+--1-- 1
+-1--- 1
+1---- 1
+----0 1
+00011 0
+.names A0.BLIF RD.BLIF A7.BLIF A5.BLIF A6.BLIF LR
+---0- 1
+--1-- 1
+-1--- 1
+0---- 1
+----0 1
+10011 0
+.names A7.BLIF IORQ.BLIF A5.BLIF A6.BLIF IOCE2
+0001 1
+--1- 0
+-1-- 0
+1--- 0
+---0 0
+.names A7.BLIF IORQ.BLIF A5.BLIF A6.BLIF IOCE1
+--0- 1
+-1-- 1
+1--- 1
+---1 1
+0010 0
+.end

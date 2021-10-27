@@ -1,0 +1,39 @@
+A. D15
+This connector is free
+
+1.  PA0
+2.  PA1
+3.  PA2
+4.  PA3
+5.  PA4
+6.  PA5
+7.  PA6
+8.  PA7
+9.  PC4
+10. PC5
+11. PC6
+12. PC7
+13. +5V
+14. GND
+15. GND
+
+
+B. D15
+LCD-display is connected into this
+
+1.  PB0 - D0
+2.  PB1 - D1
+3.  PB2 - D2
+4.  PB3 - D3
+5.  PB4 - D4
+6.  PB5 - D5
+7.  PB6 - D6
+8.  PB7 - D7
+9.  PC0 - /Enable
+10. PC1 - R/W
+11. PC2 - Register Select
+12. PC3 - NC
+13. +5V
+14. GND
+15. GND
+

@@ -1,0 +1,61 @@
+
+[Device]
+Family = plsiGal;
+PartNumber = GAL20V8B-10LP;
+Package = 24PDIP;
+PartType = GAL20V8B;
+Speed = -10;
+Operating_condition = COM;
+Status = Production;
+
+[Revision]
+Parent = plsigal.lci;
+DATE = 07/31/2004;
+TIME = 17:13:51;
+Source_Format = ABEL_Schematic;
+
+[Ignore Assignments]
+
+[Clear Assignments]
+
+[Backannotate Assignments]
+
+[Global Constraints]
+
+[Location Assignments]
+layer = OFF;
+
+[Group Assignments]
+layer = OFF;
+
+[Resource Reservations]
+layer = OFF;
+
+[Fitter Report Format]
+
+[Power]
+
+[Source Constraint Option]
+
+[Fast Bypass]
+
+[OSM Bypass]
+
+[Input Registers]
+
+[Netlist/Delay Format]
+
+[IO Types]
+layer = OFF;
+
+[Pullup]
+
+[Slewrate]
+
+[Region]
+
+[Timing Constraints]
+
+[HSI Attributes]
+
+[Input Delay]

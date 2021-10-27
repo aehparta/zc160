@@ -1,0 +1,14 @@
+A5  i
+A6  i
+A7  i
+IORQ  i
+RD  i
+WR  i
+A0  i
+IOCE2  o
+IOCE1  o
+LR  o
+LW  o
+IOW_INV  o
+IOR  o
+IOR_INV  o

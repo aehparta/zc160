@@ -1,0 +1,6 @@
+$DEVICE         P20V8AS    fit  z80w_board.tt3
+$PINS   16  RESET:21   INV_RESET:22   CE1:19   CE0:15   IOCE0:20   CE23:17   CE47:18   
+RST:23   A6:3   IORQ:5   A5:2   A7:4   A15:9   A14:10   
+A13:14   MREQ:11   
+--------------------------------------------------------------
+

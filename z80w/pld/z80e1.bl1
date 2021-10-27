@@ -1,0 +1,78 @@
+#$ TOOL ispLEVER 2.0
+#$ DATE Sat Jul 31 18:07:08 2004
+#$ TITLE z80e1.bls 
+#$ MODULE z80e1
+#$ PINS 14 A0:2 WR:11 RD:10 IORQ:9 A7:7 A6:6 A5:5 IOR:20'o'  IOR_INV:19'o'  IOW_INV:21'o'  LW:18'o'  LR:22'o'  IOCE1:17'o'  IOCE2:15'o' 
+#$ NODES 9 N_16'o'  N_17'o'  N_1'o'  N_5'o'  N_9'o'  N_10'o'  N_11'o'  N_13'o'  N_14'o' 
+
+.model z80e1
+.inputs N_16.BLIF N_17.BLIF N_1.BLIF N_5.BLIF N_13.BLIF N_9.BLIF N_10.BLIF N_14.BLIF \
+N_11.BLIF A0.BLIF WR.BLIF RD.BLIF A7.BLIF IORQ.BLIF A5.BLIF A6.BLIF
+.outputs IOR LW IOR_INV IOW_INV LR IOCE2 IOCE1 N_17 N_5 N_11 N_1 N_16 N_10 N_9 \
+N_14 N_13
+.names N_16.BLIF N_17.BLIF IOR
+00 1
+1- 0
+-1 0
+.names N_1.BLIF N_5.BLIF LW
+00 1
+1- 0
+-1 0
+.names N_16.BLIF N_17.BLIF IOR_INV
+1- 1
+-1 1
+00 0
+.names N_1.BLIF N_17.BLIF IOW_INV
+1- 1
+-1 1
+00 0
+.names N_16.BLIF N_5.BLIF LR
+1- 1
+-1 1
+00 0
+.names N_13.BLIF N_14.BLIF N_10.BLIF N_9.BLIF IOCE2
+1000 1
+--1- 0
+-1-- 0
+0--- 0
+---1 0
+.names N_14.BLIF N_13.BLIF N_10.BLIF N_9.BLIF IOCE1
+--1- 1
+-1-- 1
+0--- 1
+---1 1
+1000 0
+.names N_14.BLIF N_13.BLIF N_10.BLIF N_11.BLIF N_17
+--1- 1
+-0-- 1
+0--- 1
+---1 1
+1100 0
+.names N_13.BLIF N_11.BLIF N_14.BLIF N_10.BLIF N_5
+--0- 1
+-0-- 1
+0--- 1
+---1 1
+1110 0
+.names A0.BLIF N_11
+1 1
+0 0
+.names WR.BLIF N_1
+1 1
+0 0
+.names RD.BLIF N_16
+1 1
+0 0
+.names A7.BLIF N_10
+1 1
+0 0
+.names IORQ.BLIF N_9
+1 1
+0 0
+.names A5.BLIF N_14
+1 1
+0 0
+.names A6.BLIF N_13
+1 1
+0 0
+.end

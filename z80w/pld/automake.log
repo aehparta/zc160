@@ -1,0 +1,96 @@
+ispLEVER Auto-Make Log File
+---------------------------
+
+Updating: JEDEC File
+
+Starting: 'E:\Programs\ispTools\ispcpld\bin\sch2blf.exe -sup "z80e1.sch" -err automake.err -gui'
+
+Done: completed successfully.
+
+Starting: 'E:\Programs\ispTools\ispcpld\bin\iblflink.exe "z80e1.bls" -o "z80e1.bl0" -ipo -family -err automake.err -gui'
+
+BLIFLINK  Top-Down Design Linker
+ispLEVER 2.0 Copyright(C), 1992-2001, Lattice Semiconductor Corporation. All rights reserved
+Portions Copyright(c), 1992-1999, Vantis Corporation
+Portions Copyright(C), 1993-1998, Data I/O Corporation
+Portions Copyright(C), 1997-1998, MINC Washington Corporation
+Portions Copyright(C), Alan Phillips, Lancaster University Computer Centre 1992-1998
+
+Done: completed successfully.
+
+Starting: 'E:\Programs\ispTools\ispcpld\bin\iblifopt.exe -i "z80e1.bl0" -o "z80e1.bl1" -keepwires -red bypin choose -sweep -collapse none -pterms 8 -family -err automake.err -gui'
+
+BLIFOPT  Open-ABEL Optimizer 
+ispLEVER 2.0 Copyright(C), 1992-2001, Lattice Semiconductor Corporation. All rights reserved
+Portions Copyright(c), 1992-1999, Vantis Corporation
+Portions Copyright(C), 1993-1998, Data I/O Corporation
+Portions Copyright(C), 1997-1998, MINC Washington Corporation
+Portions Copyright(C), Alan Phillips, Lancaster University Computer Centre 1992-1998
+U.C. Berkeley, SIS Ver. 1.0, supported by Lattice Semiconductor Corp.
+
+Done: completed successfully.
+
+Starting: 'E:\Programs\ispTools\ispcpld\bin\iblflink.exe "z80e1.bl1" -o "z80w_exp.bl2" -omod z80e1 -family -err automake.err -gui'
+
+BLIFLINK  Top-Down Design Linker
+ispLEVER 2.0 Copyright(C), 1992-2001, Lattice Semiconductor Corporation. All rights reserved
+Portions Copyright(c), 1992-1999, Vantis Corporation
+Portions Copyright(C), 1993-1998, Data I/O Corporation
+Portions Copyright(C), 1997-1998, MINC Washington Corporation
+Portions Copyright(C), Alan Phillips, Lancaster University Computer Centre 1992-1998
+
+Done: completed successfully.
+
+Starting: 'E:\Programs\ispTools\ispcpld\bin\iblifopt.exe z80w_exp.bl2 -red bypin choose -sweep -collapse all -pterms 8 -err automake.err -gui'
+
+BLIFOPT  Open-ABEL Optimizer 
+ispLEVER 2.0 Copyright(C), 1992-2001, Lattice Semiconductor Corporation. All rights reserved
+Portions Copyright(c), 1992-1999, Vantis Corporation
+Portions Copyright(C), 1993-1998, Data I/O Corporation
+Portions Copyright(C), 1997-1998, MINC Washington Corporation
+Portions Copyright(C), Alan Phillips, Lancaster University Computer Centre 1992-1998
+U.C. Berkeley, SIS Ver. 1.0, supported by Lattice Semiconductor Corp.
+
+Done: completed successfully.
+
+Starting: 'E:\Programs\ispTools\ispcpld\bin\idiofft.exe z80w_exp.bl3 -pla -o z80w_exp.tt2 -dev p20v8 -define N -err automake.err -gui'
+
+DIOFFT  Flip-Flop Transformation program
+ispLEVER 2.0 Copyright(C), 1992-2001, Lattice Semiconductor Corporation. All rights reserved
+Portions Copyright(c), 1992-1999, Vantis Corporation
+Portions Copyright(C), 1993-1998, Data I/O Corporation
+Portions Copyright(C), 1997-1998, MINC Washington Corporation
+Portions Copyright(C), Alan Phillips, Lancaster University Computer Centre 1992-1998
+
+
+DIOFFT complete. - Time 0 seconds
+
+
+Done: completed successfully.
+
+Starting: 'E:\Programs\ispTools\ispcpld\bin\fit.exe z80w_exp.tt2 -dev p20v8 -str -err automake.err -gui'
+
+FIT  Generic Device Fitter
+ispLEVER 2.0 Copyright(C), 1992-2001, Lattice Semiconductor Corporation. All rights reserved
+Portions Copyright(c), 1992-1999, Vantis Corporation
+Portions Copyright(C), 1993-1998, Data I/O Corporation
+Portions Copyright(C), 1997-1998, MINC Washington Corporation
+Portions Copyright(C), Alan Phillips, Lancaster University Computer Centre 1992-1998
+Input file: 'z80w_exp.tt2'
+Device 'p20v8'
+Note 4161: Using device architecture type P20V8AS.
+Design FITS
+
+Done: completed successfully.
+
+Starting: 'E:\Programs\ispTools\ispcpld\bin\fuseasm.exe z80w_exp.tt3 -dev p20v8 -o z80w_exp.jed -ivec NoInput.tmv -rep z80w_exp.rpt -doc brief -con ptblown -for brief -err automake.err -gui'
+
+FUSEASM  Fusemap Assembler
+ispLEVER 2.0 Copyright(C), 1992-2001, Lattice Semiconductor Corporation. All rights reserved
+Portions Copyright(c), 1992-1999, Vantis Corporation
+Portions Copyright(C), 1993-1998, Data I/O Corporation
+Portions Copyright(C), 1997-1998, MINC Washington Corporation
+Portions Copyright(C), Alan Phillips, Lancaster University Computer Centre 1992-1998
+Note 5144: Could not open vector file NoInput.tmv
+
+Done: completed successfully.

@@ -1,0 +1,6 @@
+$DEVICE         P20V8AS    fit    z80w_exp.tt3
+$PINS   14  IOCE1:17   IOCE2:15   LR:22   IOW_INV:21   IOR_INV:19   LW:18   IOR:20   
+A6:6   A5:5   IORQ:9   A7:7   RD:10   WR:11   A0:2   
+
+--------------------------------------------------------------
+

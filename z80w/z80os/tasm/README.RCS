@@ -1,0 +1,49 @@
+          ANNOUNCING GNU RCS/DIFF FOR MSDOS
+
+RCS is one of the most widely used revision control systems for the 
+UNIX environment and we are pleased to offer an MSDOS port of this
+fine tool set for just $30.
+
+The port to MSDOS was done by STI and is based on the RCS version 5.6.0.1
+and DIFFUTILS version 2.5 from the Free Software Foundation.  Online
+documentation is included (no printed manual).  All the source code is
+included.  The port was accomplished with the Borland C++ 3.1 compiler.
+The tool set includes:
+
+RCS:
+    ci          Check in a file
+    co          Check out a file
+    ident       Scan file for RCS keywords
+    rcs         RCS administrative command processor
+    rcsdiff     Perform difference comparison of two file versions
+    rlog        List the revision log for a file
+    rcsclean    Remove local files that are up-to-date in the RCS library
+    rcsmerge    Three way file merge for RCS files
+    merge       Three way file merge
+
+DIFF:
+    diff        Compute differences of two files (or directories)
+    sdiff       Side by side differences
+    diff3       Three way file differences
+    cmp         Binary file differences
+
+Additional notes:
+
+1.  RCS port supports binary file revision management.
+
+2.  DIFF only uses main memory (cannot use extended or expanded memory), 
+    thus the maximum file size (assuming 640K main memory) is about 
+    200 Kbytes.
+
+3.  RCS can be configured to not use any file name suffixes, thus no 
+    limitations are imposed on filename length.
+
+4.  All the RCS/DIFF documentation is provided in both plain text and 
+    source form (NROFF source for RCS and INFO for DIFF).  No hardcopy
+    documentation is provided.
+
+5.  This port has not been tested in a network file system environment.
+
+Place your order using ORDER.FRM.
+
+

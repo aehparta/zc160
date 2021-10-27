@@ -1,0 +1,511 @@
+0001   0000             
+0002   0000             #define equ .equ
+0003   0000             #define CPU_AT_4MHZ
+0004   0000             
+0005   0000             ; Stack Pointer start value,
+0006   0000             ; it reserves 256bytes ($ff00-$ffff)
+0007   0000             Stack			equ $ff00
+0008   0000             
+0009   0000             ; 8255 PIO -chip registers
+0010   0000             ;  LCD-display
+0011   0000             PortA           equ $0
+0012   0000             PortB           equ $1
+0013   0000             PortC           equ $2
+0014   0000             PIOCtrl         equ $3
+0015   0000             LCDd            equ PortA
+0016   0000             LCDi            equ PortC
+0017   0000             
+0018   0000             ; Timer
+0019   0000             Counter0        equ $20
+0020   0000             Counter1        equ $21
+0021   0000             Counter2        equ $22
+0022   0000             CounterC        equ $23
+0023   0000             
+0024   0000             ; Delay after actions when using LCD. (2ms)
+0025   0000             LCD_delay       equ $0002
+0026   0000             
+0027   0000             ; First line of LCD.
+0028   0000             #define Line1 $00
+0029   0000             
+0030   0000             ; Second line of LCD.
+0031   0000             #define Line2 $40
+0032   0000             
+0033   0000             ; End Of Line, used with strings.
+0034   0000             #define EOL $17
+0035   0000             
+0036   0000             ; End Of LOG
+0037   0000             #define EOLOG $18
+0038   0000             
+0039   0000             #define NOEOL $19
+0040   0000             
+0041   0000             
+0042   0000             ;**************************************************************
+0043   0000             ; Code origin
+0044   0000             .org $0000
+0045   0000             
+0046   0000             ;**************************************************************
+0047   0000             ; Start
+0048   0000 F3          	di
+0049   0001 C3 D6 01    	jp RESET
+0050   0004             
+0051   0004             
+0052   0004             ;**************************************************************
+0053   0004             ;**************************************************************
+0054   0004             ;**************************************************************
+0055   0004             ; KERNEL ROUTINES
+0056   0100             .org $100
+0057   0100             ;**************************************************************
+0058   0100             
+0059   0100             ; *** byte2lcd
+0060   0100             ; This routine outputs the hex value of reg a into
+0061   0100             ; LCD-display
+0062   0100             byte2lcd:
+0063   0100 E5          	push hl
+0064   0101 C5          	push bc
+0065   0102             ; Upper 4bits of reg a
+0066   0102 21 98 02    	ld hl, hextolcd
+0067   0105 F5          	push af
+0068   0106 06 00       	ld b, 0
+0069   0108 CB 3F       	srl a
+0070   010A CB 3F       	srl a
+0071   010C CB 3F       	srl a
+0072   010E CB 3F       	srl a
+0073   0110 4F          	ld c, a
+0074   0111 09          	add hl, bc
+0075   0112 46          	ld b, (hl)
+0076   0113 CD 41 01    	call char2lcd
+0077   0116 F1          	pop af
+0078   0117             ; Lower 4bits of reg a
+0079   0117 21 98 02    	ld hl, hextolcd
+0080   011A 06 00       	ld b, 0
+0081   011C E6 0F       	and $0f
+0082   011E 4F          	ld c, a
+0083   011F 09          	add hl, bc
+0084   0120 46          	ld b, (hl)
+0085   0121 CD 41 01    	call char2lcd
+0086   0124             ;
+0087   0124 C1          	pop bc
+0088   0125 E1          	pop hl
+0089   0126 C9          	ret
+0090   0127             ; end of byte2lcd
+0091   0127             
+0092   0127             ; *** set_lcd
+0093   0127             ; Sets value to LCDs instruction register
+0094   0127             set_lcd:
+0095   0127 F5          	push af
+0096   0128 D5          	push de
+0097   0129 3E 01       	ld a, %00000001
+0098   012B D3 02       	out (LCDi), a
+0099   012D 78          	ld a, b
+0100   012E D3 00       	out (LCDd), a
+0101   0130 3E 00       	ld a, %00000000
+0102   0132 D3 02       	out (LCDi), a
+0103   0134 11 02 00    	ld de, LCD_delay
+0104   0137 CD B9 01    	call Delayms
+0105   013A 3E 01       	ld a, %00000001
+0106   013C D3 02       	out (LCDi), a
+0107   013E D1          	pop de
+0108   013F F1          	pop af
+0109   0140 C9          	ret
+0110   0141             ; end of set_lcd
+0111   0141             
+0112   0141             
+0113   0141             ; *** char2lcd
+0114   0141             ; Outs character to LCD-display
+0115   0141             char2lcd:
+0116   0141 F5          	push af
+0117   0142 C5          	push bc
+0118   0143 D5          	push de
+0119   0144             
+0120   0144 3E 05       	ld a, %00000101
+0121   0146 D3 02       	out (LCDi), a
+0122   0148 78          	ld a, b
+0123   0149 D3 00       	out (LCDd), a
+0124   014B             
+0125   014B 3E 04       	ld a, %00000100
+0126   014D D3 02       	out (LCDi), a
+0127   014F 11 02 00    	ld de, LCD_delay
+0128   0152 CD B9 01    	call Delayms
+0129   0155 3E 01       	ld a, %00000001
+0130   0157 D3 02       	out (LCDi), a
+0131   0159             
+0132   0159 D1          	pop de
+0133   015A C1          	pop bc
+0134   015B F1          	pop af
+0135   015C C9          	ret
+0136   015D             ; end of char2lcd
+0137   015D             
+0138   015D             
+0139   015D             ; *** reset_lcd
+0140   015D             ; Resets the LCD-diplay
+0141   015D             ; Clears the LCD, returns cursor to home, sets cursor move
+0142   015D             ; direction to incremental, sets display shifting off,
+0143   015D             ; sets display on, cursor on, cursor blinking off, sets
+0144   015D             ; cursor-move mode on, shift direction left, interface
+0145   015D             ; data lenght to 8bits, number of display lines to 2lines
+0146   015D             ; and character font to 5x7.
+0147   015D             ; none of the regs or flags are changed
+0148   015D             reset_lcd:
+0149   015D F5          	push af
+0150   015E 00          	nop
+0151   015F 00          	nop
+0152   0160 F1          	pop af
+0153   0161 C9          	ret
+0154   0162             	
+0155   0162 F5          	push af
+0156   0163 C5          	push bc
+0157   0164             
+0158   0164             ;	ld b,%00000001
+0159   0164             ;	call set_lcd
+0160   0164             ;	ld b,%00000110
+0161   0164             ;	call set_lcd
+0162   0164             ;	ld b,%00001100
+0163   0164             ;	call set_lcd
+0164   0164             ;	ld b,%00010000
+0165   0164             ;	call set_lcd
+0166   0164             ;	ld b,%00111000
+0167   0164             ;	call set_lcd
+0168   0164             ;	ld b,%10000000
+0169   0164             ;	call set_lcd
+0170   0164             
+0171   0164 C1          	pop bc
+0172   0165 F1          	pop af
+0173   0166 C9          	ret
+0174   0167             ; end of reset_lcd
+0175   0167             
+0176   0167             ; *** clear_lcd
+0177   0167             ; Clears the LCD
+0178   0167             clear_lcd:
+0179   0167 C5           push bc
+0180   0168 06 01        ld b,%00000001
+0181   016A CD 27 01     call set_lcd
+0182   016D C1           pop bc
+0183   016E C9           ret
+0184   016F             ; end of clear_lcd
+0185   016F             
+0186   016F             ; *** str2lcd
+0187   016F             ; Outputs a string into LCD-display
+0188   016F             ; The string start address should be stored into hl and
+0189   016F             ; end of the string should be marked with EOL
+0190   016F             ; The string is just added to displays previous
+0191   016F             ; contents
+0192   016F             ; hl and flags are changed
+0193   016F             str2lcd:
+0194   016F F5           push af
+0195   0170 C5           push bc
+0196   0171 3E 17        ld a,EOL
+0197   0173             s2l_loop:
+0198   0173 46           ld b,(hl)
+0199   0174 B8           cp b
+0200   0175 28 06        jr z,s2l_end
+0201   0177 CD 41 01     call char2lcd
+0202   017A 23           inc hl
+0203   017B 18 F6        jr s2l_loop
+0204   017D             s2l_end:
+0205   017D C1           pop bc
+0206   017E F1           pop af
+0207   017F C9           ret
+0208   0180             ; end of str2lcd
+0209   0180             
+0210   0180             ; *** strn2lcd
+0211   0180             ; Outputs a string into LCD-display
+0212   0180             ; The string start address should be stored into hl and
+0213   0180             ; lenght of the string should be in reg c
+0214   0180             ; This routine also exits if it finds EOL- or EOLOG-char and
+0215   0180             ; returns that char in reg c, otherwise it returns NOEOL
+0216   0180             ; The string is just added to displays previous
+0217   0180             ; contents
+0218   0180             ; none is changed
+0219   0180             strn2lcd:
+0220   0180 F5          	push af
+0221   0181 C5          	push bc
+0222   0182 0C          	inc c
+0223   0183             sn2l_loop:
+0224   0183 3E 19       	ld a, NOEOL
+0225   0185 0D          	dec c
+0226   0186 28 10       	jr z, sn2l_end
+0227   0188 7E          	ld a, (hl)
+0228   0189 FE 17       	cp EOL
+0229   018B 28 0B       	jr z, sn2l_end
+0230   018D FE 18       	cp EOLOG
+0231   018F 28 07       	jr z, sn2l_end
+0232   0191 47          	ld b, a
+0233   0192 CD 41 01    	call char2lcd
+0234   0195 23          	inc hl
+0235   0196 18 EB       	jr sn2l_loop
+0236   0198             sn2l_end:
+0237   0198 C1          	pop bc
+0238   0199 4F          	ld c, a
+0239   019A F1          	pop af
+0240   019B C9          	ret
+0241   019C             ; end of strn2lcd
+0242   019C             
+0243   019C             ; *** strd2lcd
+0244   019C             ; Outputs a string into LCD-display with delay
+0245   019C             ; The string start address should be stored into hl,
+0246   019C             ; end of the string should be marked with EOL,
+0247   019C             ; delay between characters in de as milliseconds
+0248   019C             ; The string is just added to displays previous
+0249   019C             ; contents
+0250   019C             ; hl and flags are changed
+0251   019C             strd2lcd:
+0252   019C F5           push af
+0253   019D C5           push bc
+0254   019E 3E 17        ld a,EOL
+0255   01A0             sd2l_loop:
+0256   01A0 46           ld b,(hl)
+0257   01A1 B8           cp b
+0258   01A2 28 09        jr z,sd2l_end
+0259   01A4 CD 41 01     call char2lcd
+0260   01A7 23           inc hl
+0261   01A8 CD B9 01     call Delayms
+0262   01AB 18 F3        jr sd2l_loop
+0263   01AD             sd2l_end:
+0264   01AD C1           pop bc
+0265   01AE F1           pop af
+0266   01AF C9           ret
+0267   01B0             ; end of strd2lcd
+0268   01B0              
+0269   01B0             ; *** setDDRAMa
+0270   01B0             ; Sets LCDs DDRAM address
+0271   01B0             setDDRAMa:
+0272   01B0 C5           push bc
+0273   01B1 F6 80        or $80
+0274   01B3 47           ld b,a
+0275   01B4 CD 27 01     call set_lcd
+0276   01B7 C1           pop bc
+0277   01B8 C9           ret
+0278   01B9             ; end of setDDRAMa
+0279   01B9             
+0280   01B9~            #ifdef CPU_AT_2MHZ
+0281   01B9~            ; *** Delayms
+0282   01B9~            ; This loop waits amount of milliseconds which is stored in de
+0283   01B9~            ; CPU should run @2MHz
+0284   01B9~            ; There is always spend some extra clocks when this delay is initialized
+0285   01B9~            ; and when it ends.
+0286   01B9~            Delayms:        ; Clocks spend in instructions and time
+0287   01B9~             push af        ; 11 / 
+0288   01B9~             push bc        ; 11 / 
+0289   01B9~             push de        ; 11 / 
+0290   01B9~             push ix        ; 15 / 
+0291   01B9~             xor a          ; 4 / 
+0292   01B9~             inc d          ; 4 / 
+0293   01B9~             ld bc,40|$100 ; 10 /
+0294   01B9~            Delayms0:       ; = 66 /
+0295   01B9~            ; Here should be used enough clocks that one loop
+0296   01B9~            ; would spend 1ms! NOP is not an option :)
+0297   01B9~             dec ix         ; 10 /
+0298   01B9~             nop            ; 4 /
+0299   01B9~             nop            ; 4 /
+0300   01B9~             nop            ; 4 /
+0301   01B9~             nop            ; 4 /
+0302   01B9~             dec bc         ; 6 /
+0303   01B9~             cp b           ; 4 / 
+0304   01B9~             jr nz,Delayms0 ; 12 /
+0305   01B9~                            ; = 48 / 24us
+0306   01B9~            ; There goes 984us and rest of the 1000us is spend here
+0307   01B9~             ld bc,40|$100 ; 10 / 
+0308   01B9~             dec de         ; 6 / 
+0309   01B9~             cp d           ; 4 / 
+0310   01B9~             jr nz,Delayms0 ; 12 / 
+0311   01B9~                            ; = 32 / 16us
+0312   01B9~             pop ix         ; 14 / 
+0313   01B9~             pop de         ; 10 / 
+0314   01B9~             pop bc         ; 10 / 
+0315   01B9~             pop af         ; 10 / 
+0316   01B9~             ret            ; 10 / 
+0317   01B9~                            ; = 54 / 
+0318   01B9~            ; end of Delayms
+0319   01B9             #endif
+0320   01B9             
+0321   01B9             #ifdef CPU_AT_4MHZ
+0322   01B9             ; *** Delayms
+0323   01B9             ; This loop waits amount of milliseconds which is stored in de
+0324   01B9             ; CPU should run @4MHz
+0325   01B9             ; There is always spend some extra clocks when this delay is initialized
+0326   01B9             ; and when it ends. These actions takes 30us+4.25us per call.
+0327   01B9             Delayms:        ; Clocks spend in instructions and time
+0328   01B9 F5           push af        ; 11 / 2.75us
+0329   01BA C5           push bc        ; 11 / 2.75us
+0330   01BB D5           push de        ; 11 / 2.75us
+0331   01BC DD E5        push ix        ; 15 / 3.75us
+0332   01BE AF           xor a          ; 4 / 1us
+0333   01BF 14           inc d          ; 4 / 1us , becose 1ms should be 1ms and so on...
+0334   01C0 01 7B 01     ld bc,123|$100 ; 10 / 2.5us
+0335   01C3             Delayms0:       ; = 66 / 16.5us
+0336   01C3             ; Here should be used enough clocks that one loop
+0337   01C3             ; would spend 1ms! NOP is not an option :)
+0338   01C3 DD 2B        dec ix         ; 10 / 2.5us
+0339   01C5 0B           dec bc         ; 6 /1.5us
+0340   01C6 B8           cp b           ; 4 / 1us
+0341   01C7 20 FA        jr nz,Delayms0 ; 12 / 3us
+0342   01C9                             ; = 32 / 8us
+0343   01C9             ; There goes 992us and rest 8us of 1000us is spend here
+0344   01C9 01 7B 01     ld bc,123|$100 ; 10 / 2.5us
+0345   01CC 1B           dec de         ; 6 / 1.5us
+0346   01CD BA           cp d           ; 4 / 1us
+0347   01CE 20 F3        jr nz,Delayms0 ; 12 / 3us
+0348   01D0                             ; = 32 / 8us
+0349   01D0 DD E1        pop ix         ; 14 / 3.5us
+0350   01D2 D1           pop de         ; 10 / 2.5us
+0351   01D3 C1           pop bc         ; 10 / 2.5us
+0352   01D4 F1           pop af         ; 10 / 2.5us
+0353   01D5 C9           ret            ; 10 / 2.5us
+0354   01D6                             ; = 54 / 13.5us
+0355   01D6             ; end of Delayms
+0356   01D6             #endif
+0357   01D6~            #ifdef CPU_AT_8MHZ
+0358   01D6~            ; *** Delayms
+0359   01D6~            ; This loop waits amount of milliseconds which is stored in de
+0360   01D6~            ; CPU should run @4MHz
+0361   01D6~            ; There is always spend some extra clocks when this delay is initialized
+0362   01D6~            ; and when it ends.
+0363   01D6~            Delayms:        ; Clocks spend in instructions and time
+0364   01D6~             push af        ; 11 / 1.375us
+0365   01D6~             push bc        ; 11 / 1.375us
+0366   01D6~             push de        ; 11 / 1.375us
+0367   01D6~             push ix        ; 15 / 1.875us
+0368   01D6~             xor a          ; 4 / 0.5us
+0369   01D6~             inc d          ; 4 / 0.5us , becose 1ms should be 1ms and so on...
+0370   01D6~             ld bc,199|$100 ; 10 / 1.25us
+0371   01D6~            Delayms0:       ; = 66 / 8.25us
+0372   01D6~            ; Here should be used enough clocks that one loop
+0373   01D6~            ; would spend 1ms! NOP is not an option :)
+0374   01D6~             nop            ; 4 / 0.5us
+0375   01D6~             nop            ; 4 / 0.5us
+0376   01D6~             dec ix         ; 10 / 1.25us
+0377   01D6~             dec bc         ; 6 / 0.75us
+0378   01D6~             cp b           ; 4 / 0.5us
+0379   01D6~             jr nz,Delayms0 ; 12 / 1.5us
+0380   01D6~                            ; = 40 / 5us
+0381   01D6~            ; There goes 995us and rest 5us of 1000us is spend here
+0382   01D6~             nop            ; 4 / 0.5us
+0383   01D6~             nop            ; 4 / 0.5us
+0384   01D6~             ld bc,199|$100 ; 10 / 1.25us
+0385   01D6~             dec de         ; 6 / 0.75us
+0386   01D6~             cp d           ; 4 / 0.5us
+0387   01D6~             jr nz,Delayms0 ; 12 / 1.5us
+0388   01D6~                            ; = 40 / 5us
+0389   01D6~             pop ix         ; 14 / 1.75us
+0390   01D6~             pop de         ; 10 / 1.25us
+0391   01D6~             pop bc         ; 10 / 1.25us
+0392   01D6~             pop af         ; 10 / 1.25us
+0393   01D6~             ret            ; 10 / 1.25us
+0394   01D6~                            ; = 54 / 6.625us
+0395   01D6~            ; end of Delayms
+0396   01D6             #endif
+0397   01D6             
+0398   01D6             ;**************************************************************
+0399   01D6             ;**************************************************************
+0400   01D6             ;**************************************************************
+0401   01D6             ; RESET
+0402   01D6             ;**************************************************************
+0403   01D6             RESET:
+0404   01D6 3E 90       	ld a, $90
+0405   01D8 D3 23       	out (CounterC), a
+0406   01DA 06 10       	ld b, $10
+0407   01DC             	
+0408   01DC             ; Init 8255 PIO
+0409   01DC             ; Port A and port C lower 4bits to LCD-diplay.
+0410   01DC             ; Port B and port C upper 4bits as outputs for now.
+0411   01DC             ; Mode for 8255 is 0 for now.
+0412   01DC 3E 80       	ld a, %10000000
+0413   01DE D3 03       	out (PIOCtrl), a
+0414   01E0 3E AA       	ld a, $aa
+0415   01E2 D3 00       	out (LCDd), a
+0416   01E4 3E 01       	ld a, %00000001
+0417   01E6 D3 02       	out (LCDi), a
+0418   01E8             
+0419   01E8             ; Init 8253 Counter Timer
+0420   01E8             ; Timer 0 divides incoming 4MHz frequency by 1000.
+0421   01E8             ; Timer 1 creates NMI interrupt every 1sec.
+0422   01E8             ; Timer 2 acts as sound generator.
+0423   01E8 3E 36       	ld a, %00110110
+0424   01EA D3 23       	out (CounterC), a
+0425   01EC 3E E8       	ld a, $e8
+0426   01EE D3 20       	out (Counter0), a
+0427   01F0 3E 03       	ld a, $03
+0428   01F2 D3 20       	out (Counter0), a
+0429   01F4             ; Counter 1
+0430   01F4             ;	ld a, %01110111
+0431   01F4             ; out (CounterC), a
+0432   01F4             ; ld a, $04
+0433   01F4             ; out (Counter1), a
+0434   01F4             ; ld a, $00
+0435   01F4             ; out (Counter1), a
+0436   01F4             ; Counter 2
+0437   01F4 3E B0       	ld a, %10110000
+0438   01F6 D3 23       	out (CounterC), a
+0439   01F8 3E 00       	ld a, $00
+0440   01FA D3 22       	out (Counter2), a
+0441   01FC 3E 00       	ld a, $00
+0442   01FE D3 22       	out (Counter2), a
+0443   0200             	
+0444   0200             ; Set up the stack pointer
+0445   0200 31 00 FF    	ld sp, Stack
+0446   0203             
+0447   0203             ; Init LCD.
+0448   0203 CD 5D 01    	call reset_lcd
+0449   0206             ;	call xxxx
+0450   0206             	
+0451   0206             ; Beeb for everything OK.
+0452   0206 3E B6       	ld a, %10110110
+0453   0208 D3 23       	out (CounterC), a
+0454   020A 78          	ld a, b
+0455   020B D3 22       	out (Counter2), a
+0456   020D 3E 00       	ld a, $00
+0457   020F D3 22       	out (Counter2), a
+0458   0211             	
+0459   0211 11 F4 01    	ld de, 500
+0460   0214 CD B9 01    	call Delayms
+0461   0217             
+0462   0217 3E B0       	ld a, %10110000
+0463   0219 D3 23       	out (CounterC), a
+0464   021B 3E 00       	ld a, $00
+0465   021D D3 22       	out (Counter2), a
+0466   021F 3E 00       	ld a, $00
+0467   0221 D3 22       	out (Counter2), a
+0468   0223             
+0469   0223 76          	halt
+0470   0224             
+0471   0224             ; Start the OS.
+0472   0224 21 36 02    	ld hl, s_OSstring
+0473   0227 CD 6F 01    	call str2lcd
+0474   022A 21 4A 02    	ld hl, s_version
+0475   022D CD 6F 01    	call str2lcd
+0476   0230             		
+0477   0230             halt:
+0478   0230             ;	halt
+0479   0230             
+0480   0230             xxx:
+0481   0230 F5          	push af
+0482   0231 F1          	pop af
+0483   0232 C9          	ret
+0484   0233             	
+0485   0233             xxxx:
+0486   0233 F5          	push af
+0487   0234 F1          	pop af
+0488   0235 C9          	ret
+0489   0236             	
+0490   0236             ;**************************************************************
+0491   0236             ; Misc data, example character strings
+0492   0236 5A3830205765s_OSstring      .db "Z80 WestOS, by Duge",EOL
+0492   023C 73744F532C206279204475676517
+0493   024A 76657273696Fs_version       .db "version b0.01",EOL
+0493   0250 6E2062302E303117
+0494   0258 435055206861s_halted        .db "CPU halted.",EOL
+0494   025E 6C7465642E17
+0495   0264 202020202020s_clearline     .db "                    ",EOL
+0495   026A 202020202020202020202020202017
+0496   0279 53797374656Ds_uptime1       .db "System uptime:",EOL
+0496   027F 20757074696D653A17
+0497   0288 303030303064s_uptime2       .db "00000d00h00m00s",EOL
+0497   028E 30306830306D30307317
+0498   0298 303132333435hextolcd        .db '0','1','2','3','4','5','6','7','8','9'
+0498   029E 36373839
+0499   02A2 414243444546                .db 'A','B','C','D','E','F'
+0500   02A8             ;**************************************************************
+0501   02A8             
+0502   02A8             .end
+0503   02A8             
+tasm: Number of errors = 0

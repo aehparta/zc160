@@ -1,0 +1,5 @@
+0001   0000             .org $0000
+0002   0000 AF           xor a
+0003   0001 EE 00        xor
+0004   0003 B7           or a
+0005   0004             .endtasm: Number of errors = 0

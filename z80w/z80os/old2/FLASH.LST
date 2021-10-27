@@ -1,0 +1,3056 @@
+0001   0000             ;**************************************************************
+0002   0000             ;
+0003   0000             ; FLASH.asm
+0004   0000             ;       version 009
+0005   0000             ;
+0006   0000             ; Here is routines and such for network mostly
+0007   0000             ; Some other miscellaneous code also... 
+0008   0000             
+0009   0000             ; Enable some of these to use LEDs and 7segments for debugging
+0010   0000             ;#define DEBUG_MM        ; DEBUG when running memory manager code
+0011   0000             ;#define DEBUG_TCPIP     ; DEBUG when running TCP/IP code
+0012   0000             ;#define DEBUG_HANDLEPACKET      ;DEBUG when running TCP/IP code
+0013   0000             
+0014   0000             #ifndef OS_FILE
+0015   0000             #define ALONE
+0016   0000             #endif
+0017   0000             
+0018   0000             #ifdef ALONE
+0019   0000             #include "OSdef.h"
+0001+  0000             ;**************************************************************
+0002+  0000             ;
+0003+  0000             ; Defines & equs & routine addresses
+0004+  0000             ;
+0005+  0000             ;**************************************************************
+0006+  0000             
+0007+  0000             #define equ .equ
+0008+  0000             
+0009+  0000             #define CPU_AT_4MHZ
+0010+  0000             
+0011+  0000             ; Macros for using the LEDs
+0012+  0000             #define led_reset(reset) ld a,(LEDs_state)\ or ~reset\ out (LEDs),a\ ld (LEDs_state),a
+0013+  0000             #define led_set(set) ld a,(LEDs_state)\ and ~set\ out (LEDs),a\ ld (LEDs_state),a
+0014+  0000             #define led_toggle(toggle) ld a,(LEDs_state)\ xor toggle\ out (LEDs),a\ ld (LEDs_state),a
+0015+  0000             #define leds_load(load) ld a,load\ out (LEDs),a\ ld (LEDs_state),a
+0016+  0000             
+0017+  0000             ; Operating system reserves memory between $ea00-$ffff
+0018+  0000             
+0019+  0000             ; Stack Pointer start value,
+0020+  0000             ; it reserves 256bytes ($ff00-$ffff)
+0021+  0000             StackPointerOrigin: equ $fff0
+0022+  0000             ; Variables
+0023+  0000             SRM             equ $ea00       ; Here are OS's variables
+0024+  0000             UMO             equ $e000       ; Here starts the 'User's Memory' (1KB)
+0025+  0000             ; Temporary values
+0026+  0000             T0              equ SRM+0       ; These values are bytes
+0027+  0000             T1              equ SRM+1
+0028+  0000             T2              equ SRM+2
+0029+  0000             T3              equ SRM+3
+0030+  0000             GT0             equ SRM+4
+0031+  0000             GT1             equ SRM+5
+0032+  0000             ; Hex editor
+0033+  0000             w_he_address    equ SRM+6       ;word
+0034+  0000             b_he_addset     equ SRM+8       ;byte
+0035+  0000             b_he_undovalue  equ SRM+9       ;byte
+0036+  0000             w_he_undoaddr   equ SRM+10      ;word
+0037+  0000             b_he_undoset    equ SRM+12      ;byte
+0038+  0000             b_he_nibble     equ SRM+13      ;byte
+0039+  0000             b_he_output     equ SRM+14      ;byte
+0040+  0000             b_he_input      equ SRM+15      ;byte
+0041+  0000             w_he_jumpaddr   equ SRM+16      ;word
+0042+  0000             b_he_calljump   equ SRM+18      ;byte
+0043+  0000             w_he_calladdr   equ SRM+19      ;word
+0044+  0000             ; key-routines
+0045+  0000             key_pressed     equ SRM+30      ;byte
+0046+  0000             key_timer       equ SRM+31      ;byte
+0047+  0000             key_delay       equ SRM+32      ;byte
+0048+  0000             key_press       equ SRM+33      ;byte
+0049+  0000             key_repeatdelay equ SRM+34      ;word
+0050+  0000             key_repeatrate  equ SRM+36      ;word
+0051+  0000             key_rd          equ SRM+38      ;word
+0052+  0000             key_rr          equ SRM+40      ;word
+0053+  0000             key_rset        equ SRM+42      ;byte
+0054+  0000             ; Default repeat delay and rate for keyboard
+0055+  0000             RepeatDelay     equ SRM+50      ;word
+0056+  0000             RepeatRate      equ SRM+52      ;word
+0057+  0000             RepeatSet       equ SRM+54      ;byte
+0058+  0000             ; Log id's and addresses
+0059+  0000             logs_curid      equ SRM+60      ;byte
+0060+  0000             logs_status     equ SRM+61      ;byte
+0061+  0000             logs_cur        equ SRM+62      ;word
+0062+  0000             logs_ids        equ SRM+64      ;9words=18bytes
+0063+  0000             ;
+0064+  0000             SystemLogId     equ SRM+127     ;byte
+0065+  0000             ; Used by network
+0066+  0000             network         equ SRM+128     ;reserves 256bytes
+0067+  0000             ; Uptime counter               
+0068+  0000             uptime          equ SRM+384     ;6bytes
+0069+  0000             ; State of LEDs
+0070+  0000             LEDs_state      equ SRM+390
+0071+  0000             ; For logs
+0072+  0000             logs            equ SRM+640     ;reserves 4KB
+0073+  0000             
+0074+  0000             ;**************************************************************
+0075+  0000             ; LEDs, 7segments and keyboard io-addresses
+0076+  0000             SSeg1           equ $01
+0077+  0000             SSeg2           equ $02
+0078+  0000             SSeg3           equ $03
+0079+  0000             SSeg4           equ $04
+0080+  0000             KeyS            equ $05
+0081+  0000             KeyR            equ $06
+0082+  0000             LEDs            equ $07
+0083+  0000             ; 8255 PIO -chip registers
+0084+  0000             ;  LCD-display
+0085+  0000             PortA           equ $20
+0086+  0000             PortB           equ $21
+0087+  0000             PortC           equ $22
+0088+  0000             PIOCtrl         equ $23
+0089+  0000             LCDd            equ PortB
+0090+  0000             LCDi            equ PortC
+0091+  0000             ; Timer
+0092+  0000             Counter0        equ $a0
+0093+  0000             Counter1        equ $a1
+0094+  0000             Counter2        equ $a2
+0095+  0000             CounterC        equ $a3
+0096+  0000             ; Other IOs
+0097+  0000             ethcom          equ $c0
+0098+  0000             flashcom        equ $c1
+0099+  0000             ETHBASE         equ $e0
+0100+  0000             
+0101+  0000             
+0102+  0000             ; Keyboard
+0103+  0000             ; These values are returned by key-routines
+0104+  0000             key0    equ $00
+0105+  0000             key1    equ $01
+0106+  0000             key2    equ $02
+0107+  0000             key3    equ $03
+0108+  0000             
+0109+  0000             key4    equ $04
+0110+  0000             key5    equ $05
+0111+  0000             key6    equ $06
+0112+  0000             key7    equ $07
+0113+  0000             
+0114+  0000             key8    equ $08
+0115+  0000             key9    equ $09
+0116+  0000             keya    equ $0a
+0117+  0000             keyb    equ $0b
+0118+  0000             
+0119+  0000             keyc    equ $0c
+0120+  0000             keyd    equ $0d
+0121+  0000             keye    equ $0e
+0122+  0000             keyf    equ $0f
+0123+  0000             
+0124+  0000             CK0     equ $10
+0125+  0000             CK1     equ $11
+0126+  0000             CK2     equ $12
+0127+  0000             CK3     equ $13
+0128+  0000             
+0129+  0000             CK4     equ $14
+0130+  0000             CK5     equ $15
+0131+  0000             Shift   equ $16
+0132+  0000             Enter   equ $17
+0133+  0000             
+0134+  0000             none    equ $ff
+0135+  0000             
+0136+  0000             ; defines
+0137+  0000             #define Line1 $00
+0138+  0000             #define Line2 $40
+0139+  0000             #define EOL $17                 ; End Of Line, used with strings
+0140+  0000             #define EOLOG $18               ; End Of LOG
+0141+  0000             #define NOEOL $19
+0142+  0000             #define LOGSP $ff
+0143+  0000             #define log_adding $01          ; This flag is set in log_status when there is adding in progress
+0144+  0000             #define MAX_LOGS 8
+0145+  0000             #define LOG_MEMORY_SIZE 4096
+0146+  0000             
+0147+  0000             ; Next delay-values are relative to speed of CPU
+0148+  0000~            #ifdef CPU_AT_2MHZ
+0149+  0000~            _RepeatDelay    equ $0aff       ; default value
+0150+  0000~            _RepeatRate     equ $00ff       ; default value
+0151+  0000~            FastKeyDelay    equ $40
+0152+  0000~            NormalKeyDelay  equ $a0
+0153+  0000             #endif
+0154+  0000             #ifdef CPU_AT_4MHZ
+0155+  0000             _RepeatDelay    equ $0fff       ; default value
+0156+  0000             _RepeatRate     equ $01ff       ; default value
+0157+  0000             FastKeyDelay    equ $80
+0158+  0000             NormalKeyDelay  equ $f0
+0159+  0000             #endif
+0160+  0000~            #ifdef CPU_AT_8MHZ
+0161+  0000~            _RepeatDelay    equ $1fff       ; default value
+0162+  0000~            _RepeatRate     equ $02ff       ; default value
+0163+  0000~            FastKeyDelay    equ $c0
+0164+  0000~            NormalKeyDelay  equ $f0
+0165+  0000             #endif
+0166+  0000             
+0167+  0000             LCD_delay       equ $0002       ; Delay after actions when using
+0168+  0000                                             ; LCD for 2ms
+0169+  0000             
+0170+  0000             ErrorMesg       equ 3000        ; Show error for 3secs
+0171+  0000             NormalMesg      equ 1000        ; Show normal messages for 1,5secs
+0172+  0000             FastMesg        equ 1000        ; Show fast messages for 1sec
+0173+  0000             LongMesg        equ 4000        ; Show long message for 4secs
+0174+  0000             LLongMesg       equ 7000        ; Show really long message for 7secs
+0175+  0000             
+0176+  0000             ; *****************
+0177+  0000             ; Routine addresses
+0178+  0000             #ifndef OS_FILE
+0179+  0000             DelayBC         equ $0040
+0180+  0000             DelayDE         equ $0049
+0181+  0000             DelayHL         equ $0052
+0182+  0000             HALT            equ $006b
+0183+  0000             n_as_7seg       equ $009e
+0184+  0000             n_to_7seg       equ $00b1
+0185+  0000             b_to_7seg       equ $00cb
+0186+  0000             byte2lcd        equ $00fe
+0187+  0000             set_lcd         equ $0125
+0188+  0000             char2lcd        equ $013f
+0189+  0000             reset_lcd       equ $015b
+0190+  0000             clear_lcd       equ $017e
+0191+  0000             str2lcd         equ $0186
+0192+  0000             strn2lcd        equ $0197
+0193+  0000             strd2lcd        equ $01b3
+0194+  0000             setDDRAMa       equ $01c7
+0195+  0000             key_scan        equ $01d0
+0196+  0000             key_testshift   equ $026a
+0197+  0000             key_getkey      equ $0277
+0198+  0000             key_getbyte     equ $030a
+0199+  0000             key_getaddress  equ $03e1
+0200+  0000             key_getword     equ $03f7
+0201+  0000             Delayms         equ $0554
+0202+  0000             CreateLog       equ $0571
+0203+  0000             AddLog          equ $05bd
+0204+  0000             ViewLog         equ $0640
+0205+  0000             #endif
+0206+  0000             
+0207+  0000             ; ************
+0208+  0000             ; "Next level"
+0209+  0000             ; (Network and such)
+0210+  0000             
+0211+  0000             ; These macros makes easier to use the NIC
+0212+  0000             ; by adding the base address of NIC to the
+0213+  0000             ; relative NIC register address
+0214+  0000             ;#define einb(address) ld a,(ethbase)\ add a,address\ ld c,a\ in a,(c)
+0215+  0000             ;#define eoutb(address) ex af,af'\ ld a,(ethbase)\ add a,address\ ld c,a\ ex af,af'\ out (c),a
+0216+  0000             
+0217+  0000             ; network variables
+0218+  0000             ETHM            equ SRM+128     ;256bytes (must be equ to network
+0219+  0000                                             ;in osXXX.asm)
+0220+  0000             ;
+0221+  0000             ethdetect       equ ETHM+1      ;byte
+0222+  0000             ethtmp          equ ETHM+2      ;byte
+0223+  0000             ethsaprom       equ ETHM+3      ;32 bytes
+0224+  0000             ethhwaddr       equ ETHM+35      ;6 bytes
+0225+  0000             ethpiomode      equ ETHM+41     ;byte
+0226+  0000             ethaddr         equ ETHM+42     ;byte
+0227+  0000             ethirqreg       equ ETHM+43     ;byte
+0228+  0000             ethwrdlen       equ ETHM+44     ;byte
+0229+  0000             ethT0           equ ETHM+45     ;byte
+0230+  0000             ethT1           equ ETHM+46     ;byte
+0231+  0000             ethT2           equ ETHM+47     ;byte
+0232+  0000             ethT3           equ ETHM+48     ;byte
+0233+  0000             etxStartPage    equ ETHM+49     ;byte
+0234+  0000             erxStartPage    equ ETHM+50     ;byte
+0235+  0000             ethStopPage     equ ETHM+51     ;byte
+0236+  0000             ethCurrentPage  equ ETHM+52     ;byte
+0237+  0000             NetLogId        equ ETHM+53     ;byte
+0238+  0000             ; Jump-table
+0239+  0000             ejProbe         equ ETHM+60     ;word
+0240+  0000             ejReset         equ ETHM+62     ;word
+0241+  0000             ejOpen          equ ETHM+64     ;word
+0242+  0000             ejEnable        equ ETHM+66     ;word
+0243+  0000             ejDisable       equ ETHM+68     ;word
+0244+  0000             ejInterrupt     equ ETHM+70     ;word
+0245+  0000             ejSend          equ ETHM+72     ;word
+0246+  0000             ; Information for sending and receiving packets
+0247+  0000             ethDataAddr     equ ETHM+80     ;word
+0248+  0000             ethDataLen      equ ETHM+82     ;word
+0249+  0000             ethDataPage     equ ETHM+84     ;word
+0250+  0000             ; Error counters
+0251+  0000             ethRxFrameErrs  equ ETHM+100    ;word frame errors
+0252+  0000             ethRxCrcErrs    equ ETHM+102    ;word CRC errors
+0253+  0000             ethRxMissedErrs equ ETHM+104    ;word missed-errors
+0254+  0000             ethTxCarrErrs   equ ETHM+106    ;word tx carrier errors
+0255+  0000             ethTxHBErrs     equ ETHM+108    ;word tx heartbeat errors
+0256+  0000             ethTxWindow     equ ETHM+110    ;word tx window errors
+0257+  0000             ethRxOverErrs   equ ETHM+112    ;word rx overrun errors
+0258+  0000             ethRxErrs       equ ETHM+114    ;word rx errors
+0259+  0000             ethRxFifoErrs   equ ETHM+116    ;word rx fifo errors
+0260+  0000             ethRxLenErrs    equ ETHM+118    ;word rx lenght errors
+0261+  0000             ethRxPackets    equ ETHM+120    ;dword rx packets counter
+0262+  0000             ethTxPackets    equ ETHM+124    ;dword tx packets counter
+0263+  0000             ethRxBytes      equ ETHM+128    ;dword rx bytes
+0264+  0000             ethTxBytes      equ ETHM+132    ;dword tx bytes
+0265+  0000             ethRxDropped    equ ETHM+136    ;word rx packets dropped
+0266+  0000             ; Structures (ex. headers) and such
+0267+  0000             ; receive packet header
+0268+  0000             #define pkthdr_size 4
+0269+  0000             pkthdr          equ ETHM+150    ;2 bytes+1 word=4 bytes
+0270+  0000             pkthdr_stat     equ ETHM+150    ;byte
+0271+  0000             pkthdr_next     equ ETHM+151    ;byte
+0272+  0000             pkthdr_count    equ ETHM+152    ;word
+0273+  0000             ; Ing:s :)
+0274+  0000             #define XXXing 17
+0275+  0000             ethRxing        equ ETHM+160    ;byte
+0276+  0000             ethTxing        equ ETHM+161    ;byte
+0277+  0000             
+0278+  0000             ; Temporary values
+0279+  0000             NT0             equ ETHM+252    ;byte
+0280+  0000             NT1             equ ETHM+253    ;byte
+0281+  0000             NT2             equ ETHM+254    ;byte
+0282+  0000             NT3             equ ETHM+255    ;byte
+0020   0000             #include "drivers.asm"
+0001+  0000             ;**************************************************************
+0002+  0000             ; Drivers
+0003+  2000             .org $2000
+0004+  2000             
+0005+  2000             ; Enable some of these to use LEDs and 7segments for debugging
+0006+  2000             ;#define DEBUG_DRIVERS   ; DEBUG when running drivers code
+0007+  2000             
+0008+  2000             ; Call-table for applications
+0009+  2000             ethInit:
+0010+  2000 C3 8D 20     jp ethNICInit
+0011+  2003             ethReset:
+0012+  2003 E5           push hl
+0013+  2004 2A BE EA     ld hl,(ejReset)
+0014+  2007 E9           jp (hl)
+0015+  2008             ethOpen:
+0016+  2008 E5           push hl
+0017+  2009 2A C0 EA     ld hl,(ejOpen)
+0018+  200C E9           jp (hl)
+0019+  200D             ethEnable:
+0020+  200D E5           push hl
+0021+  200E 2A C2 EA     ld hl,(ejEnable)
+0022+  2011 E9           jp (hl)
+0023+  2012             ethDisable:
+0024+  2012 E5           push hl
+0025+  2013 2A C4 EA     ld hl,(ejDisable)
+0026+  2016 E9           jp (hl)
+0027+  2017             ethInterrupt:
+0028+  2017 E5           push hl
+0029+  2018 2A C6 EA     ld hl,(ejInterrupt)
+0030+  201B E9           jp (hl)
+0031+  201C             ethSend:
+0032+  201C E5           push hl
+0033+  201D 2A C8 EA     ld hl,(ejSend)
+0034+  2020 E9           jp (hl)
+0035+  2021             ;
+0036+  2021             
+0037+  2021             ; *******************************
+0038+  2021             ; misc
+0039+  2021             ; *******************************
+0040+  2021             
+0041+  2021             ; Ethernet NICs ID's
+0042+  2021             NE1comp         equ $01
+0043+  2021             NE2comp         equ $02
+0044+  2021             NECcomp         equ $03
+0045+  2021             NEBcomp         equ $04
+0046+  2021             ; Coming... maybe.
+0047+  2021             SMCultra        equ $11
+0048+  2021             SMCEtherEZ      equ $12
+0049+  2021             c3c509b         equ $21
+0050+  2021             ;
+0051+  2021             noNIC           equ $69
+0052+  2021             
+0053+  2021             eSending        equ $26
+0054+  2021             eSended         equ $17
+0055+  2021             eTimedOut       equ $69
+0056+  2021             
+0057+  2021             MAX_INTERRUPT_SERVICE   equ 10
+0058+  2021             MAX_RECEIVE_SERVICE     equ 10
+0059+  2021             MIN_ETH_PACKET_SIZE     equ 60
+0060+  2021             MAX_ETH_PACKET_SIZE     equ 256
+0061+  2021             
+0062+  2021~            #ifdef CPU_AT_2MHZ
+0063+  2021~            WaitForTimeout          equ 2800        ; Should be about 20ms
+0064+  2021             #endif
+0065+  2021             #ifdef CPU_AT_4MHZ
+0066+  2021             WaitForTimeout          equ 5600        ; Should be about 20ms
+0067+  2021             #endif
+0068+  2021~            #ifdef CPU_AT_8MHZ
+0069+  2021~            WaitForTimeout          equ 11200       ; Should be about 20ms
+0070+  2021             #endif
+0071+  2021             
+0072+  2021 4E6F20457468s_NoNIC         .db "No Ethernet NIC",EOL
+0072+  2027 65726E6574204E494317
+0073+  2031 666F756E642E                .db "found.",EOL
+0073+  2037 17
+0074+  2038 50726F62696Es_NetProbeNIC   .db "Probing NIC...",EOL
+0074+  203E 67204E49432E2E2E17
+0075+  2047 4E6574204C6Fs_NetLogFirst   .db "Net Log Created.",LOGSP,EOL
+0075+  204D 6720437265617465642EFF17
+0076+  2059 FF 17       s_LOGSP         .db LOGSP,EOL 
+0077+  205B FFFFFFFFFFFFtest_packet     .db $ff,$ff,$ff,$ff,$ff,$ff
+0078+  2061 004033389A42                .db $00,$40,$33,$38,$9a,$42
+0079+  2067 546573742070                .db "Test packet."
+0079+  206D 61636B65742E
+0080+  2073 53656E642062                .db "Send by Duge's Z80!!"
+0080+  2079 7920447567652773205A38302121
+0081+  2087 000000000217HWADDRESS       .db $00,$00,$00,$00,$02,$17
+0082+  208D             
+0083+  208D             ; *********************************
+0084+  208D             ; some default routines for network
+0085+  208D             ; *********************************
+0086+  208D             ; ethNICInit
+0087+  208D             ethNICInit:
+0088+  208D F3           di
+0089+  208E 21 00 04     ld hl,1024
+0090+  2091 CD 71 05     call CreateLog
+0091+  2094 32 B5 EA     ld (NetLogId),a
+0092+  2097 21 47 20     ld hl,s_NetLogFirst
+0093+  209A CD BD 05     call AddLog
+0094+  209D             ; Clear error counters
+0095+  209D 21 00 00     ld hl,0
+0096+  20A0 22 E4 EA     ld (ethRxFrameErrs),hl ; rx frame errors
+0097+  20A3 22 E6 EA     ld (ethRxCrcErrs),hl   ; rx CRC errors
+0098+  20A6 22 E8 EA     ld (ethRxMissedErrs),hl; rx missed-errors
+0099+  20A9 22 EA EA     ld (ethTxCarrErrs),hl  ; tx carrier errors
+0100+  20AC 22 EC EA     ld (ethTxHBErrs),hl    ; tx heartbeat errors
+0101+  20AF 22 EE EA     ld (ethTxWindow),hl    ; tx window errors
+0102+  20B2 22 F0 EA     ld (ethRxOverErrs),hl  ; rx overrun errors
+0103+  20B5 22 F2 EA     ld (ethRxErrs),hl      ; rx errors      
+0104+  20B8 22 F4 EA     ld (ethRxFifoErrs),hl  ; rx fifo errors      
+0105+  20BB 22 F6 EA     ld (ethRxLenErrs),hl   ; rx fifo errors
+0106+  20BE 22 08 EB     ld (ethRxDropped),hl   ; rx dropped packets
+0107+  20C1             ;
+0108+  20C1 22 F8 EA     ld (ethRxPackets),hl   
+0109+  20C4 22 FA EA     ld (ethRxPackets+2),hl  
+0110+  20C7 22 FC EA     ld (ethTxPackets),hl      
+0111+  20CA 22 FE EA     ld (ethTxPackets+2),hl    
+0112+  20CD 22 00 EB     ld (ethRxBytes),hl    
+0113+  20D0 22 02 EB     ld (ethRxBytes+2),hl    
+0114+  20D3 22 04 EB     ld (ethTxBytes),hl
+0115+  20D6 22 06 EB     ld (ethTxBytes+2),hl
+0116+  20D9             ;
+0117+  20D9 22 20 EB     ld (ethRxing),hl
+0118+  20DC             ; Show search-text in LCD
+0119+  20DC 3A B5 EA     ld a,(NetLogId)
+0120+  20DF 21 38 20     ld hl,s_NetProbeNIC
+0121+  20E2 CD BD 05     call AddLog
+0122+  20E5 21 59 20     ld hl,s_LOGSP
+0123+  20E8 CD BD 05     call AddLog
+0124+  20EB CD 7E 01     call clear_lcd
+0125+  20EE 21 38 20     ld hl,s_NetProbeNIC
+0126+  20F1 CD 86 01     call str2lcd
+0127+  20F4 11 E8 03     ld de,NormalMesg
+0128+  20F7 CD 54 05     call Delayms
+0129+  20FA 3E 69        ld a,noNIC
+0130+  20FC 32 81 EA     ld (ethdetect),a
+0131+  20FF             ; Probe the NIC
+0132+  20FF CD 2E 23     call ne_probe           ; NEx000-compatible cards
+0133+  2102 FE 69        cp noNIC
+0134+  2104 20 05        jr nz,ie_nicfound
+0135+  2106             ; call smc_probe
+0136+  2106             ; cp noNIC
+0137+  2106             ; jr nz,ie_nicfound
+0138+  2106 21 21 20     ld hl,s_NoNIC
+0139+  2109 3E 69        ld a,noNIC
+0140+  210B             ie_nicfound:
+0141+  210B 32 81 EA     ld (ethdetect),a
+0142+  210E 3A B5 EA     ld a,(NetLogId)
+0143+  2111 E5           push hl
+0144+  2112 CD BD 05     call AddLog
+0145+  2115 21 59 20     ld hl,s_LOGSP
+0146+  2118 CD BD 05     call AddLog
+0147+  211B CD 7E 01     call clear_lcd
+0148+  211E E1           pop hl
+0149+  211F CD 86 01     call str2lcd
+0150+  2122 3E 40        ld a,Line2
+0151+  2124 CD C7 01     call setDDRAMa
+0152+  2127 23           inc hl
+0153+  2128 CD 86 01     call str2lcd
+0154+  212B 11 E8 03     ld de,NormalMesg
+0155+  212E CD 54 05     call Delayms
+0156+  2131 CD 7E 01     call clear_lcd
+0157+  2134             ; Enable the NIC
+0158+  2134 3A 81 EA     ld a,(ethdetect)
+0159+  2137 FE 69        cp noNIC
+0160+  2139 CA 40 21     jp z,ie_nonic
+0161+  213C CD 08 20     call ethOpen
+0162+  213F FB           ei
+0163+  2140             ie_nonic:
+0164+  2140 AF           xor a
+0165+  2141 32 82 EA     ld (ethtmp),a
+0166+  2144 CD 7E 01     call clear_lcd
+0167+  2147 3A 81 EA     ld a,(ethdetect)
+0168+  214A C9           ret
+0169+  214B             ; end of ethNICInit
+0170+  214B             
+0171+  214B             ;**************************************************************
+0172+  214B             ;
+0173+  214B             ; Drivers
+0174+  214B             ; 
+0175+  214B             ;**************************************************************
+0176+  214B             
+0177+  214B             
+0178+  214B             ;**************************************************************
+0179+  214B             ; Some routines used by 8390-compatible NICs
+0180+  214B             
+0181+  214B             ; Some generic ethernet register configurations.
+0182+  214B             E8390_TX_IRQ_MASK	equ $a	; For register EN0_ISR 
+0183+  214B             E8390_RX_IRQ_MASK	equ $5
+0184+  214B             E8390_RXCONFIG		equ $4	; EN0_RXCR: broadcasts, no multicast,errors 
+0185+  214B             E8390_RXOFF		equ $20	; EN0_RXCR: Accept no packets 
+0186+  214B             E8390_TXCONFIG		equ $00	; EN0_TXCR: Normal transmit mode 
+0187+  214B             E8390_TXOFF		equ $02	; EN0_TXCR: Transmitter off 
+0188+  214B             
+0189+  214B             ; Register accessed at EN_CMD, the 8390 base addr.  
+0190+  214B             E8390_STOP	equ $01	; Stop and reset the chip 
+0191+  214B             E8390_START	equ $02	; Start the chip, clear reset 
+0192+  214B             E8390_TRANS	equ $04	; Transmit a frame 
+0193+  214B             E8390_RREAD	equ $08	; Remote read 
+0194+  214B             E8390_RWRITE	equ $10	; Remote write  
+0195+  214B             E8390_NODMA	equ $20	; Remote DMA 
+0196+  214B             E8390_PAGE0	equ $00	; Select page chip registers 
+0197+  214B             E8390_PAGE1	equ $40	; using the two high-order bits 
+0198+  214B             E8390_PAGE2	equ $80	; Page 3 is invalid. 
+0199+  214B              
+0200+  214B             E8390_CMD	equ $00  ; The command register (for all pages 
+0201+  214B             ; Page 0 register offsets. 
+0202+  214B             EN0_CLDALO	equ $01	; Low byte of current local dma addr  RD 
+0203+  214B             EN0_STARTPG	equ $01	; Starting page of ring bfr WR 
+0204+  214B             EN0_CLDAHI	equ $02	; High byte of current local dma addr  RD 
+0205+  214B             EN0_STOPPG	equ $02	; Ending page +1 of ring bfr WR 
+0206+  214B             EN0_BOUNDARY	equ $03	; Boundary page of ring bfr RD WR 
+0207+  214B             EN0_TSR		equ $04	; Transmit status reg RD 
+0208+  214B             EN0_TPSR	equ $04	; Transmit starting page WR 
+0209+  214B             EN0_NCR		equ $05	; Number of collision reg RD 
+0210+  214B             EN0_TCNTLO	equ $05	; Low  byte of tx byte count WR 
+0211+  214B             EN0_FIFO	equ $06	; FIFO RD 
+0212+  214B             EN0_TCNTHI	equ $06	; High byte of tx byte count WR 
+0213+  214B             EN0_ISR		equ $07	; Interrupt status reg RD WR 
+0214+  214B             EN0_CRDALO	equ $08	; low byte of current remote dma address RD 
+0215+  214B             EN0_RSARLO	equ $08	; Remote start address reg 0 
+0216+  214B             EN0_CRDAHI	equ $09	; high byte, current remote dma address RD 
+0217+  214B             EN0_RSARHI	equ $09	; Remote start address reg 1 
+0218+  214B             EN0_RCNTLO	equ $0a	; Remote byte count reg WR 
+0219+  214B             EN0_RCNTHI	equ $0b	; Remote byte count reg WR 
+0220+  214B             EN0_RSR		equ $0c	; rx status reg RD 
+0221+  214B             EN0_RXCR	equ $0c	; RX configuration reg WR 
+0222+  214B             EN0_TXCR	equ $0d	; TX configuration reg WR 
+0223+  214B             EN0_COUNTER0	equ $0d	; Rcv alignment error counter RD 
+0224+  214B             EN0_DCFG	equ $0e	; Data configuration reg WR 
+0225+  214B             EN0_COUNTER1	equ $0e	; Rcv CRC error counter RD 
+0226+  214B             EN0_IMR		equ $0f	; Interrupt mask reg WR 
+0227+  214B             EN0_COUNTER2	equ $0f	; Rcv missed frame error counter RD 
+0228+  214B             
+0229+  214B             ; Bits in EN0_ISR - Interrupt status register 
+0230+  214B             ENISR_RX	equ $01	; Receiver, no error 
+0231+  214B             ENISR_TX	equ $02	; Transmitter, no error 
+0232+  214B             ENISR_RX_ERR	equ $04	; Receiver, with error 
+0233+  214B             ENISR_TX_ERR	equ $08	; Transmitter, with error 
+0234+  214B             ENISR_OVER	equ $10	; Receiver overwrote the ring 
+0235+  214B             ENISR_COUNTERS	equ $20	; Counters need emptying 
+0236+  214B             ENISR_RDC	equ $40	; remote dma complete 
+0237+  214B             ENISR_RESET	equ $80	; Reset completed 
+0238+  214B             ENISR_ALL	equ $3f	; Interrupts we will enable 
+0239+  214B             
+0240+  214B             ; Bits in EN0_DCFG - Data config register 
+0241+  214B             ENDCFG_WTS	equ $01	; word transfer mode selection 
+0242+  214B             ENDCFG_BOS	equ $02	; byte order selection 
+0243+  214B             
+0244+  214B             ; Page 1 register offsets. 
+0245+  214B             EN1_PHYS   equ $01	; This board's physical enet addr RD WR 
+0246+  214B             ;EN1_PHYS_SHIFT(i  equ i+1 ; Get and set mac address 
+0247+  214B             EN1_CURPAG equ $07	; Current memory page RD WR 
+0248+  214B             EN1_MULT   equ $08	; Multicast filter mask array (8 bytes RD WR 
+0249+  214B             ;EN1_MULT_SHIFT(i  equ 8+i ; Get and set multicast filter 
+0250+  214B             
+0251+  214B             ; Bits in received packet status byte and EN0_RSR
+0252+  214B             ENRSR_RXOK	equ $01	; Received a good packet 
+0253+  214B             ENRSR_CRC	equ $02	; CRC error 
+0254+  214B             ENRSR_FAE	equ $04	; frame alignment error 
+0255+  214B             ENRSR_FO	equ $08	; FIFO overrun 
+0256+  214B             ENRSR_MPA	equ $10	; missed pkt 
+0257+  214B             ENRSR_PHY	equ $20	; physical/multicast address 
+0258+  214B             ENRSR_DIS	equ $40	; receiver disable. set in monitor mode 
+0259+  214B             ENRSR_DEF	equ $80	; deferring 
+0260+  214B             
+0261+  214B             ; Transmitted packet status, EN0_TSR. 
+0262+  214B             ENTSR_PTX equ $01	; Packet transmitted without error 
+0263+  214B             ENTSR_ND  equ $02	; The transmit wasn't deferred. 
+0264+  214B             ENTSR_COL equ $04	; The transmit collided at least once. 
+0265+  214B             ENTSR_ABT equ $08  ; The transmit collided 16 times, and was deferred. 
+0266+  214B             ENTSR_CRS equ $10	; The carrier sense was lost. 
+0267+  214B             ENTSR_FU  equ $20  ; A "FIFO underrun" occurred during transmit. 
+0268+  214B             ENTSR_CDH equ $40	; The collision detect "heartbeat" signal was lost. 
+0269+  214B             ENTSR_OWC equ $80  ; There was an out-of-window collision. 
+0270+  214B             
+0271+  214B             ; Something from Writing drivers for DP8390 -datasheet
+0272+  214B             ;command                 equ ethbase+$00
+0273+  214B             ;pagestart               equ ethbase+$01
+0274+  214B             ;pagestop                equ ethbase+$02
+0275+  214B             ;boundary                equ ethbase+$03
+0276+  214B             ;transmitstatus          equ ethbase+$04
+0277+  214B             ;transmitpage            equ ethbase+$04
+0278+  214B             ;transmitbytecount0      equ ethbase+$05
+0279+  214B             ;ncr                     equ ethbase+$05
+0280+  214B             ;transmitbytecount1      equ ethbase+$06
+0281+  214B             ;interruptstatus         equ ethbase+$07
+0282+  214B             ;current                 equ ethbase+$07
+0283+  214B             ;remotestartaddress0     equ ethbase+$08
+0284+  214B             ;crdma0                  equ ethbase+$08
+0285+  214B             ;remotestartaddress1     equ ethbase+$09
+0286+  214B             ;crdma1                  equ ethbase+$09
+0287+  214B             ;remotebytecount0        equ ethbase+$0a
+0288+  214B             ;remotebytecount1        equ ethbase+$0b
+0289+  214B             ;receivestatus           equ ethbase+$0c
+0290+  214B             ;receiveconfiguration    equ ethbase+$0c
+0291+  214B             ;transmitconfiguration   equ ethbase+$0d
+0292+  214B             ;fae_tally               equ ethbase+$0d
+0293+  214B             ;dataconfiguration       equ ethbase+$0e
+0294+  214B             ;crc_tally               equ ethbase+$0e
+0295+  214B             ;interruptmask           equ ethbase+$0f
+0296+  214B             ;miss_pkt_tally          equ ethbase+$0f
+0297+  214B             ;ioport                  equ ethbase+$10
+0298+  214B             
+0299+  214B             ; *******************************
+0300+  214B             ; DP8390_init
+0301+  214B             ; Init 8390 registers to "default"
+0302+  214B             
+0303+  214B 383339302068dp_HWsavebad .db "8390 hw-address",$17
+0303+  2151 772D6164647265737317
+0304+  215B 736176652066             .db "save failed.",$17
+0304+  2161 61696C65642E17
+0305+  2168             
+0306+  2168             ;
+0307+  2168             jDP8390_init:
+0308+  2168 E1           pop hl
+0309+  2169             DP8390_init:
+0310+  2169 F5           push af
+0311+  216A C5           push bc
+0312+  216B D5           push de
+0313+  216C E5           push hl
+0314+  216D 3E 21        ld a,E8390_NODMA+E8390_PAGE0+E8390_STOP
+0315+  216F D3 E0        out (ETHBASE+E8390_CMD),a
+0316+  2171 3A AC EA     ld a,(ethwrdlen)
+0317+  2174 FE 02        cp 2
+0318+  2176 3E 48        ld a,$48
+0319+  2178 20 02        jr nz,dp_bytelen
+0320+  217A 3E 49        ld a,$49
+0321+  217C             dp_bytelen:
+0322+  217C D3 EE        out (ETHBASE+EN0_DCFG),a
+0323+  217E AF           xor a
+0324+  217F D3 EA        out (ETHBASE+EN0_RCNTLO),a
+0325+  2181 D3 EB        out (ETHBASE+EN0_RCNTHI),a
+0326+  2183 3E 20        ld a,E8390_RXOFF
+0327+  2185 D3 EC        out (ETHBASE+EN0_RXCR),a
+0328+  2187 3E 02        ld a,E8390_TXOFF
+0329+  2189 D3 ED        out (ETHBASE+EN0_TXCR),a
+0330+  218B             ;
+0331+  218B 3A B1 EA     ld a,(etxStartPage)
+0332+  218E D3 E4        out (ETHBASE+EN0_TPSR),a
+0333+  2190 3A B2 EA     ld a,(erxStartPage)
+0334+  2193 D3 E1        out (ETHBASE+EN0_STARTPG),a
+0335+  2195 3A B3 EA     ld a,(ethStopPage)
+0336+  2198 3D           dec a
+0337+  2199 D3 E3        out (ETHBASE+EN0_BOUNDARY),a
+0338+  219B 3C           inc a
+0339+  219C D3 E2        out (ETHBASE+EN0_STOPPG),a
+0340+  219E 3E FF        ld a,$ff
+0341+  21A0 D3 E7        out (ETHBASE+EN0_ISR),a
+0342+  21A2 AF           xor a
+0343+  21A3 D3 EF        out (ETHBASE+EN0_IMR),a
+0344+  21A5             ;
+0345+  21A5 3E 61        ld a,E8390_NODMA+E8390_PAGE1+E8390_STOP
+0346+  21A7 D3 E0        out (ETHBASE+E8390_CMD),a
+0347+  21A9             ; Set hardware address
+0348+  21A9 AF           xor a
+0349+  21AA 32 B0 EA     ld (ethT3),a
+0350+  21AD 06 06        ld b,6
+0351+  21AF 0E E1        ld c,ETHBASE+EN1_PHYS
+0352+  21B1 21 87 20     ld hl,HWADDRESS
+0353+  21B4             dp_hwset:
+0354+  21B4 7E           ld a,(hl)
+0355+  21B5 ED 79        out (c),a
+0356+  21B7 57           ld d,a
+0357+  21B8 ED 78        in a,(c)
+0358+  21BA 23           inc hl
+0359+  21BB 0C           inc c
+0360+  21BC BA           cp d
+0361+  21BD 28 05        jr z,dp_hwgood
+0362+  21BF 3E 69        ld a,$69
+0363+  21C1 32 B0 EA     ld (ethT3),a
+0364+  21C4             dp_hwgood:
+0365+  21C4 05           dec b
+0366+  21C5 20 ED        jr nz,dp_hwset
+0367+  21C7             ;
+0368+  21C7 3A B0 EA     ld a,(ethT3)
+0369+  21CA FE 00        cp 0
+0370+  21CC 28 1B        jr z,dp_hwallgood
+0371+  21CE CD 7E 01     call clear_lcd
+0372+  21D1 21 4B 21     ld hl,dp_HWsavebad
+0373+  21D4 CD 86 01     call str2lcd
+0374+  21D7 3E 40        ld a,Line2
+0375+  21D9 CD C7 01     call setDDRAMa
+0376+  21DC 23           inc hl
+0377+  21DD CD 86 01     call str2lcd
+0378+  21E0 11 E8 03     ld de,FastMesg
+0379+  21E3 CD 54 05     call Delayms
+0380+  21E6 CD 7E 01     call clear_lcd
+0381+  21E9             dp_hwallgood:
+0382+  21E9 3A B2 EA     ld a,(erxStartPage)
+0383+  21EC D3 E7        out (ETHBASE+EN1_CURPAG),a
+0384+  21EE 3E 21        ld a,E8390_NODMA+E8390_PAGE0+E8390_STOP
+0385+  21F0 D3 E0        out (ETHBASE+E8390_CMD),a
+0386+  21F2             ;
+0387+  21F2 E1           pop hl
+0388+  21F3 D1           pop de
+0389+  21F4 C1           pop bc
+0390+  21F5 F1           pop af
+0391+  21F6 C9           ret
+0392+  21F7             ; end of DP8390_init
+0393+  21F7             
+0394+  21F7             ; *******************************
+0395+  21F7             ; DP8390_enable
+0396+  21F7             jDP8390_enable:
+0397+  21F7 E1           pop hl
+0398+  21F8             DP8390_enable:
+0399+  21F8 F5           push af
+0400+  21F9 C5           push bc
+0401+  21FA 3E FF        ld a,$ff
+0402+  21FC D3 E7        out (ETHBASE+EN0_ISR),a
+0403+  21FE 3E 3F        ld a,ENISR_ALL
+0404+  2200 D3 EF        out (ETHBASE+EN0_IMR),a
+0405+  2202 3E 22        ld a,E8390_NODMA+E8390_PAGE0+E8390_START
+0406+  2204 D3 E0        out (ETHBASE+E8390_CMD),a
+0407+  2206 3E 00        ld a,E8390_TXCONFIG
+0408+  2208 D3 ED        out (ETHBASE+EN0_TXCR),a
+0409+  220A 3E 04        ld a,E8390_RXCONFIG
+0410+  220C D3 EC        out (ETHBASE+EN0_RXCR),a
+0411+  220E C1           pop bc
+0412+  220F F1           pop af
+0413+  2210 C9           ret
+0414+  2211             ; end of DP8390_enable
+0415+  2211             ;**************************************************************
+0416+  2211             
+0417+  2211             
+0418+  2211             ;**************************************************************
+0419+  2211             ; Drivers for NE1000/NE2000 (DP8390) compatible adapters
+0420+  2211             ; Mostly copied from linux 2.4.5 kernels NE1000/NE2000 (8390) drivers
+0421+  2211             ; (written by Donald Becker)
+0422+  2211             
+0423+  2211 4E4578303030ne_copyright .db "NEx000 drivers      ",$17
+0423+  2217 206472697665727320202020202017
+0424+  2226 427920447567             .db "By Duge. Mostly     ",$17
+0424+  222C 652E204D6F73746C79202020202017
+0425+  223B 636F70696564             .db "copied from linux   ",$17
+0425+  2241 2066726F6D206C696E757820202017
+0426+  2250 6B65726E656C             .db "kernel drivers      ",$17
+0426+  2256 206472697665727320202020202017
+0427+  2265 777269747465             .db "written by          ",$17
+0427+  226B 6E2062792020202020202020202017
+0428+  227A 446F6E616C64             .db "Donald Becker.      ",$17,$17
+0428+  2280 204265636B65722E2020202020201717
+0429+  2290 4E6F204E455Bne_nodev     .db "No NE[1,2]000 found.",$17,$17
+0429+  2296 312C325D30303020666F756E642E1717
+0430+  22A6 526573657420ne_noreset   .db "Reset failed on",$17
+0430+  22AC 6661696C6564206F6E17
+0431+  22B6 4E455B312C32             .db "NE[1,2]000-NIC.",$17
+0431+  22BC 5D3030302D4E49432E17
+0432+  22C6 4E4531303030ne1_detected .db "NE1000-NIC",$17
+0432+  22CC 2D4E494317
+0433+  22D1 646574656374             .db "detected.",$17
+0433+  22D7 65642E17
+0434+  22DB 4E4532303030ne2_detected .db "NE2000-NIC",$17
+0434+  22E1 2D4E494317
+0435+  22E6 646574656374             .db "detected.",$17
+0435+  22EC 65642E17
+0436+  22F0 4E452D636F6DneC_detected .db "NE-compatible Ctron-",$17
+0436+  22F6 70617469626C65204374726F6E2D17
+0437+  2305 4E4943206465             .db "NIC detected.",$17
+0437+  230B 7465637465642E17
+0438+  2313 426164204E45ne_badclone  .db "Bad NEx000 clone",$17
+0438+  2319 7830303020636C6F6E6517
+0439+  2324 646574656374             .db "detected.",$17
+0439+  232A 65642E17
+0440+  232E             
+0441+  232E             ; #define's
+0442+  232E             ;
+0443+  232E             ; Weird stuff, but have no reason to change this 'grab' from
+0444+  232E             ; the linux kernel, so leaving it like this
+0445+  232E             ;
+0446+  232E             #define TX_2X_PAGES 12
+0447+  232E             #define TX_1X_PAGES 6
+0448+  232E             ; Should always use two Tx slots to get back-to-back transmits.
+0449+  232E             #define EI_PINGPONG
+0450+  232E             #ifdef EI_PINGPONG
+0451+  232E             #define TX_PAGES TX_2X_PAGES
+0452+  232E~            #else
+0453+  232E~            #define TX_PAGES TX_1X_PAGES
+0454+  232E             #endif
+0455+  232E             ;
+0456+  232E             
+0457+  232E             NE_BASE                 equ $00
+0458+  232E             NE_CMD                  equ $00
+0459+  232E             NE_DATAPORT             equ $10    ; NatSemi-defined port window offset. 
+0460+  232E             NE_RESET                equ $1f    ; Issue a read to reset, a write to clear. 
+0461+  232E             NE_IO_EXTENT            equ $20
+0462+  232E             
+0463+  232E             NE1SM_START_PG          equ $20    ; First page of TX buffer 
+0464+  232E             NE1SM_STOP_PG           equ $40    ; Last page +1 of RX ring 
+0465+  232E             NESM_START_PG           equ $40    ; First page of TX buffer 
+0466+  232E             NESM_STOP_PG            equ $80    ; Last page +1 of RX ring 
+0467+  232E             
+0468+  232E             ; *******************************
+0469+  232E             ; ne_probe
+0470+  232E             ; Let's probe for NEx000-based card
+0471+  232E             ne_probe:
+0472+  232E DB E0        in a,(ETHBASE+0)
+0473+  2330 32 AE EA     ld (ethT1),a
+0474+  2333 FE FF        cp $ff
+0475+  2335 20 03        jr nz,nepb_maybe0
+0476+  2337 C3 81 24     jp nepb_nodev
+0477+  233A             nepb_maybe0:
+0478+  233A 3E 61        ld a,E8390_NODMA+E8390_PAGE1+E8390_STOP
+0479+  233C D3 E0        out (ETHBASE+E8390_CMD),a
+0480+  233E DB ED        in a,(ETHBASE+$0d)
+0481+  2340 32 AD EA     ld (ethT0),a
+0482+  2343 3E FF        ld a,$ff
+0483+  2345 D3 ED        out (ETHBASE+$0d),a
+0484+  2347 3E 20        ld a,E8390_NODMA+E8390_PAGE0
+0485+  2349 D3 E0        out (ETHBASE+E8390_CMD),a
+0486+  234B DB ED        in a,(ETHBASE+EN0_COUNTER0)
+0487+  234D FE 00        cp 0
+0488+  234F 28 0D        jr z,nepb_possibly0
+0489+  2351 3A AE EA     ld a,(ethT1)
+0490+  2354 D3 E0        out (ETHBASE+0),a
+0491+  2356 3A AD EA     ld a,(ethT0)
+0492+  2359 D3 ED        out (ETHBASE+$0d),a
+0493+  235B C3 81 24     jp nepb_nodev
+0494+  235E             nepb_possibly0:
+0495+  235E~            #ifdef DEBUG_DRIVERS
+0496+  235E~             led_set($01)
+0496+  235E~             led_set($01)
+0496+  235E~             led_set($01)
+0496+  235E~             led_set($01)
+0497+  235E             #endif
+0498+  235E CD 11 28     call ne_reset          ; Reset
+0499+  2361 FE 17        cp $17                 ; See if reset successful
+0500+  2363 28 1B        jr z,nepb_resets       ;
+0501+  2365 21 A6 22     ld hl,ne_noreset
+0502+  2368 CD 7E 01     call clear_lcd
+0503+  236B CD 86 01     call str2lcd
+0504+  236E 3E 40        ld a,Line2
+0505+  2370 CD C7 01     call setDDRAMa
+0506+  2373 23           inc hl
+0507+  2374 CD 86 01     call str2lcd
+0508+  2377 11 B8 0B     ld de,ErrorMesg
+0509+  237A CD 54 05     call Delayms
+0510+  237D CD 7E 01     call clear_lcd
+0511+  2380             nepb_resets:
+0512+  2380~            #ifdef DEBUG_DRIVERS
+0513+  2380~             led_set($02)
+0513+  2380~             led_set($02)
+0513+  2380~             led_set($02)
+0513+  2380~             led_set($02)
+0514+  2380             #endif
+0515+  2380 3E 21        ld a,E8390_NODMA+E8390_PAGE0+E8390_STOP
+0516+  2382 D3 E0        out (ETHBASE+E8390_CMD),a
+0517+  2384 3E 48        ld a,$48
+0518+  2386 D3 EE        out (ETHBASE+EN0_DCFG),a
+0519+  2388 AF           xor a
+0520+  2389 D3 EA        out (ETHBASE+EN0_RCNTLO),a
+0521+  238B D3 EB        out (ETHBASE+EN0_RCNTHI),a
+0522+  238D D3 EF        out (ETHBASE+EN0_IMR),a
+0523+  238F 3E FF        ld a,$ff
+0524+  2391 D3 E7        out (ETHBASE+EN0_ISR),a
+0525+  2393 3E 20        ld a,E8390_RXOFF
+0526+  2395 D3 EC        out (ETHBASE+EN0_RXCR),a
+0527+  2397 3E 02        ld a,E8390_TXOFF
+0528+  2399 D3 ED        out (ETHBASE+EN0_TXCR),a
+0529+  239B 3E 20        ld a,32
+0530+  239D D3 EA        out (ETHBASE+EN0_RCNTLO),a
+0531+  239F AF           xor a
+0532+  23A0 D3 EB        out (ETHBASE+EN0_RCNTHI),a
+0533+  23A2 D3 E8        out (ETHBASE+EN0_RSARLO),a
+0534+  23A4 D3 E9        out (ETHBASE+EN0_RSARHI),a
+0535+  23A6 3E 0A        ld a,E8390_RREAD+E8390_START
+0536+  23A8 D3 E0        out (ETHBASE+E8390_CMD),a
+0537+  23AA             ; Read station address PROM (SAPROM)
+0538+  23AA 3E 02        ld a,2
+0539+  23AC 32 AC EA     ld (ethwrdlen),a
+0540+  23AF 06 10        ld b,16
+0541+  23B1 21 83 EA     ld hl,ethsaprom
+0542+  23B4             nepb_readsaprom:
+0543+  23B4 DB F0        in a,(ETHBASE+NE_DATAPORT)
+0544+  23B6 77           ld (hl),a
+0545+  23B7 23           inc hl
+0546+  23B8 57           ld d,a
+0547+  23B9 DB F0        in a,(ETHBASE+NE_DATAPORT)
+0548+  23BB 77           ld (hl),a
+0549+  23BC 23           inc hl
+0550+  23BD BA           cp d
+0551+  23BE 28 05        jr z,nepb_wrdlen2
+0552+  23C0~            #ifdef DEBUG_DRIVERS
+0553+  23C0~             push bc
+0554+  23C0~             ld c,SSeg1
+0555+  23C0~             call b_to_7seg
+0556+  23C0~             ld a,d
+0557+  23C0~             ld c,SSeg3
+0558+  23C0~             call b_to_7seg
+0559+  23C0~             pop bc
+0560+  23C0~             ld de,1000
+0561+  23C0~             call Delayms
+0562+  23C0             #endif
+0563+  23C0 3E 01        ld a,1
+0564+  23C2 32 AC EA     ld (ethwrdlen),a
+0565+  23C5             nepb_wrdlen2:
+0566+  23C5 05           dec b
+0567+  23C6 20 EC        jr nz,nepb_readsaprom
+0568+  23C8             ; Do some settings depending on if the NIC was detected as
+0569+  23C8             ; 16bit or 8bit card
+0570+  23C8 20 25        jr nz,nepb_byte
+0571+  23CA~            #ifdef DEBUG_DRIVERS
+0572+  23CA~             led_set($03)
+0572+  23CA~             led_set($03)
+0572+  23CA~             led_set($03)
+0572+  23CA~             led_set($03)
+0573+  23CA             #endif
+0574+  23CA 01 83 EA     ld bc,ethsaprom
+0575+  23CD 21 83 EA     ld hl,ethsaprom
+0576+  23D0 16 10        ld d,16
+0577+  23D2             nepb_wsaset:
+0578+  23D2 7E           ld a,(hl)
+0579+  23D3 02           ld (bc),a
+0580+  23D4 03           inc bc
+0581+  23D5 23           inc hl
+0582+  23D6 23           inc hl
+0583+  23D7 15           dec d
+0584+  23D8 20 F8        jr nz,nepb_wsaset
+0585+  23DA             ;
+0586+  23DA 3E 49        ld a,$49
+0587+  23DC D3 EE        out (ETHBASE+EN0_DCFG),a
+0588+  23DE 3E 40        ld a,NESM_START_PG
+0589+  23E0 32 B1 EA     ld (etxStartPage),a
+0590+  23E3 C6 0C        add a,TX_PAGES
+0591+  23E5 32 B2 EA     ld (erxStartPage),a
+0592+  23E8 3E 80        ld a,NESM_STOP_PG
+0593+  23EA 32 B3 EA     ld (ethStopPage),a
+0594+  23ED 18 0F        jr nepb_jbyte
+0595+  23EF             nepb_byte:
+0596+  23EF~            #ifdef DEBUG_DRIVERS
+0597+  23EF~             led_set($02)
+0597+  23EF~             led_set($02)
+0597+  23EF~             led_set($02)
+0597+  23EF~             led_set($02)
+0598+  23EF             #endif
+0599+  23EF 3E 20        ld a,NE1SM_START_PG
+0600+  23F1 32 B1 EA     ld (etxStartPage),a
+0601+  23F4 C6 0C        add a,TX_PAGES
+0602+  23F6 32 B2 EA     ld (erxStartPage),a
+0603+  23F9 3E 40        ld a,NE1SM_STOP_PG
+0604+  23FB 32 B3 EA     ld (ethStopPage),a
+0605+  23FE             nepb_jbyte:
+0606+  23FE             ; Save hardware-address
+0607+  23FE 16 06        ld d,6
+0608+  2400 21 83 EA     ld hl,ethsaprom
+0609+  2403 01 A3 EA     ld bc,ethhwaddr
+0610+  2406             nepb_hwsave:
+0611+  2406 7E           ld a,(hl)
+0612+  2407 02           ld (bc),a
+0613+  2408 23           inc hl
+0614+  2409 03           inc bc
+0615+  240A 15           dec d
+0616+  240B 20 F9        jr nz,nepb_hwsave
+0617+  240D CD 69 21     call DP8390_init
+0618+  2410             ; Set up jump-table which is called by applications
+0619+  2410 21 10 28     ld hl,jne_reset
+0620+  2413 22 BE EA     ld (ejReset),hl
+0621+  2416 21 89 24     ld hl,jne_open
+0622+  2419 22 C0 EA     ld (ejOpen),hl
+0623+  241C 21 F7 21     ld hl,jDP8390_enable
+0624+  241F 22 C2 EA     ld (ejEnable),hl
+0625+  2422 21 68 21     ld hl,jDP8390_init
+0626+  2425 22 C4 EA     ld (ejDisable),hl
+0627+  2428 21 96 24     ld hl,jne_interrupt
+0628+  242B 22 C6 EA     ld (ejInterrupt),hl
+0629+  242E 21 52 27     ld hl,jne_send
+0630+  2431 22 C8 EA     ld (ejSend),hl
+0631+  2434             ; Save the NIC's ID
+0632+  2434 3A 91 EA     ld a,(ethsaprom+14)
+0633+  2437 47           ld b,a
+0634+  2438 3A 92 EA     ld a,(ethsaprom+15)
+0635+  243B B8           cp b
+0636+  243C 20 17        jr nz,nepb_nonex
+0637+  243E FE 57        cp $57                 ; Check for NEx000-card
+0638+  2440 20 38        jr nz,nepb_badclone
+0639+  2442             nepb_copam:             ; If NE-compatible copam-card
+0640+  2442 3A AC EA     ld a,(ethwrdlen)
+0641+  2445 FE 02        cp 2                   ; Check if 16bit
+0642+  2447 3E 02        ld a,NE2comp
+0643+  2449 21 DB 22     ld hl,ne2_detected
+0644+  244C 28 3A        jr z,nepb_end          ; Jump, if was 16bit card (NE2000)
+0645+  244E 3E 01        ld a,NE1comp           ; in other case 8bit (NE1000)
+0646+  2450 21 C6 22     ld hl,ne1_detected
+0647+  2453 18 33        jr nepb_end
+0648+  2455             nepb_nonex:
+0649+  2455 FE 00        cp $0
+0650+  2457 20 05        jr nz,nepb_notcopam
+0651+  2459 78           ld a,b
+0652+  245A FE 49        cp $49
+0653+  245C 28 E4        jr z,nepb_copam        ; Card was detected as 'copam' NEx000-compatible
+0654+  245E             nepb_notcopam:
+0655+  245E 3A 83 EA     ld a,(ethsaprom+0)
+0656+  2461 FE 00        cp $0
+0657+  2463 20 15        jr nz,nepb_badclone
+0658+  2465 3A 84 EA     ld a,(ethsaprom+1)
+0659+  2468 FE 00        cp $0
+0660+  246A 20 0E        jr nz,nepb_badclone
+0661+  246C 3A 85 EA     ld a,(ethsaprom+2)
+0662+  246F FE 1D        cp $1d
+0663+  2471 20 07        jr nz,nepb_badclone
+0664+  2473 3E 03        ld a,NECcomp           ; Ctron 8- or 16-bit NEx000-compatible card
+0665+  2475 21 F0 22     ld hl,neC_detected     ; Detection between 8- and 16-bits left out
+0666+  2478 18 0E        jr nepb_end            ; becose there no use for that information
+0667+  247A             nepb_badclone:
+0668+  247A 21 13 23     ld hl,ne_badclone
+0669+  247D 3E 04        ld a,NEBcomp
+0670+  247F 18 07        jr nepb_end
+0671+  2481             nepb_nodev:
+0672+  2481 3E 69        ld a,noNIC
+0673+  2483 21 90 22     ld hl,ne_nodev
+0674+  2486 18 00        jr nepb_end
+0675+  2488             ;
+0676+  2488             nepb_end:
+0677+  2488 C9           ret
+0678+  2489             ; end of ne_probe
+0679+  2489             
+0680+  2489             ; *******************************
+0681+  2489             ; ne_open
+0682+  2489             jne_open:
+0683+  2489 E1           pop hl
+0684+  248A             ne_open:
+0685+  248A CD 11 28     call ne_reset
+0686+  248D CD 69 21     call DP8390_init
+0687+  2490 CD F8 21     call DP8390_enable
+0688+  2493 F5           push af
+0689+  2494 F1           pop af
+0690+  2495 C9           ret
+0691+  2496             ; end of ne_open
+0692+  2496             
+0693+  2496             ; *******************************
+0694+  2496             ; ne_interrupt
+0695+  2496             jne_interrupt:
+0696+  2496 E1           pop hl
+0697+  2497             ne_interrupt:
+0698+  2497 F5           push af
+0699+  2498 E5           push hl
+0700+  2499 C5           push bc
+0701+  249A D5           push de
+0702+  249B 3E 20        ld a,E8390_NODMA+E8390_PAGE0
+0703+  249D D3 E0        out (ETHBASE+NE_CMD),a
+0704+  249F 3E 0A        ld a,MAX_INTERRUPT_SERVICE
+0705+  24A1 32 7E EB     ld (NT2),a
+0706+  24A4~            #ifdef DEBUG_DRIVERS
+0707+  24A4~             ld a,$ff
+0708+  24A4~             out (LEDs),a
+0709+  24A4~             out (SSeg1),a
+0710+  24A4~             out (SSeg2),a
+0711+  24A4~             out (SSeg3),a
+0712+  24A4~             out (SSeg4),a
+0713+  24A4~             xor a
+0714+  24A4~             push af
+0715+  24A4             #endif
+0716+  24A4             nei_rloop:
+0717+  24A4~            #ifdef DEBUG_DRIVERS
+0718+  24A4~             pop af
+0719+  24A4~             inc a
+0720+  24A4~             push af
+0721+  24A4~             or 1
+0722+  24A4~             xor $ff
+0723+  24A4~            ; out (LEDs),a
+0724+  24A4             #endif
+0725+  24A4 3A 7E EB     ld a,(NT2)
+0726+  24A7 3D           dec a
+0727+  24A8 CA E6 24     jp z,nei_end
+0728+  24AB 32 7E EB     ld (NT2),a
+0729+  24AE DB E7        in a,(ETHBASE+EN0_ISR)
+0730+  24B0 FE 00        cp 0
+0731+  24B2 CA E6 24     jp z,nei_end
+0732+  24B5 47           ld b,a
+0733+  24B6 E6 10        and ENISR_OVER
+0734+  24B8 C2 07 25     jp nz,nei_over
+0735+  24BB 78           ld a,b
+0736+  24BC E6 01        and ENISR_RX
+0737+  24BE C2 EB 24     jp nz,nei_rx
+0738+  24C1 78           ld a,b
+0739+  24C2 E6 04        and ENISR_RX_ERR
+0740+  24C4 C2 EB 24     jp nz,nei_rxwitherr
+0741+  24C7 78           ld a,b
+0742+  24C8 E6 02        and ENISR_TX
+0743+  24CA C2 F1 24     jp nz,nei_tx
+0744+  24CD 78           ld a,b
+0745+  24CE E6 08        and ENISR_TX_ERR
+0746+  24D0 C2 FC 24     jp nz,nei_txwitherr
+0747+  24D3 78           ld a,b
+0748+  24D4 E6 40        and ENISR_RDC
+0749+  24D6 C2 51 25     jp nz,nei_enisr
+0750+  24D9 78           ld a,b
+0751+  24DA E6 20        and ENISR_COUNTERS
+0752+  24DC C2 58 25     jp nz,nei_counters
+0753+  24DF             nei_loop:
+0754+  24DF 3E 22        ld a,E8390_NODMA+E8390_PAGE0+E8390_START
+0755+  24E1 D3 E0        out (ETHBASE+E8390_CMD),a
+0756+  24E3 C3 A4 24     jp nei_rloop
+0757+  24E6             nei_end:
+0758+  24E6~            #ifdef DEBUG_DRIVERS
+0759+  24E6~             pop af
+0760+  24E6~             ld a,$ff
+0761+  24E6~            ; out (LEDs),a
+0762+  24E6             #endif
+0763+  24E6 D1           pop de
+0764+  24E7 C1           pop bc
+0765+  24E8 E1           pop hl
+0766+  24E9 F1           pop af
+0767+  24EA C9           ret
+0768+  24EB             ;
+0769+  24EB             nei_rx:
+0770+  24EB             nei_rxwitherr:
+0771+  24EB~            #ifdef DEBUG_DRIVERS
+0772+  24EB~             ld a,0
+0773+  24EB~             ld c,SSeg1
+0774+  24EB~             call n_to_7seg
+0775+  24EB             #endif
+0776+  24EB CD 86 25     call ne_receive
+0777+  24EE C3 DF 24     jp nei_loop
+0778+  24F1             nei_tx:
+0779+  24F1~            #ifdef DEBUG_DRIVERS
+0780+  24F1~             ld a,1
+0781+  24F1~             ld c,SSeg1
+0782+  24F1~             call n_to_7seg
+0783+  24F1             #endif
+0784+  24F1 AF           xor a
+0785+  24F2 32 21 EB     ld (ethTxing),a
+0786+  24F5 3E 02        ld a,ENISR_TX
+0787+  24F7 D3 E7        out (ETHBASE+EN0_ISR),a
+0788+  24F9 C3 DF 24     jp nei_loop
+0789+  24FC             nei_txwitherr:
+0790+  24FC~            #ifdef DEBUG_DRIVERS
+0791+  24FC~             ld a,2
+0792+  24FC~             ld c,SSeg1
+0793+  24FC~             call n_to_7seg
+0794+  24FC             #endif
+0795+  24FC AF           xor a
+0796+  24FD 32 21 EB     ld (ethTxing),a
+0797+  2500 3E 08        ld a,ENISR_TX_ERR
+0798+  2502 D3 E7        out (ETHBASE+EN0_ISR),a
+0799+  2504 C3 DF 24     jp nei_loop
+0800+  2507             ; Handle receiver overrun
+0801+  2507             nei_over:
+0802+  2507~            #ifdef DEBUG_DRIVERS
+0803+  2507~             ld a,3
+0804+  2507~             ld c,SSeg1
+0805+  2507~             call n_to_7seg
+0806+  2507             #endif
+0807+  2507 DB E0        in a,(ETHBASE+E8390_CMD)
+0808+  2509 E6 04        and E8390_TRANS
+0809+  250B 47           ld b,a
+0810+  250C 3E 21        ld a,E8390_NODMA+E8390_PAGE0+E8390_STOP
+0811+  250E D3 E0        out (ETHBASE+E8390_CMD),a
+0812+  2510 2A F0 EA     ld hl,(ethRxOverErrs)
+0813+  2513 23           inc hl
+0814+  2514 22 F0 EA     ld (ethRxOverErrs),hl
+0815+  2517 11 32 00     ld de,50
+0816+  251A CD 54 05     call Delayms
+0817+  251D AF           xor a
+0818+  251E D3 EA        out (ETHBASE+EN0_RCNTLO),a
+0819+  2520 D3 EB        out (ETHBASE+EN0_RCNTHI),a
+0820+  2522 B8           cp b
+0821+  2523 CA 31 25     jp z,neio_notrans
+0822+  2526 DB E7        in a,(ETHBASE+EN0_ISR)
+0823+  2528 E6 0A        and ENISR_TX+ENISR_TX_ERR
+0824+  252A FE 00        cp 0
+0825+  252C C2 31 25     jp nz,neio_notrans
+0826+  252F 06 01        ld b,1                         ; A packet must be resend 
+0827+  2531             neio_notrans:
+0828+  2531 3E 02        ld a,E8390_TXOFF
+0829+  2533 D3 ED        out (ETHBASE+EN0_TXCR),a
+0830+  2535 3E 22        ld a,E8390_NODMA+E8390_PAGE0+E8390_START
+0831+  2537 D3 E0        out (ETHBASE+E8390_CMD),a
+0832+  2539 CD 86 25     call ne_receive
+0833+  253C 3E 10        ld a,ENISR_OVER
+0834+  253E D3 E7        out (ETHBASE+EN0_ISR),a
+0835+  2540 3A 00 00     ld a,(E8390_TXCONFIG)
+0836+  2543 D3 ED        out (ETHBASE+EN0_TXCR),a
+0837+  2545             ; Resend a packet if there was a send before overrun happened
+0838+  2545 AF           xor a
+0839+  2546 B8           cp b
+0840+  2547 CA 4E 25     jp z,neio_noretrans
+0841+  254A 3E 26        ld a,E8390_NODMA+E8390_PAGE0+E8390_START+E8390_TRANS
+0842+  254C D3 E0        out (ETHBASE+E8390_CMD),a
+0843+  254E             neio_noretrans:
+0844+  254E C3 DF 24     jp nei_loop
+0845+  2551             ; Ignore any RDC
+0846+  2551             nei_enisr:
+0847+  2551~            #ifdef DEBUG_DRIVERS
+0848+  2551~             ld a,4
+0849+  2551~             ld c,SSeg1
+0850+  2551~             call n_to_7seg
+0851+  2551             #endif
+0852+  2551 3E 40        ld a,ENISR_RDC
+0853+  2553 D3 E7        out (ETHBASE+EN0_ISR),a
+0854+  2555 C3 DF 24     jp nei_loop
+0855+  2558             ; Update counters
+0856+  2558             nei_counters:
+0857+  2558~            #ifdef DEBUG_DRIVERS
+0858+  2558~             ld a,4
+0859+  2558~             ld c,SSeg1
+0860+  2558~             call n_to_7seg
+0861+  2558             #endif
+0862+  2558 DB ED        in a,(ETHBASE+EN0_COUNTER0)
+0863+  255A 6F           ld l,a
+0864+  255B 26 00        ld h,0
+0865+  255D ED 5B E4 EA  ld de,(ethRxFrameErrs)
+0866+  2561 19           add hl,de
+0867+  2562 22 E4 EA     ld (ethRxFrameErrs),hl
+0868+  2565 DB EE        in a,(ETHBASE+EN0_COUNTER1)
+0869+  2567 6F           ld l,a
+0870+  2568 26 00        ld h,0
+0871+  256A ED 5B E6 EA  ld de,(ethRxCrcErrs)
+0872+  256E 19           add hl,de
+0873+  256F 22 E6 EA     ld (ethRxCrcErrs),hl
+0874+  2572 DB EF        in a,(ETHBASE+EN0_COUNTER2)
+0875+  2574 6F           ld l,a
+0876+  2575 26 00        ld h,0
+0877+  2577 ED 5B E8 EA  ld de,(ethRxMissedErrs)
+0878+  257B 19           add hl,de
+0879+  257C 22 E8 EA     ld (ethRxMissedErrs),hl
+0880+  257F 3E 20        ld a,ENISR_COUNTERS
+0881+  2581 D3 E7        out (ETHBASE+EN0_ISR),a
+0882+  2583 C3 DF 24     jp nei_loop
+0883+  2586             ; end of ne_interrupt
+0884+  2586             
+0885+  2586             ; *******************************
+0886+  2586             ; ne_receive
+0887+  2586             ne_receive:
+0888+  2586 F5           push af
+0889+  2587 E5           push hl
+0890+  2588 C5           push bc
+0891+  2589 D5           push de
+0892+  258A 3E 0A        ld a,MAX_RECEIVE_SERVICE
+0893+  258C 32 7F EB     ld (NT3),a
+0894+  258F             ner_loop:
+0895+  258F 3A 7F EB     ld a,(NT3)
+0896+  2592 3D           dec a
+0897+  2593 CA 34 27     jp z,ner_end
+0898+  2596 32 7F EB     ld (NT3),a
+0899+  2599             ;
+0900+  2599 3E 60        ld a,E8390_NODMA+E8390_PAGE1
+0901+  259B D3 E0        out (ETHBASE+E8390_CMD),a
+0902+  259D DB E7        in a,(ETHBASE+EN1_CURPAG)
+0903+  259F 47           ld b,a
+0904+  25A0 32 7C EB     ld (NT0),a
+0905+  25A3 3E 20        ld a,E8390_NODMA+E8390_PAGE0
+0906+  25A5 D3 E0        out (ETHBASE+E8390_CMD),a
+0907+  25A7 DB E3        in a,(ETHBASE+EN0_BOUNDARY)
+0908+  25A9 3C           inc a
+0909+  25AA 5F           ld e,a
+0910+  25AB 32 7D EB     ld (NT1),a
+0911+  25AE 3A B3 EA     ld a,(ethStopPage)
+0912+  25B1 3D           dec a
+0913+  25B2 BB           cp e
+0914+  25B3 D2 BA 25     jp nc,ner_notbigger
+0915+  25B6 3A B2 EA     ld a,(erxStartPage)
+0916+  25B9 5F           ld e,a
+0917+  25BA             ner_notbigger:
+0918+  25BA 78           ld a,b
+0919+  25BB BB           cp e
+0920+  25BC CA 34 27     jp z,ner_end
+0921+  25BF             ; Now grab the 8390 header
+0922+  25BF 3E 22        ld a,E8390_NODMA+E8390_PAGE0+E8390_START
+0923+  25C1 D3 E0        out (ETHBASE+E8390_CMD),a
+0924+  25C3 3E 04        ld a,pkthdr_size
+0925+  25C5 47           ld b,a
+0926+  25C6 D3 EA        out (ETHBASE+EN0_RCNTLO),a
+0927+  25C8 AF           xor a
+0928+  25C9 D3 EB        out (ETHBASE+EN0_RCNTHI),a
+0929+  25CB D3 E8        out (ETHBASE+EN0_RSARLO),a
+0930+  25CD 7B           ld a,e
+0931+  25CE D3 E9        out (ETHBASE+EN0_RSARHI),a
+0932+  25D0 3E 0A        ld a,E8390_RREAD+E8390_START
+0933+  25D2 D3 E0        out (ETHBASE+E8390_CMD),a
+0934+  25D4 21 16 EB     ld hl,pkthdr
+0935+  25D7 3A AC EA     ld a,(ethwrdlen)
+0936+  25DA FE 02        cp 2
+0937+  25DC C2 F0 25     jp nz,ner_hdrbybyte
+0938+  25DF CB 38        srl b
+0939+  25E1             ner_wloop:
+0940+  25E1 DB F0        in a,(ETHBASE+NE_DATAPORT)
+0941+  25E3 77           ld (hl),a
+0942+  25E4 23           inc hl
+0943+  25E5 DB C0        in a,(ethcom)
+0944+  25E7 77           ld (hl),a
+0945+  25E8 23           inc hl
+0946+  25E9 05           dec b
+0947+  25EA C2 E1 25     jp nz,ner_wloop
+0948+  25ED C3 F8 25     jp ner_hdrcopied
+0949+  25F0             ner_hdrbybyte:
+0950+  25F0 DB F0        in a,(ETHBASE+NE_DATAPORT)
+0951+  25F2 77           ld (hl),a
+0952+  25F3 23           inc hl
+0953+  25F4 05           dec b
+0954+  25F5 C2 E1 25     jp nz,ner_wloop
+0955+  25F8             ner_hdrcopied:
+0956+  25F8 3E 40        ld a,ENISR_RDC
+0957+  25FA D3 E7        out (ETHBASE+EN0_ISR),a
+0958+  25FC             ;
+0959+  25FC 2A 18 EB     ld hl,(pkthdr_count)
+0960+  25FF 54           ld d,h
+0961+  2600 3E 04        ld a,pkthdr_size
+0962+  2602             ner_pkthdrdec:
+0963+  2602 2B           dec hl
+0964+  2603 3D           dec a
+0965+  2604 20 FC        jr nz,ner_pkthdrdec
+0966+  2606 22 18 EB     ld (pkthdr_count),hl
+0967+  2609 14           inc d
+0968+  260A 7B           ld a,e
+0969+  260B 82           add a,d
+0970+  260C ED 5B 17 EB  ld de,(pkthdr_next)
+0971+  2610             ; Bogosity test
+0972+  2610             ; Aaargh!! This kind of testing can be awful to do with assembly:
+0973+  2610             ; (cut from ne.c, linux kernel drivers)
+0974+  2610             ; "if (rx_frame.next != next_frame
+0975+  2610             ;   && rx_frame.next != next_frame + 1
+0976+  2610             ;   && rx_frame.next != next_frame - num_rx_pages
+0977+  2610             ;   && rx_frame.next != next_frame + 1 - num_rx_pages) {"
+0978+  2610             ;
+0979+  2610             ;rx_frame.next != next_frame 
+0980+  2610 BB           cp e
+0981+  2611 CA 3F 26     jp z,ner_bogend
+0982+  2614             ;rx_frame.next != next_frame + 1
+0983+  2614 3C           inc a
+0984+  2615 BB           cp e
+0985+  2616 CA 3F 26     jp z,ner_bogend
+0986+  2619             ;rx_frame.next != next_frame + 1 - num_rx_pages
+0987+  2619 ED 4B B3 EA  ld bc,(ethStopPage)
+0988+  261D 81           add a,c
+0989+  261E ED 4B B2 EA  ld bc,(erxStartPage)
+0990+  2622 91           sub c
+0991+  2623 BB           cp e
+0992+  2624 CA 3F 26     jp z,ner_bogend
+0993+  2627             ;rx_frame.next != next_frame - num_rx_pages
+0994+  2627 3D           dec a
+0995+  2628 BB           cp e
+0996+  2629 CA 3F 26     jp z,ner_bogend
+0997+  262C             ;
+0998+  262C 3A 7C EB     ld a,(NT0)
+0999+  262F 32 B4 EA     ld (ethCurrentPage),a
+1000+  2632 3D           dec a
+1001+  2633 D3 E3        out (ETHBASE+EN0_BOUNDARY),a
+1002+  2635 2A F2 EA     ld hl,(ethRxErrs)
+1003+  2638 23           inc hl
+1004+  2639 22 F2 EA     ld (ethRxErrs),hl
+1005+  263C C3 8F 25     jp ner_loop
+1006+  263F             ; bogosity test end
+1007+  263F             ner_bogend:
+1008+  263F 3A 19 EB     ld a,(pkthdr_count+1)
+1009+  2642 FE 00        cp $00
+1010+  2644 C2 60 26     jp nz,ner_bigpkt
+1011+  2647 3A 18 EB     ld a,(pkthdr_count)
+1012+  264A FE 3C        cp $3c
+1013+  264C D2 73 26     jp nc,ner_pktsizeok
+1014+  264F             ner_pktsizenok:
+1015+  264F 2A F2 EA     ld hl,(ethRxErrs)
+1016+  2652 23           inc hl
+1017+  2653 22 F2 EA     ld (ethRxErrs),hl
+1018+  2656 2A F6 EA     ld hl,(ethRxLenErrs)
+1019+  2659 23           inc hl
+1020+  265A 22 F6 EA     ld (ethRxLenErrs),hl
+1021+  265D C3 1C 27     jp ner_nend
+1022+  2660             ner_bigpkt:
+1023+  2660 ED 5B 18 EB  ld de,(pkthdr_count)
+1024+  2664 3E 05        ld a,$05
+1025+  2666 BA           cp d
+1026+  2667 DA 4F 26     jp c,ner_pktsizenok
+1027+  266A C2 73 26     jp nz,ner_pktsizeok
+1028+  266D 3E EE        ld a,$ee
+1029+  266F BB           cp e
+1030+  2670 DA 4F 26     jp c,ner_pktsizenok
+1031+  2673             ner_pktsizeok:
+1032+  2673             ;
+1033+  2673 3A 16 EB     ld a,(pkthdr_stat)
+1034+  2676 E6 0F        and $0f
+1035+  2678 FE 01        cp ENRSR_RXOK
+1036+  267A C2 06 27     jp nz,ner_else
+1037+  267D             ; The packet is really a packet and it's OK!!!
+1038+  267D             ; Now it can be handled!
+1039+  267D             ; Copy the packet from NIC to local memory
+1040+  267D             ; Same as linux drivers ne_block_input-routine
+1041+  267D             ; First check for free space in packet buffer
+1042+  267D~            #ifdef DEBUG_DRIVERS
+1043+  267D~             ld a,0
+1044+  267D~             ld c,SSeg2
+1045+  267D~             call n_to_7seg
+1046+  267D             #endif
+1047+  267D 2A 18 EB     ld hl,(pkthdr_count)
+1048+  2680 22 F7 CF     ld (netDataLen),hl
+1049+  2683 CD 03 2A     call net_checkspace
+1050+  2686 FE FF        cp nBufNoSpace
+1051+  2688 CA C8 26     jp z,ner_nospace
+1052+  268B             ;
+1053+  268B 3E 22        ld a,E8390_NODMA+E8390_PAGE0+E8390_START
+1054+  268D D3 E0        out (ETHBASE+NE_CMD),a
+1055+  268F 3A 18 EB     ld a,(pkthdr_count)
+1056+  2692 D3 EA        out (ETHBASE+EN0_RCNTLO),a
+1057+  2694 3A 19 EB     ld a,(pkthdr_count+1)
+1058+  2697 D3 EB        out (ETHBASE+EN0_RCNTHI),a
+1059+  2699 3E 04        ld a,pkthdr_size
+1060+  269B D3 E8        out (ETHBASE+EN0_RSARLO),a
+1061+  269D 3A 7D EB     ld a,(NT1)
+1062+  26A0 D3 E9        out (ETHBASE+EN0_RSARHI),a
+1063+  26A2 3E 0A        ld a,E8390_RREAD+E8390_START
+1064+  26A4 D3 E0        out (ETHBASE+NE_CMD),a
+1065+  26A6             ; Registers ready, start copying
+1066+  26A6 ED 5B 18 EB  ld de,(pkthdr_count)
+1067+  26AA ED 53 F7 CF  ld (netDataLen),de
+1068+  26AE 3E F0        ld a,ETHBASE+NE_DATAPORT
+1069+  26B0 32 FC CF     ld (netIOCopyPort),a
+1070+  26B3 3E 00        ld a,nBufCopyIO
+1071+  26B5 32 FB CF     ld (netCopyType),a
+1072+  26B8~            #ifdef DEBUG_DRIVERS
+1073+  26B8~             ld a,1
+1074+  26B8~             ld c,SSeg2
+1075+  26B8~             call n_to_7seg
+1076+  26B8             #endif
+1077+  26B8 CD 06 2A     call net_allocbuffer
+1078+  26BB FE FF        cp nBufNoSpace
+1079+  26BD C2 D2 26     jp nz,ner_copyok
+1080+  26C0             ; Should this be handled in this way?
+1081+  26C0             ; Anyway something is really wrong if this is needed
+1082+  26C0 3E 21        ld a,E8390_NODMA+E8390_PAGE0+E8390_STOP
+1083+  26C2 D3 E0        out (ETHBASE+NE_CMD),a
+1084+  26C4 3E 22        ld a,E8390_NODMA+E8390_PAGE0+E8390_START
+1085+  26C6 D3 E0        out (ETHBASE+NE_CMD),a
+1086+  26C8             ner_nospace:
+1087+  26C8~            #ifdef DEBUG_DRIVERS
+1088+  26C8~             ld a,2
+1089+  26C8~             ld c,SSeg2
+1090+  26C8~             call n_to_7seg
+1091+  26C8             #endif
+1092+  26C8 2A 08 EB     ld hl,(ethRxDropped)
+1093+  26CB 23           inc hl
+1094+  26CC 22 08 EB     ld (ethRxDropped),hl
+1095+  26CF~            #ifdef DEBUG_DRIVERS
+1096+  26CF~             ld a,(ethRxDropped)
+1097+  26CF~             ld c,SSeg3
+1098+  26CF~             call b_to_7seg
+1099+  26CF             #endif
+1100+  26CF C3 34 27     jp ner_end
+1101+  26D2             ner_copyok:
+1102+  26D2~            #ifdef DEBUG_DRIVERS
+1103+  26D2~             ld a,3
+1104+  26D2~             ld c,SSeg2
+1105+  26D2~             call n_to_7seg
+1106+  26D2             #endif
+1107+  26D2 3E 40        ld a,ENISR_RDC
+1108+  26D4 D3 E7        out (ETHBASE+EN0_ISR),a
+1109+  26D6             ; Update rx packet counter and rx byte counter
+1110+  26D6 2A F8 EA     ld hl,(ethRxPackets)
+1111+  26D9 11 01 00     ld de,1
+1112+  26DC 19           add hl,de
+1113+  26DD 22 F8 EA     ld (ethRxPackets),hl
+1114+  26E0 2A FA EA     ld hl,(ethRxPackets+2)
+1115+  26E3 1E 00        ld e,0
+1116+  26E5 ED 5A        adc hl,de
+1117+  26E7 22 FA EA     ld (ethRxPackets+2),hl
+1118+  26EA 2A 00 EB     ld hl,(ethRxBytes)
+1119+  26ED ED 5B 18 EB  ld de,(pkthdr_count)
+1120+  26F1 19           add hl,de
+1121+  26F2 22 00 EB     ld (ethRxBytes),hl
+1122+  26F5 2A 02 EB     ld hl,(ethRxBytes+2)
+1123+  26F8 11 00 00     ld de,0
+1124+  26FB ED 5A        adc hl,de
+1125+  26FD 22 02 EB     ld (ethRxBytes+2),hl
+1126+  2700~            #ifdef DEBUG_DRIVERS
+1127+  2700~             ld a,(ethRxPackets)
+1128+  2700~             ld c,SSeg3
+1129+  2700~             call b_to_7seg
+1130+  2700             #endif
+1131+  2700             ; Call packet handler
+1132+  2700 CD 0F 2A     call net_handlepacket
+1133+  2703 C3 1C 27     jp ner_nend
+1134+  2706             ;
+1135+  2706             ner_else:
+1136+  2706~            #ifdef DEBUG_DRIVERS
+1137+  2706~             ld a,4
+1138+  2706~             ld c,SSeg2
+1139+  2706~             call n_to_7seg
+1140+  2706             #endif
+1141+  2706 2A F2 EA     ld hl,(ethRxErrs)
+1142+  2709 23           inc hl
+1143+  270A 22 F2 EA     ld (ethRxErrs),hl
+1144+  270D 3A 16 EB     ld a,(pkthdr_stat)
+1145+  2710 E6 08        and ENRSR_FO
+1146+  2712 CA 1C 27     jp z,ner_nend
+1147+  2715 2A F4 EA     ld hl,(ethRxFifoErrs)
+1148+  2718 23           inc hl
+1149+  2719 22 F4 EA     ld (ethRxFifoErrs),hl
+1150+  271C             ner_nend:
+1151+  271C~            #ifdef DEBUG_DRIVERS
+1152+  271C~             ld a,5
+1153+  271C~             ld c,SSeg2
+1154+  271C~             call n_to_7seg
+1155+  271C             #endif
+1156+  271C 3A B3 EA     ld a,(ethStopPage)
+1157+  271F 3D           dec a
+1158+  2720 21 17 EB     ld hl,pkthdr_next
+1159+  2723 BE           cp (hl)
+1160+  2724 D2 2A 27     jp nc,nerp_nbadbad
+1161+  2727~            #ifdef DEBUG_DRIVERS
+1162+  2727~             ld a,6
+1163+  2727~             ld c,SSeg2
+1164+  2727~             call n_to_7seg
+1165+  2727             #endif
+1166+  2727 21 B2 EA     ld hl,erxStartPage
+1167+  272A             nerp_nbadbad:
+1168+  272A 7E           ld a,(hl)
+1169+  272B 32 B4 EA     ld (ethCurrentPage),a
+1170+  272E 3D           dec a
+1171+  272F D3 E3        out (ETHBASE+EN0_BOUNDARY),a
+1172+  2731 C3 8F 25     jp ner_loop
+1173+  2734             ;
+1174+  2734             ner_end:
+1175+  2734 3E 05        ld a,ENISR_RX+ENISR_RX_ERR
+1176+  2736 D3 E7        out (ETHBASE+EN0_ISR),a
+1177+  2738 D1           pop de
+1178+  2739 C1           pop bc
+1179+  273A E1           pop hl
+1180+  273B F1           pop af
+1181+  273C C9           ret
+1182+  273D             ; end of ne_receive
+1183+  273D             
+1184+  273D             ; *******************************
+1185+  273D             ; ne_send
+1186+  273D             ; Packet's address in (ethDataAddr), lenght in
+1187+  273D             ; (ethDataLen)
+1188+  273D 54696D656F75nes_timeout     .db "Timeout for Tx RDC.",LOGSP,EOL
+1188+  2743 7420666F72205478205244432EFF17
+1189+  2752             
+1190+  2752             jne_send:
+1191+  2752 E1           pop hl
+1192+  2753             ne_send:
+1193+  2753 3A 21 EB     ld a,(ethTxing)
+1194+  2756 FE 11        cp XXXing
+1195+  2758 3E 26        ld a,eSending
+1196+  275A C8           ret z
+1197+  275B DB E0        in a,(ETHBASE+NE_CMD)           ; Is NIC already sending?
+1198+  275D FE 26        cp $26
+1199+  275F 3E 26        ld a,eSending          ; If, return eSending in reg a
+1200+  2761 C8           ret z                  ;
+1201+  2762 F3           di
+1202+  2763 C5           push bc
+1203+  2764 D5           push de
+1204+  2765 E5           push hl
+1205+  2766~            #ifdef DEBUG_DRIVERS
+1206+  2766~             ld a,0
+1207+  2766~             ld c,SSeg4
+1208+  2766~             call n_to_7seg
+1209+  2766             #endif
+1210+  2766 3A AC EA     ld a,(ethwrdlen)
+1211+  2769 FE 02        cp 2                   ; Check for odd byte count if
+1212+  276B C2 79 27     jp nz,nes_nodd         ; in word mode (is this needed really?)
+1213+  276E 2A D2 EA     ld hl,(ethDataLen)
+1214+  2771 23           inc hl
+1215+  2772 7D           ld a,l
+1216+  2773 E6 FE        and $fe
+1217+  2775 6F           ld l,a
+1218+  2776 22 D2 EA     ld (ethDataLen),hl
+1219+  2779             nes_nodd:
+1220+  2779 3E 22        ld a,E8390_PAGE0+E8390_START+E8390_NODMA
+1221+  277B D3 E0        out (ETHBASE+NE_CMD),a
+1222+  277D 3E 40        ld a,ENISR_RDC
+1223+  277F D3 E7        out (ETHBASE+EN0_ISR),a
+1224+  2781 3A D2 EA     ld a,(ethDataLen)
+1225+  2784 D3 EA        out (ETHBASE+EN0_RCNTLO),a
+1226+  2786 3A D3 EA     ld a,(ethDataLen+1)
+1227+  2789 D3 EB        out (ETHBASE+EN0_RCNTHI),a
+1228+  278B AF           xor a
+1229+  278C D3 E8        out (ETHBASE+EN0_RSARLO),a
+1230+  278E 3A B1 EA     ld a,(etxStartPage)
+1231+  2791 D3 E9        out (ETHBASE+EN0_RSARHI),a
+1232+  2793 3E 12        ld a,E8390_RWRITE+E8390_START
+1233+  2795 D3 E0        out (ETHBASE+NE_CMD),a
+1234+  2797 0E F0        ld c,ETHBASE+NE_DATAPORT
+1235+  2799             ; Now copy the data into NIC
+1236+  2799 3A AC EA     ld a,(ethwrdlen)
+1237+  279C FE 02        cp 2		        ; Is the card 16bit or 8bit?
+1238+  279E C2 C0 27     jp nz,nes_sendbybyte   ; Is the card 8- or 16-bit
+1239+  27A1~            #ifdef DEBUG_DRIVERS
+1240+  27A1~             push bc
+1241+  27A1~             push af
+1242+  27A1~             ld a,1
+1243+  27A1~             ld c,SSeg4
+1244+  27A1~             call n_to_7seg
+1245+  27A1~             pop af
+1246+  27A1~             pop bc
+1247+  27A1             #endif
+1248+  27A1 ED 5B D2 EA  ld de,(ethDataLen)
+1249+  27A5 CB 3A        srl d                  ; Divide de's value by 2
+1250+  27A7 CB 1B        rr e
+1251+  27A9 14           inc d
+1252+  27AA 2A D0 EA     ld hl,(ethDataAddr)
+1253+  27AD             nes_sendbyword:
+1254+  27AD 46           ld b,(hl)
+1255+  27AE 23           inc hl
+1256+  27AF 7E           ld a,(hl)
+1257+  27B0 23           inc hl
+1258+  27B1 D3 C0        out (ethcom),a
+1259+  27B3 ED 41        out (c),b
+1260+  27B5 1D           dec e
+1261+  27B6 C2 AD 27     jp nz,nes_sendbyword
+1262+  27B9 15           dec d
+1263+  27BA C2 AD 27     jp nz,nes_sendbyword
+1264+  27BD C3 C5 27     jp nes_nsend
+1265+  27C0             nes_sendbybyte:
+1266+  27C0             ; 8-bit card not supported yet
+1267+  27C0~            #ifdef DEBUG_DRIVERS
+1268+  27C0~             ld a,2
+1269+  27C0~             ld c,SSeg4
+1270+  27C0~             call n_to_7seg
+1271+  27C0             #endif
+1272+  27C0 3E 17        ld a,eSended
+1273+  27C2 C3 09 28     jp nes_end
+1274+  27C5             nes_nsend:
+1275+  27C5~            #ifdef DEBUG_DRIVERS
+1276+  27C5~             push bc
+1277+  27C5~             push af
+1278+  27C5~             ld a,3
+1279+  27C5~             ld c,SSeg4
+1280+  27C5~             call n_to_7seg
+1281+  27C5~             pop af
+1282+  27C5~             pop bc
+1283+  27C5             #endif
+1284+  27C5 21 E0 15     ld hl,WaitForTimeout
+1285+  27C8             nes_wait:               ; Should wait here about 20ms
+1286+  27C8 2B           dec hl
+1287+  27C9 7C           ld a,h
+1288+  27CA FE 00        cp 0
+1289+  27CC CA F2 27     jp z,nes_timedout
+1290+  27CF DB E7        in a,(ETHBASE+EN0_ISR)
+1291+  27D1 E6 40        and ENISR_RDC
+1292+  27D3 CA C8 27     jp z,nes_wait
+1293+  27D6             nes_pos:
+1294+  27D6 3E 40        ld a,ENISR_RDC
+1295+  27D8 D3 E7        out (ETHBASE+(EN0_ISR),a
+1296+  27DA 3A B1 EA     ld a,(etxStartPage)
+1297+  27DD D3 E4        out (ETHBASE+EN0_TPSR),a
+1298+  27DF 3A D2 EA     ld a,(ethDataLen)
+1299+  27E2 D3 E5        out (ETHBASE+EN0_TCNTLO),a
+1300+  27E4 3A D3 EA     ld a,(ethDataLen+1)
+1301+  27E7 D3 E6        out (ETHBASE+EN0_TCNTHI),a
+1302+  27E9 3E 26        ld a,E8390_NODMA+E8390_TRANS+E8390_START
+1303+  27EB D3 E0        out (ETHBASE+NE_CMD),a
+1304+  27ED 3E 17        ld a,eSended
+1305+  27EF C3 09 28     jp nes_end
+1306+  27F2             nes_timedout:
+1307+  27F2 3A B5 EA     ld a,(NetLogId)
+1308+  27F5 21 3D 27     ld hl,nes_timeout
+1309+  27F8 CD BD 05     call AddLog            ; This message is seen in Net log(1)
+1310+  27FB CD 11 28     call ne_reset
+1311+  27FE CD 69 21     call DP8390_init
+1312+  2801 CD F8 21     call DP8390_enable
+1313+  2804 3E 69        ld a,eTimedOut
+1314+  2806 C3 09 28     jp nes_end
+1315+  2809             nes_end:
+1316+  2809 F5           push af
+1317+  280A~            #ifdef DEBUG_DRIVERS
+1318+  280A~             ld a,4
+1319+  280A~             ld c,SSeg4
+1320+  280A~             call n_to_7seg
+1321+  280A             #endif
+1322+  280A F1           pop af
+1323+  280B E1           pop hl
+1324+  280C D1           pop de
+1325+  280D C1           pop bc
+1326+  280E FB           ei
+1327+  280F C9           ret
+1328+  2810             
+1329+  2810             ; end of ne_send
+1330+  2810             
+1331+  2810             ; *******************************
+1332+  2810             ; ne_reset
+1333+  2810             jne_reset:
+1334+  2810 E1           pop hl
+1335+  2811             ne_reset:
+1336+  2811 C5           push bc
+1337+  2812 E5           push hl
+1338+  2813 DB FF        in a,(ETHBASE+NE_RESET)
+1339+  2815 D3 FF        out (ETHBASE+NE_RESET),a
+1340+  2817 21 00 10     ld hl,$1000
+1341+  281A             ners_wait:
+1342+  281A 2B           dec hl
+1343+  281B 7C           ld a,h
+1344+  281C FE 00        cp 0
+1345+  281E 28 0F        jr z,ners_failed
+1346+  2820 DB E7        in a,(ETHBASE+EN0_ISR)
+1347+  2822 E6 80        and ENISR_RESET
+1348+  2824 28 F4        jr z,ners_wait
+1349+  2826 3E FF        ld a,$ff
+1350+  2828 D3 E7        out (ETHBASE+EN0_ISR),a
+1351+  282A 3E 17        ld a,$17
+1352+  282C E1           pop hl
+1353+  282D C1           pop bc
+1354+  282E C9           ret
+1355+  282F             ners_failed:
+1356+  282F 3E 69        ld a,$69
+1357+  2831 E1           pop hl
+1358+  2832 C1           pop bc
+1359+  2833 C9           ret
+1360+  2834             ; end of ne_reset
+1361+  2834             
+1362+  2834             ; end of NEx000 compatible adapters driver
+1363+  2834             ;**************************************************************
+1364+  2834             
+1365+  2834             ; end of Drivers
+1366+  2834             ;**************************************************************
+0021   2834             #endif
+0022   2834             
+0023   2A00             .org $2a00
+0024   2A00             ; Jump table
+0025   2A00             net_init:
+0026   2A00 C3 12 2C     jp nnet_init
+0027   2A03             net_checkspace:
+0028   2A03 C3 6C 2A     jp nnet_checkspace
+0029   2A06             net_allocbuffer:
+0030   2A06 C3 B8 2A     jp nnet_allocbuffer
+0031   2A09             net_freebuffer:
+0032   2A09 C3 C7 2B     jp nnet_freebuffer
+0033   2A0C             net_resetbuf:
+0034   2A0C C3 32 2A     jp nnet_resetbuf
+0035   2A0F             net_handlepacket:
+0036   2A0F C3 74 2C     jp nnet_handlepacket
+0037   2A12             
+0038   2A12             ;**************************************************************
+0039   2A12             ;
+0040   2A12             ; code for TCP/IP & ARP support
+0041   2A12             ;
+0042   2A12             ;**************************************************************
+0043   2A12             
+0044   2A12             ; #defines
+0045   2A12             #define ARP_OR_IP  $08
+0046   2A12             #define ARP_PACKET $06
+0047   2A12             #define IP_PACKET  $00
+0048   2A12             
+0049   2A12             #define ARP_REQUEST 1
+0050   2A12             #define ARP_REPLY 2
+0051   2A12             #define ARP_HWTYPE_ETH 1
+0052   2A12             
+0053   2A12             #define IP_PROTO_ICMP 1
+0054   2A12             
+0055   2A12             #define IP_DEFAULT_TTL 64
+0056   2A12             #define IP_ICMP_ECHO_TTL 32
+0057   2A12             #define IP_ICMP_MAX_SIZE 102    ; Maximum size of incoming icmp-packet
+0058   2A12                                             ; which is still handled
+0059   2A12                                             ; (Absolut maximum is 254)
+0060   2A12                                             ; This is here for now becose of some bug in 
+0061   2A12                                             ; ip-packet handling or network drivers
+0062   2A12             #define ICMP_ECHO_REPLY 0
+0063   2A12             #define ICMP_ECHO 8
+0064   2A12             #define ICMP_DROP 7
+0065   2A12             #define ICMP_UNREACHABLE 3
+0066   2A12             #define ICMP_DEFAULT_REPLY_TYPE ICMP_ECHO_REPLY
+0067   2A12             #define ICMP_DEFAULT_REPLY_CODE 0
+0068   2A12             #define ICMP_UNREACHABLE_TTL 240
+0069   2A12             ;
+0070   2A12             #define HWTYPE_ETH 1            ; No support for others than ethernet (probably)
+0071   2A12             #define OPCODE_ARPREQ 1         ; ARP-request
+0072   2A12             #define OPCODE_ARPREP 2         ; ARP-reply
+0073   2A12             ;
+0074   2A12             #define nBufPages 12
+0075   2A12             #define nBufTocs 4
+0076   2A12             #define nBufTocMaxPages 6
+0077   2A12             #define nBufPageSize 256
+0078   2A12             #define nBufMaxSize nBufTocMaxPages*nBufPageSize
+0079   2A12             #define nBuf1TocSize 10
+0080   2A12             #define nBufTocSize nBufTocs*nBuf1TocSize
+0081   2A12             ;
+0082   2A12             #define nBufTocStat 0           ;byte
+0083   2A12             #define nBufTocNPages 1         ;byte
+0084   2A12             #define nBufTocLen 2            ;word
+0085   2A12             #define nBufTocPages  4         ;6 bytes
+0086   2A12             ;
+0087   2A12             #define nBufferRead 1
+0088   2A12             #define nBufferWrite 2
+0089   2A12             #define nBufPageReserved 1
+0090   2A12             #define nBufTocReserved 1
+0091   2A12             ; ARP table
+0092   2A12             #define nArpTables 16
+0093   2A12             #define nArp1TabSize 12
+0094   2A12             #define nArpTabSize nArpTables*nArp1TabSize
+0095   2A12             #define nArpTabStat 0           ;byte
+0096   2A12             #define nArpTabDate 1           ;byte
+0097   2A12             #define nArpTabMAC 2            ;6 bytes
+0098   2A12             #define nArpTabIp 8             ;4 bytes
+0099   2A12             ; Ethernet packet header
+0100   2A12             ; DLC header
+0101   2A12             #define ehDlcSize 14
+0102   2A12             #define ehTarget 0              ;6 bytes
+0103   2A12             #define ehSource 6              ;6 bytes
+0104   2A12             #define ehType 12               ;word
+0105   2A12             ; ARP specific header
+0106   2A12             #define ehArpSize 28
+0107   2A12             #define ehArpHwType 14          ;word
+0108   2A12             #define ehArpProtocol 16        ;word
+0109   2A12             #define ehArpHwLen 18           ;byte
+0110   2A12             #define ehArpProtoLen 19        ;byte
+0111   2A12             #define ehArpOpCode 20          ;word
+0112   2A12             #define ehArpSourceHw 22        ;6 bytes
+0113   2A12             #define ehArpSourceIp 28        ;4 bytes, when using IP-protocol
+0114   2A12             #define ehArpTargetHw 32        ;6 bytes
+0115   2A12             #define ehArpTargetIp 38        ;4 bytes, when IP...
+0116   2A12             ; IP specific header
+0117   2A12             #define ehIpSize 20
+0118   2A12             #define ehIpVhl 14              ;byte
+0119   2A12             #define ehIpTos 15              ;byte
+0120   2A12             #define ehIpLen 16              ;word
+0121   2A12             #define ehIpId 18               ;word
+0122   2A12             #define ehIpOffset 20           ;word
+0123   2A12             #define ehIpTtl 22              ;byte
+0124   2A12             #define ehIpProto 23            ;byte
+0125   2A12             #define ehIpChecksum 24         ;word
+0126   2A12             #define ehIpSource 26           ;4 bytes
+0127   2A12             #define ehIpTarget 30           ;4 bytes
+0128   2A12             ; ICMP header
+0129   2A12             #define ehIcmpSize 8
+0130   2A12             #define ehIcmpType 34           ;byte
+0131   2A12             #define ehIcmpCode 35           ;byte
+0132   2A12             #define ehIcmpChecksum 36       ;word
+0133   2A12             #define ehIcmpId 38             ;word
+0134   2A12             #define ehIcmpSeqNumb 40        ;word
+0135   2A12             ;
+0136   2A12             nBufCopyIO      equ 0
+0137   2A12             nBufCopyMem     equ 1
+0138   2A12             nBufNoSpace     equ $ff
+0139   2A12             nBufNoId        equ $ff
+0140   2A12             ;
+0141   2A12             nArpDate        equ 40
+0142   2A12             
+0143   2A12             ; RAM at address $c000-$dfff
+0144   2A12             NETB            equ $c000       ;4KB of RAM for use of network
+0145   2A12             NETBL           equ NETB+$fff
+0146   2A12             ;
+0147   2A12             netBuffer       equ NETB+0      ;Reserves 12*256 bytes as buffer for received
+0148   2A12                                             ;and queue transmit packets
+0149   2A12             ;
+0150   2A12             netBufToc       equ NETB+3072   ;8*10 bytes
+0151   2A12             netArpTable     equ NETB+3152   ;16*12 bytes
+0152   2A12             ;Misc
+0153   2A12             netIcmpReplyType        equ NETBL-57    ;byte
+0154   2A12             netIcmpReplyCode        equ NETBL-56    ;byte
+0155   2A12             netChksumAddr   equ NETBL-55    ;word
+0156   2A12             netChksumCount  equ NETBL-53    ;word
+0157   2A12             ;Here are settings for this systems NIC
+0158   2A12             IpMasked        equ NETBL-51    ;*
+0159   2A12             IpAddress       equ NETBL-47    ;4 bytes
+0160   2A12             NetMask         equ NETBL-43    ;*
+0161   2A12             GateWay         equ NETBL-39    ;*
+0162   2A12             DNS             equ NETBL-35    ;*
+0163   2A12             ;
+0164   2A12             netMacAddress   equ NETBL-31    ;6 bytes, for MAC address
+0165   2A12             netIpAddress    equ NETBL-25    ;4 bytes, for IP address
+0166   2A12             netBufStat      equ NETBL-21    ;12 bytes, 1 for each buffer page
+0167   2A12             netBufUsedPages equ NETBL-9     ;byte
+0168   2A12             netDataLen      equ NETBL-8     ;word
+0169   2A12             netDataAddr     equ NETBL-6     ;word
+0170   2A12             netCopyType     equ NETBL-4     ;byte
+0171   2A12             netIOCopyPort   equ NETBL-3     ;byte
+0172   2A12             netBufStatus    equ NETBL-2     ;byte
+0173   2A12             netBufTemp      equ NETBL-1     ;byte
+0174   2A12             netBufTocId     equ NETBL-0     ;byte
+0175   2A12             ;
+0176   2A12             ; Default settings for tcp/ip
+0177   2A12             default_ip_settings:
+0178   2A12 6F 70 71 D9 def_ip          .db 111,112,113,217
+0179   2A16 FF FF FF 00 def_mask        .db 255,255,255,0
+0180   2A1A 00 00 00 00 def_gw          .db 0,0,0,0
+0181   2A1E 00 00 00 00 def_dns         .db 0,0,0,0
+0182   2A22             ; Pointer to tocs starts
+0183   2A22             ; (this is a look-up-table for faster execution)
+0184   2A22             nBufTocPointers:
+0185   2A22 00 00       netBuf1stToc    .dw netBufToc+nBuf1TocSize*0
+0186   2A24 0A CC       netBuf2ndToc    .dw netBufToc+nBuf1TocSize*1
+0187   2A26 14 98       netBuf3rdToc    .dw netBufToc+nBuf1TocSize*2
+0188   2A28 1E 64       netBuf4thToc    .dw netBufToc+nBuf1TocSize*3
+0189   2A2A 28 30       netBuf5thToc    .dw netBufToc+nBuf1TocSize*4
+0190   2A2C 32 FC       netBuf6thToc    .dw netBufToc+nBuf1TocSize*5
+0191   2A2E 3C C8       netBuf7thToc    .dw netBufToc+nBuf1TocSize*6
+0192   2A30 46 94       netBuf8thToc    .dw netBufToc+nBuf1TocSize*7
+0193   2A32             
+0194   2A32             ;**************************************************************
+0195   2A32             ; Network buffer memory manager
+0196   2A32             
+0197   2A32             ; *******************************
+0198   2A32             ; net_resetbuf
+0199   2A32             nnet_resetbuf:
+0200   2A32 F5           push af
+0201   2A33 C5           push bc
+0202   2A34 E5           push hl
+0203   2A35 01 27 00     ld bc,nBufTocSize-1
+0204   2A38 21 00 CC     ld hl,netBufToc
+0205   2A3B 11 01 CC     ld de,netBufToc+1
+0206   2A3E 36 00        ld (hl),0
+0207   2A40 ED B0        ldir
+0208   2A42 01 0B 00     ld bc,nBufPages-1
+0209   2A45 21 EA CF     ld hl,netBufStat
+0210   2A48 11 EB CF     ld de,netBufStat+1
+0211   2A4B 36 00        ld (hl),0
+0212   2A4D ED B0        ldir
+0213   2A4F 01 BF 00     ld bc,nArpTabSize-1
+0214   2A52 21 50 CC     ld hl,netArpTable
+0215   2A55 11 51 CC     ld de,netArpTable+1
+0216   2A58 36 00        ld (hl),0
+0217   2A5A ED B0        ldir
+0218   2A5C AF           xor a
+0219   2A5D 32 F6 CF     ld (netBufUsedPages),a
+0220   2A60 32 FD CF     ld (netBufStatus),a
+0221   2A63 3E FF        ld a,nBufNoSpace
+0222   2A65 32 FF CF     ld (netBufTocId),a
+0223   2A68 E1           pop hl
+0224   2A69 C1           pop bc
+0225   2A6A F1           pop af
+0226   2A6B C9           ret
+0227   2A6C             ; end of net_resetbuf
+0228   2A6C             
+0229   2A6C             ; *******************************
+0230   2A6C             ; net_checkspace
+0231   2A6C             ; Checks for free space in network buffer and if there is
+0232   2A6C             ; enough space returns free TOC's ID in (netBudTocId) and
+0233   2A6C             ; reg a, otherwise returns nBufNoSpace in reg a
+0234   2A6C             nnet_checkspace:
+0235   2A6C C5           push bc
+0236   2A6D D5           push de
+0237   2A6E E5           push hl
+0238   2A6F~            #ifdef DEBUG_MM
+0239   2A6F~             ld a,1
+0240   2A6F~             ld c,SSeg1
+0241   2A6F~             call n_to_7seg
+0242   2A6F             #endif
+0243   2A6F ED 4B F7 CF  ld bc,(netDataLen)
+0244   2A73 AF           xor a
+0245   2A74 B8           cp b
+0246   2A75 C2 7E 2A     jp nz,ntc_nzero
+0247   2A78 B9           cp c
+0248   2A79 3E FF        ld a,nBufNoSpace
+0249   2A7B CA B4 2A     jp z,ntc_end
+0250   2A7E             ntc_nzero:
+0251   2A7E 0B           dec bc
+0252   2A7F 3E 06        ld a,nBufMaxSize/256
+0253   2A81 B8           cp b
+0254   2A82 3E FF        ld a,nBufNoSpace
+0255   2A84 DA B4 2A     jp c,ntc_end
+0256   2A87 CA B4 2A     jp z,ntc_end
+0257   2A8A 04           inc b
+0258   2A8B 3A F6 CF     ld a,(netBufUsedPages)
+0259   2A8E 80           add a,b
+0260   2A8F 3D           dec a
+0261   2A90 FE 0C        cp nBufPages
+0262   2A92 3E FF        ld a,nBufNoSpace
+0263   2A94 D2 B4 2A     jp nc,ntc_end
+0264   2A97 21 00 CC     ld hl,netBufToc+nBufTocStat
+0265   2A9A 11 0A 00     ld de,nBuf1TocSize
+0266   2A9D 0E 04        ld c,nBufTocs
+0267   2A9F AF           xor a
+0268   2AA0             ntc_findfreetoc:
+0269   2AA0 BE           cp (hl)
+0270   2AA1 CA AE 2A     jp z,ntc_fftoc
+0271   2AA4 19           add hl,de
+0272   2AA5 0D           dec c
+0273   2AA6 C2 A0 2A     jp nz,ntc_findfreetoc
+0274   2AA9 3E FF        ld a,nBufNoSpace
+0275   2AAB C3 B4 2A     jp ntc_end
+0276   2AAE             ntc_fftoc:
+0277   2AAE 3E 04        ld a,nBufTocs
+0278   2AB0 91           sub c
+0279   2AB1 32 FF CF     ld (netBufTocId),a
+0280   2AB4             ntc_end:
+0281   2AB4~            #ifdef DEBUG_MM
+0282   2AB4~             ld a,2
+0283   2AB4~             ld c,SSeg1
+0284   2AB4~             call n_to_7seg
+0285   2AB4             #endif
+0286   2AB4 C1           pop bc
+0287   2AB5 D1           pop de
+0288   2AB6 E1           pop hl
+0289   2AB7 C9           ret
+0290   2AB8             ; end of net_checkspace
+0291   2AB8             
+0292   2AB8             ; *******************************
+0293   2AB8             ; net_allocbuffer
+0294   2AB8             ; This routine is mostly used by network drivers
+0295   2AB8             ; Allocates buffer with size stored in (netDataLen) and
+0296   2AB8             ; copies data to that buffer from address found in
+0297   2AB8             ; (netDataAddr), returns buffer id (netBufTocId).
+0298   2AB8             ; Type of copy must be stored in (netCopyType) and port
+0299   2AB8             ; which to copy from in (netIOCopyPort), types are memory
+0300   2AB8             ; and io.
+0301   2AB8             ; If there is no space left returns nBufNoSpace in reg a
+0302   2AB8             nnet_allocbuffer:
+0303   2AB8 3A FD CF     ld a,(netBufStatus)            ; This should not happen!
+0304   2ABB FE 00        cp 0                           ; (That the buffer is already in use)
+0305   2ABD 3E FF        ld a,nBufNoSpace
+0306   2ABF C0           ret nz
+0307   2AC0 3E 02        ld a,nBufferWrite
+0308   2AC2 32 FD CF     ld (netBufStatus),a
+0309   2AC5 C5           push bc
+0310   2AC6 D5           push de
+0311   2AC7 E5           push hl
+0312   2AC8~            #ifdef DEBUG_MM
+0313   2AC8~             ld a,1
+0314   2AC8~             ld c,SSeg2
+0315   2AC8~             call n_to_7seg
+0316   2AC8~             xor a
+0317   2AC8~             out (SSeg3),a
+0318   2AC8             #endif
+0319   2AC8 ED 4B F7 CF  ld bc,(netDataLen)
+0320   2ACC AF           xor a
+0321   2ACD B8           cp b
+0322   2ACE C2 D7 2A     jp nz,nta_nzero
+0323   2AD1 B9           cp c
+0324   2AD2 3E FF        ld a,nBufNoSpace
+0325   2AD4 CA BD 2B     jp z,nta_end
+0326   2AD7             nta_nzero:
+0327   2AD7 0B           dec bc
+0328   2AD8 3E 06        ld a,nBufMaxSize/256
+0329   2ADA B8           cp b
+0330   2ADB 3E FF        ld a,nBufNoSpace
+0331   2ADD DA BD 2B     jp c,nta_end
+0332   2AE0 CA BD 2B     jp z,nta_end
+0333   2AE3 04           inc b
+0334   2AE4 3A F6 CF     ld a,(netBufUsedPages)
+0335   2AE7 80           add a,b
+0336   2AE8 3D           dec a
+0337   2AE9 FE 0C        cp nBufPages
+0338   2AEB 3E FF        ld a,nBufNoSpace
+0339   2AED D2 BD 2B     jp nc,nta_end
+0340   2AF0 21 00 CC     ld hl,netBufToc+nBufTocStat
+0341   2AF3 11 0A 00     ld de,nBuf1TocSize
+0342   2AF6 0E 04        ld c,nBufTocs
+0343   2AF8 AF           xor a
+0344   2AF9             nta_findfreetoc:
+0345   2AF9 BE           cp (hl)
+0346   2AFA CA 07 2B     jp z,nta_fftoc
+0347   2AFD 19           add hl,de
+0348   2AFE 0D           dec c
+0349   2AFF C2 F9 2A     jp nz,nta_findfreetoc
+0350   2B02 3E FF        ld a,nBufNoSpace
+0351   2B04 C3 BD 2B     jp nta_end
+0352   2B07             nta_fftoc:
+0353   2B07             ; There is free TOC and enough free pages (free space)
+0354   2B07             ; Now copy the data and set up TOC
+0355   2B07~            #ifdef DEBUG_MM
+0356   2B07~             push bc
+0357   2B07~             ld a,4
+0358   2B07~             ld c,SSeg2
+0359   2B07~             call n_to_7seg
+0360   2B07~             pop bc
+0361   2B07             #endif
+0362   2B07 3E 04        ld a,nBufTocs
+0363   2B09 91           sub c
+0364   2B0A 32 FF CF     ld (netBufTocId),a             ; Save TOC ID
+0365   2B0D 3A F6 CF     ld a,(netBufUsedPages)
+0366   2B10 80           add a,b
+0367   2B11 32 F6 CF     ld (netBufUsedPages),a
+0368   2B14 3E 01        ld a,nBufTocReserved
+0369   2B16 77           ld (hl),a
+0370   2B17 23           inc hl
+0371   2B18 70           ld (hl),b
+0372   2B19 78           ld a,b
+0373   2B1A 32 FE CF     ld (netBufTemp),a
+0374   2B1D 23           inc hl
+0375   2B1E ED 5B F7 CF  ld de,(netDataLen)
+0376   2B22 73           ld (hl),e
+0377   2B23 23           inc hl
+0378   2B24 72           ld (hl),d
+0379   2B25 23           inc hl
+0380   2B26 EB           ex de,hl
+0381   2B27 21 E9 CF     ld hl,netBufStat-1
+0382   2B2A 0E 0D        ld c,nBufPages+1
+0383   2B2C D9           exx
+0384   2B2D ED 5B F9 CF  ld de,(netDataAddr)
+0385   2B31 D9           exx
+0386   2B32 AF           xor a
+0387   2B33             nta_pgloop:
+0388   2B33 23           inc hl
+0389   2B34 0D           dec c
+0390   2B35 BE           cp (hl)
+0391   2B36 C2 33 2B     jp nz,nta_pgloop
+0392   2B39 3E 01        ld a,nBufPageReserved
+0393   2B3B 77           ld (hl),a
+0394   2B3C 3E 0C        ld a,nBufPages
+0395   2B3E 91           sub c
+0396   2B3F 12           ld (de),a
+0397   2B40 13           inc de
+0398   2B41 D9           exx
+0399   2B42 21 00 C0     ld hl,netBuffer
+0400   2B45 84           add a,h
+0401   2B46 67           ld h,a
+0402   2B47 3A FB CF     ld a,(netCopyType)
+0403   2B4A FE 00        cp nBufCopyIO
+0404   2B4C C2 AD 2B     jp nz,nta_copyfrommem
+0405   2B4F             nta_copyfromio:
+0406   2B4F~            #ifdef DEBUG_MM
+0407   2B4F~             ld a,1
+0408   2B4F~             ld c,SSeg3
+0409   2B4F~             call n_to_7seg
+0410   2B4F             #endif
+0411   2B4F ED 4B FC CF  ld bc,(netIOCopyPort)
+0412   2B53 3A AC EA     ld a,(ethwrdlen)
+0413   2B56 FE 02        cp 2
+0414   2B58 C2 8F 2B     jp nz,nte_cpbybyte
+0415   2B5B 06 80        ld b,$80
+0416   2B5D 3A FE CF     ld a,(netBufTemp)
+0417   2B60 3D           dec a
+0418   2B61 32 FE CF     ld (netBufTemp),a
+0419   2B64 C2 6D 2B     jp nz,nte_cpbyword
+0420   2B67 3A F7 CF     ld a,(netDataLen)
+0421   2B6A CB 3F        srl a
+0422   2B6C 47           ld b,a
+0423   2B6D             nte_cpbyword:
+0424   2B6D ED 78        in a,(c)
+0425   2B6F 77           ld (hl),a
+0426   2B70 23           inc hl
+0427   2B71 DB C0        in a,(ethcom)
+0428   2B73 77           ld (hl),a
+0429   2B74 23           inc hl
+0430   2B75 05           dec b
+0431   2B76 C2 6D 2B     jp nz,nte_cpbyword
+0432   2B79 3A FE CF     ld a,(netBufTemp)
+0433   2B7C FE 00        cp 0
+0434   2B7E C2 8C 2B     jp nz,nte_cpwnlast
+0435   2B81 3A F7 CF     ld a,(netDataLen)
+0436   2B84 E6 01        and 1
+0437   2B86 CA 8C 2B     jp z,nte_cpwnlast
+0438   2B89 ED 78        in a,(c)
+0439   2B8B 77           ld (hl),a
+0440   2B8C             nte_cpwnlast:
+0441   2B8C C3 A1 2B     jp nte_iocpend
+0442   2B8F             nte_cpbybyte:
+0443   2B8F 06 00        ld b,0
+0444   2B91 3A FE CF     ld a,(netBufTemp)
+0445   2B94 3D           dec a
+0446   2B95 32 FE CF     ld (netBufTemp),a
+0447   2B98 C2 9F 2B     jp nz,nte_cpbnlast
+0448   2B9B 3A F7 CF     ld a,(netDataLen)
+0449   2B9E 47           ld b,a
+0450   2B9F             nte_cpbnlast:
+0451   2B9F ED B2        inir                   ; Copy one page from io
+0452   2BA1             nte_iocpend:
+0453   2BA1 D9           exx
+0454   2BA2~            #ifdef DEBUG_MM
+0455   2BA2~             push bc
+0456   2BA2~             ld a,2
+0457   2BA2~             ld c,SSeg3
+0458   2BA2~             call n_to_7seg
+0459   2BA2~             pop bc
+0460   2BA2             #endif
+0461   2BA2 AF           xor a
+0462   2BA3 05           dec b
+0463   2BA4 C2 33 2B     jp nz,nta_pgloop
+0464   2BA7 3A FF CF     ld a,(netBufTocId)
+0465   2BAA C3 BD 2B     jp nta_end
+0466   2BAD             nta_copyfrommem:
+0467   2BAD~            #ifdef DEBUG_MM
+0468   2BAD~             ld a,4
+0469   2BAD~             ld c,SSeg3
+0470   2BAD~             call n_to_7seg
+0471   2BAD             #endif
+0472   2BAD 01 00 01     ld bc,$100
+0473   2BB0 EB           ex de,hl
+0474   2BB1 ED B0        ldir                   ; Copy one page from mem
+0475   2BB3 EB           ex de,hl
+0476   2BB4 D9           exx
+0477   2BB5~            #ifdef DEBUG_MM
+0478   2BB5~             push bc
+0479   2BB5~             ld a,5
+0480   2BB5~             ld c,SSeg3
+0481   2BB5~             call n_to_7seg
+0482   2BB5~             pop bc
+0483   2BB5             #endif
+0484   2BB5 AF           xor a
+0485   2BB6 05           dec b
+0486   2BB7 C2 33 2B     jp nz,nta_pgloop
+0487   2BBA 3A FF CF     ld a,(netBufTocId)
+0488   2BBD             nta_end:
+0489   2BBD 47           ld b,a
+0490   2BBE~            #ifdef DEBUG_MM
+0491   2BBE~             ld a,8
+0492   2BBE~             ld c,SSeg2
+0493   2BBE~             call n_to_7seg
+0494   2BBE             #endif
+0495   2BBE AF           xor a
+0496   2BBF 32 FD CF     ld (netBufStatus),a
+0497   2BC2 78           ld a,b
+0498   2BC3 E1           pop hl
+0499   2BC4 D1           pop de
+0500   2BC5 C1           pop bc
+0501   2BC6 C9           ret
+0502   2BC7             ; end of net_allocbuffer
+0503   2BC7             
+0504   2BC7             ; *******************************
+0505   2BC7             ; net_freebuffer
+0506   2BC7             ; Marks free a TOC which ID must be stored in (netBufTocId)
+0507   2BC7             nnet_freebuffer:
+0508   2BC7 F5           push af
+0509   2BC8 C5           push bc
+0510   2BC9 DD E5        push ix
+0511   2BCB FD E5        push iy
+0512   2BCD DD 21 00 CC  ld ix,netBufToc
+0513   2BD1 01 0A 00     ld bc,nBuf1TocSize
+0514   2BD4 3A FF CF     ld a,(netBufTocId)
+0515   2BD7 3C           inc a
+0516   2BD8             ntf_gettotoc:
+0517   2BD8 3D           dec a
+0518   2BD9 CA E1 2B     jp z,ntf_gottotoc
+0519   2BDC DD 09        add ix,bc
+0520   2BDE C3 D8 2B     jp ntf_gettotoc
+0521   2BE1             ntf_gottotoc:
+0522   2BE1 DD 7E 00     ld a,(ix+nBufTocStat)
+0523   2BE4 FE 00        cp 0
+0524   2BE6 CA 0B 2C     jp z,ntf_end
+0525   2BE9 AF           xor a
+0526   2BEA 47           ld b,a
+0527   2BEB DD 77 00     ld (ix+nBufTocStat),a
+0528   2BEE DD 4E 01     ld c,(ix+nBufTocNPages)
+0529   2BF1 3A F6 CF     ld a,(netBufUsedPages)
+0530   2BF4 91           sub c
+0531   2BF5 32 F6 CF     ld (netBufUsedPages),a
+0532   2BF8 79           ld a,c
+0533   2BF9 FD 21 EA CF  ld iy,netBufStat
+0534   2BFD             ntf_markpagesfree:
+0535   2BFD DD 4E 04     ld c,(ix+nBufTocPages)
+0536   2C00 FD 09        add iy,bc
+0537   2C02 FD 70 00     ld (iy),b
+0538   2C05 DD 23        inc ix
+0539   2C07 3D           dec a
+0540   2C08 C2 FD 2B     jp nz,ntf_markpagesfree
+0541   2C0B             ntf_end:
+0542   2C0B FD E1        pop iy
+0543   2C0D DD E1        pop ix
+0544   2C0F C1           pop bc
+0545   2C10 F1           pop af
+0546   2C11 C9           ret
+0547   2C12             ; end of net_freebuffer
+0548   2C12             
+0549   2C12             ; end of Memory manager
+0550   2C12             ;**************************************************************
+0551   2C12             
+0552   2C12             ; *******************************
+0553   2C12             ; net_init
+0554   2C12             nnet_init:
+0555   2C12 F3           di
+0556   2C13 E5           push hl
+0557   2C14 D5           push de
+0558   2C15 C5           push bc
+0559   2C16 CD 0C 2A     call net_resetbuf
+0560   2C19             ; Set default ip, netmask, gateway and dns
+0561   2C19 21 12 2A     ld hl,default_ip_settings
+0562   2C1C 11 D0 CF     ld de,IpAddress
+0563   2C1F 01 10 00     ld bc,4*4
+0564   2C22 ED B0        ldir
+0565   2C24             ; Logical and between ip and netmask for later use
+0566   2C24 DD 21 D4 CF  ld ix,NetMask
+0567   2C28 3A D0 CF     ld a,(IpAddress)
+0568   2C2B DD A6 00     and (ix)
+0569   2C2E 32 CC CF     ld (IpMasked),a
+0570   2C31 3A D1 CF     ld a,(IpAddress+1)
+0571   2C34 DD A6 01     and (ix+1)
+0572   2C37 32 CD CF     ld (IpMasked+1),a
+0573   2C3A 3A D2 CF     ld a,(IpAddress+2)
+0574   2C3D DD A6 02     and (ix+2)
+0575   2C40 32 CE CF     ld (IpMasked+2),a
+0576   2C43 3A D3 CF     ld a,(IpAddress+3)
+0577   2C46 DD A6 03     and (ix+3)
+0578   2C49 32 CF CF     ld (IpMasked+3),a
+0579   2C4C             ; Set icmp reply type and code
+0580   2C4C 3E 00        ld a,ICMP_DEFAULT_REPLY_TYPE
+0581   2C4E 32 C6 CF     ld (netIcmpReplyType),a
+0582   2C51 3E 00        ld a,ICMP_DEFAULT_REPLY_CODE
+0583   2C53 32 C7 CF     ld (netIcmpReplyCode),a
+0584   2C56             ; Send kind of 'test packet'
+0585   2C56 AF           xor a
+0586   2C57 32 D4 EA     ld (ethDataPage),a
+0587   2C5A 3A B1 EA     ld a,(etxStartPage)
+0588   2C5D 32 D5 EA     ld (ethDataPage+1),a
+0589   2C60 21 3C 00     ld hl,MIN_ETH_PACKET_SIZE
+0590   2C63 22 D2 EA     ld (ethDataLen),hl
+0591   2C66 21 5B 20     ld hl,test_packet
+0592   2C69 22 D0 EA     ld (ethDataAddr),hl
+0593   2C6C CD 1C 20     call ethSend
+0594   2C6F             ;
+0595   2C6F C1           pop bc
+0596   2C70 D1           pop de
+0597   2C71 E1           pop hl
+0598   2C72 FB           ei
+0599   2C73 C9           ret
+0600   2C74             ; end of nnet_init
+0601   2C74             
+0602   2C74             ; *******************************
+0603   2C74             ; net_handlepacket
+0604   2C74             ; Should be called when a packet arrives from network
+0605   2C74             ; Packet TOC ID must be stored in (netBufTocId)
+0606   2C74             nnet_handlepacket:
+0607   2C74 F5           push af
+0608   2C75 C5           push bc
+0609   2C76 D5           push de
+0610   2C77 E5           push hl
+0611   2C78 FD E5        push iy
+0612   2C7A DD E5        push ix
+0613   2C7C             ; Find out what kind of packet we are dealing with
+0614   2C7C~            #ifdef DEBUG_HANDLEPACKET
+0615   2C7C~             ld a,0
+0616   2C7C~             ld c,SSeg1
+0617   2C7C~             call n_to_7seg
+0618   2C7C~             ld a,$ff
+0619   2C7C~             out (SSeg2),a
+0620   2C7C~             out (SSeg3),a
+0621   2C7C~             out (SSeg4),a
+0622   2C7C             #endif
+0623   2C7C             ; Get toc start into ix
+0624   2C7C DD 21 00 CC  ld ix,netBufToc
+0625   2C80 01 0A 00     ld bc,nBuf1TocSize
+0626   2C83 3A FF CF     ld a,(netBufTocId)
+0627   2C86 3C           inc a
+0628   2C87             nhtf_gettotoc:
+0629   2C87 3D           dec a
+0630   2C88 CA 90 2C     jp z,nhtf_gottotoc
+0631   2C8B DD 09        add ix,bc
+0632   2C8D C3 87 2C     jp nhtf_gettotoc
+0633   2C90             nhtf_gottotoc:
+0634   2C90             ; ld h,0
+0635   2C90             ; ld a,(netBufTocId)
+0636   2C90             ; sla a
+0637   2C90             ; ld l,a
+0638   2C90             ; ld bc,nBufTocPointers
+0639   2C90             ; add hl,bc
+0640   2C90             ; ld c,(hl)
+0641   2C90             ; inc hl
+0642   2C90             ; ld b,(hl)
+0643   2C90             ; ld ix,0
+0644   2C90             ; add ix,bc
+0645   2C90 DD 7E 00     ld a,(ix+nBufTocStat) ;disabled* Check, just for sure, that this
+0646   2C93 FE 01        cp nBufTocReserved    ;TOC is really in use
+0647   2C95 C2 D9 2C     jp nz,nh_end
+0648   2C98 DD 46 04     ld b,(ix+nBufTocPages)
+0649   2C9B 0E 00        ld c,0
+0650   2C9D FD 21 00 C0  ld iy,netBuffer
+0651   2CA1 FD 09        add iy,bc              ;Now iy has the start address of packet's first page
+0652   2CA3             ; Find out what protocol the packet is using
+0653   2CA3 3E 08        ld a,ARP_OR_IP
+0654   2CA5 FD BE 0C     cp (iy+ehType)
+0655   2CA8 C2 BB 2C     jp nz,nh_drop          ; No support for other than ip-protocol (and arp ofcourse)
+0656   2CAB 3E 00        ld a,IP_PACKET 
+0657   2CAD FD BE 0D     cp (iy+ehType+1)
+0658   2CB0 CA D7 2D     jp z,nh_handleippacket
+0659   2CB3 3E 06        ld a,ARP_PACKET 
+0660   2CB5 FD BE 0D     cp (iy+ehType+1)
+0661   2CB8 CA E2 2C     jp z,nh_handlearppacket
+0662   2CBB             ; Now the packet should be handled and the buffer can be set free
+0663   2CBB             nh_drop:
+0664   2CBB             nh_packethandled:
+0665   2CBB             ; This is same as the free-buffer-routine, just little shorter
+0666   2CBB 06 00        ld b,0
+0667   2CBD DD 36 00 00  ld (ix+nBufTocStat),0
+0668   2CC1 DD 4E 01     ld c,(ix+nBufTocNPages)
+0669   2CC4 3A F6 CF     ld a,(netBufUsedPages)
+0670   2CC7 91           sub c
+0671   2CC8 32 F6 CF     ld (netBufUsedPages),a
+0672   2CCB             nhtf_markpagesfree:
+0673   2CCB 21 EA CF     ld hl,netBufStat
+0674   2CCE DD 4E 04     ld c,(ix+nBufTocPages)
+0675   2CD1 09           add hl,bc
+0676   2CD2 70           ld (hl),b
+0677   2CD3 DD 23        inc ix
+0678   2CD5 3D           dec a
+0679   2CD6 C2 CB 2C     jp nz,nhtf_markpagesfree
+0680   2CD9             nhtf_end:
+0681   2CD9             ;
+0682   2CD9             nh_end:
+0683   2CD9~            #ifdef DEBUG_HANDLEPACKET
+0684   2CD9~             ld a,2
+0685   2CD9~             ld c,SSeg1
+0686   2CD9~             call n_to_7seg
+0687   2CD9             #endif
+0688   2CD9 DD E1        pop ix
+0689   2CDB FD E1        pop iy
+0690   2CDD E1           pop hl
+0691   2CDE D1           pop de
+0692   2CDF C1           pop bc
+0693   2CE0 F1           pop af
+0694   2CE1 C9           ret
+0695   2CE2              
+0696   2CE2             ; *******************************
+0697   2CE2             ;
+0698   2CE2             ; Handle an arp-packet
+0699   2CE2             ;
+0700   2CE2             nh_handlearppacket:
+0701   2CE2~            #ifdef DEBUG_HANDLEPACKET
+0702   2CE2~             ld a,0
+0703   2CE2~             ld c,SSeg2
+0704   2CE2~             call n_to_7seg
+0705   2CE2             #endif
+0706   2CE2             ; Here could be checked if the packet is too small, but
+0707   2CE2             ; the NIC drivers should already have checked that the packet
+0708   2CE2             ; is atleast 60 bytes long.
+0709   2CE2             ; ld a,(ix+nBufTocLen+1)
+0710   2CE2             ; cp 0
+0711   2CE2             ; jp nz,nh_enough
+0712   2CE2             ; ld a,(ix+nBufTocLen)
+0713   2CE2             ; cp ehDlcSize+ehArpSize
+0714   2CE2             ; jp c,nh_packethandled
+0715   2CE2             ;nh_enough:
+0716   2CE2 AF           xor a
+0717   2CE3 FD BE 14     cp (iy+ehArpOpCode)
+0718   2CE6 C2 BB 2C     jp nz,nh_packethandled
+0719   2CE9 FD 7E 15     ld a,(iy+ehArpOpCode+1)
+0720   2CEC FE 01        cp ARP_REQUEST
+0721   2CEE CA F9 2C     jp z,nh_arprequest
+0722   2CF1 FE 02        cp ARP_REPLY
+0723   2CF3 C2 BB 2C     jp nz,nh_packethandled
+0724   2CF6             ; *******************************
+0725   2CF6             nh_arpreply:
+0726   2CF6~            #ifdef DEBUG_HANDLEPACKET
+0727   2CF6~             ld a,0
+0728   2CF6~             ld c,SSeg3
+0729   2CF6~             call n_to_7seg
+0730   2CF6             #endif
+0731   2CF6 C3 BB 2C     jp nh_packethandled
+0732   2CF9             ; *******************************
+0733   2CF9             nh_arprequest:
+0734   2CF9~            #ifdef DEBUG_HANDLEPACKET
+0735   2CF9~             ld a,8
+0736   2CF9~             ld c,SSeg3
+0737   2CF9~             call n_to_7seg
+0738   2CF9             #endif
+0739   2CF9             ; Check that is the ip-address this node's
+0740   2CF9 3A D0 CF     ld a,(IpAddress)
+0741   2CFC FD BE 26     cp (iy+ehArpTargetIp)
+0742   2CFF C2 BB 2C     jp nz,nh_packethandled
+0743   2D02 3A D1 CF     ld a,(IpAddress+1)
+0744   2D05 FD BE 27     cp (iy+ehArpTargetIp+1)
+0745   2D08 C2 BB 2C     jp nz,nh_packethandled
+0746   2D0B 3A D2 CF     ld a,(IpAddress+2)
+0747   2D0E FD BE 28     cp (iy+ehArpTargetIp+2)
+0748   2D11 C2 BB 2C     jp nz,nh_packethandled
+0749   2D14 3A D3 CF     ld a,(IpAddress+3)
+0750   2D17 FD BE 29     cp (iy+ehArpTargetIp+3)
+0751   2D1A C2 BB 2C     jp nz,nh_packethandled
+0752   2D1D~            #ifdef DEBUG_HANDLEPACKET
+0753   2D1D~             ld a,9
+0754   2D1D~             ld c,SSeg3
+0755   2D1D~             call n_to_7seg
+0756   2D1D             #endif
+0757   2D1D             ; This ARP-request was meant for this node
+0758   2D1D             ; Set opcode to ARP-reply
+0759   2D1D             ; ld (iy+ehArpOpCode),0
+0760   2D1D FD 36 15 02  ld (iy+ehArpOpCode+1),ARP_REPLY
+0761   2D21             ; Set target MAC-address (horrifying long, but faster than a loop)
+0762   2D21             #define nh__set_target_mac_address(fix) ld a,(iy+ehArpSourceHw+fix)
+0763   2D21             #defcont \ ld (iy+ehArpTargetHw+fix),a
+0764   2D21             #defcont \ ld (iy+ehTarget+fix),a
+0765   2D21 FD 7E 16     nh__set_target_mac_address(0)
+0765   2D24 FD 77 20    
+0765   2D27 FD 77 00    
+0766   2D2A FD 7E 17     nh__set_target_mac_address(1)
+0766   2D2D FD 77 21    
+0766   2D30 FD 77 01    
+0767   2D33 FD 7E 18     nh__set_target_mac_address(2)
+0767   2D36 FD 77 22    
+0767   2D39 FD 77 02    
+0768   2D3C FD 7E 19     nh__set_target_mac_address(3)
+0768   2D3F FD 77 23    
+0768   2D42 FD 77 03    
+0769   2D45 FD 7E 1A     nh__set_target_mac_address(4)
+0769   2D48 FD 77 24    
+0769   2D4B FD 77 04    
+0770   2D4E FD 7E 1B     nh__set_target_mac_address(5)
+0770   2D51 FD 77 25    
+0770   2D54 FD 77 05    
+0771   2D57             ; Set source MAC-address
+0772   2D57             #define nh__set_source_mac_address(fix) ld a,(HWADDRESS+fix)
+0773   2D57             #defcont \ ld (iy+ehArpSourceHw+fix),a
+0774   2D57             #defcont \ ld (iy+ehSource+fix),a
+0775   2D57 3A 87 20     nh__set_source_mac_address(0)
+0775   2D5A FD 77 16    
+0775   2D5D FD 77 06    
+0776   2D60 3A 88 20     nh__set_source_mac_address(1)
+0776   2D63 FD 77 17    
+0776   2D66 FD 77 07    
+0777   2D69 3A 89 20     nh__set_source_mac_address(2)
+0777   2D6C FD 77 18    
+0777   2D6F FD 77 08    
+0778   2D72 3A 8A 20     nh__set_source_mac_address(3)
+0778   2D75 FD 77 19    
+0778   2D78 FD 77 09    
+0779   2D7B 3A 8B 20     nh__set_source_mac_address(4)
+0779   2D7E FD 77 1A    
+0779   2D81 FD 77 0A    
+0780   2D84 3A 8C 20     nh__set_source_mac_address(5)
+0780   2D87 FD 77 1B    
+0780   2D8A FD 77 0B    
+0781   2D8D             ; Set target IP-address
+0782   2D8D             #define nh__set_target_ip(fix) ld a,(iy+ehArpSourceIp+fix)
+0783   2D8D             #defcont \ ld (iy+ehArpTargetIp+fix),a
+0784   2D8D FD 7E 1C     nh__set_target_ip(0)
+0784   2D90 FD 77 26    
+0785   2D93 FD 7E 1D     nh__set_target_ip(1)
+0785   2D96 FD 77 27    
+0786   2D99 FD 7E 1E     nh__set_target_ip(2)
+0786   2D9C FD 77 28    
+0787   2D9F FD 7E 1F     nh__set_target_ip(3)
+0787   2DA2 FD 77 29    
+0788   2DA5             ; Set source IP-address
+0789   2DA5             #define nh__set_source_ip(fix) ld a,(IpAddress+fix)
+0790   2DA5             #defcont \ ld (iy+ehArpSourceIp+fix),a
+0791   2DA5 3A D0 CF     nh__set_source_ip(0)
+0791   2DA8 FD 77 1C    
+0792   2DAB 3A D1 CF     nh__set_source_ip(1)
+0792   2DAE FD 77 1D    
+0793   2DB1 3A D2 CF     nh__set_source_ip(2)
+0793   2DB4 FD 77 1E    
+0794   2DB7 3A D3 CF     nh__set_source_ip(3)
+0794   2DBA FD 77 1F    
+0795   2DBD             ; Send this packet
+0796   2DBD~            #ifdef DEBUG_HANDLEPACKET
+0797   2DBD~             ld a,$a
+0798   2DBD~             ld c,SSeg3
+0799   2DBD~             call n_to_7seg
+0800   2DBD             #endif
+0801   2DBD AF           xor a
+0802   2DBE 32 D4 EA     ld (ethDataPage),a
+0803   2DC1 3A B1 EA     ld a,(etxStartPage)
+0804   2DC4 32 D5 EA     ld (ethDataPage+1),a
+0805   2DC7 21 3C 00     ld hl,MIN_ETH_PACKET_SIZE
+0806   2DCA 22 D2 EA     ld (ethDataLen),hl
+0807   2DCD FD 22 D0 EA  ld (ethDataAddr),iy
+0808   2DD1 CD 1C 20     call ethSend
+0809   2DD4~            #ifdef DEBUG_HANDLEPACKET
+0810   2DD4~             ld a,$b
+0811   2DD4~             ld c,SSeg3
+0812   2DD4~             call n_to_7seg
+0813   2DD4             #endif
+0814   2DD4 C3 BB 2C     jp nh_packethandled
+0815   2DD7             ; end of handing of arp-packet
+0816   2DD7             
+0817   2DD7             ; *******************************
+0818   2DD7             ;
+0819   2DD7             ; Handle an ip-packet
+0820   2DD7             ;
+0821   2DD7             nh_handleippacket:
+0822   2DD7~            #ifdef DEBUG_HANDLEPACKET
+0823   2DD7~             ld a,1
+0824   2DD7~             ld c,SSeg2
+0825   2DD7~             call n_to_7seg
+0826   2DD7             #endif
+0827   2DD7             ; Check that the packet is valid
+0828   2DD7 3E 45        ld a,$45
+0829   2DD9 FD BE 0E     cp (iy+ehIpVhl)
+0830   2DDC C2 BB 2C     jp nz,nh_drop
+0831   2DDF             ; Here should be checked that the ip packet lenght is valid,
+0832   2DDF             ; but it is left out for now
+0833   2DDF             ; No ip fragments allowed
+0834   2DDF FD 7E 14     ld a,(iy+ehIpOffset)
+0835   2DE2 E6 3F        and $3f
+0836   2DE4 C2 BB 2C     jp nz,nh_drop
+0837   2DE7             ; Check if the packet is for us
+0838   2DE7 3A D3 CF     ld a,(IpAddress+3)
+0839   2DEA FD BE 21     cp (iy+ehIpTarget+3)
+0840   2DED C2 31 2E     jp nz,nhip_arpupdate
+0841   2DF0 3A D2 CF     ld a,(IpAddress+2)
+0842   2DF3 FD BE 20     cp (iy+ehIpTarget+2)
+0843   2DF6 C2 31 2E     jp nz,nhip_arpupdate
+0844   2DF9 3A D1 CF     ld a,(IpAddress+1)
+0845   2DFC FD BE 1F     cp (iy+ehIpTarget+1)
+0846   2DFF C2 31 2E     jp nz,nhip_arpupdate
+0847   2E02 3A D0 CF     ld a,(IpAddress)
+0848   2E05 FD BE 1E     cp (iy+ehIpTarget)
+0849   2E08 C2 31 2E     jp nz,nhip_arpupdate
+0850   2E0B             ; This packet is for us
+0851   2E0B             ; Check checksum
+0852   2E0B FD E5        push iy
+0853   2E0D 01 0E 00     ld bc,ehDlcSize
+0854   2E10 FD 09        add iy,bc
+0855   2E12 FD 22 C8 CF  ld (netChksumAddr),iy
+0856   2E16 01 14 00     ld bc,ehIpSize
+0857   2E19 ED 43 CA CF  ld (netChksumCount),bc
+0858   2E1D CD F6 2F     call chksum
+0859   2E20 FD E1        pop iy
+0860   2E22 01 01 00     ld bc,1
+0861   2E25 09           add hl,bc
+0862   2E26 D2 BB 2C     jp nc,nh_drop          ;If checksum failed then jump
+0863   2E29             ; Find out what ip-protocol the packet is  using
+0864   2E29 3E 01        ld a,IP_PROTO_ICMP
+0865   2E2B FD BE 17     cp (iy+ehIpProto)
+0866   2E2E CA 95 2E     jp z,nhip_icmp
+0867   2E31             nhip_arpupdate:
+0868   2E31             ; Use netmask to the packet ip
+0869   2E31             ; and compare packet and this node ip address with netmask
+0870   2E31             ; to see if the packet came from LAN
+0871   2E31 ED 5B CC CF  ld de,(IpMasked)
+0872   2E35 ED 4B CE CF  ld bc,(IpMasked+2)
+0873   2E39 21 D4 CF     ld hl,NetMask
+0874   2E3C FD 7E 1A     ld a,(iy+ehIpSource)
+0875   2E3F 32 E6 CF     ld (netIpAddress),a
+0876   2E42 A6           and (hl)
+0877   2E43 BB           cp e
+0878   2E44 C2 92 2E     jp nz,nhip_notlan
+0879   2E47 FD 7E 1B     ld a,(iy+ehIpSource+1)
+0880   2E4A 32 E7 CF     ld (netIpAddress+1),a
+0881   2E4D 23           inc hl
+0882   2E4E A6           and (hl)
+0883   2E4F BA           cp d
+0884   2E50 C2 92 2E     jp nz,nhip_notlan
+0885   2E53 FD 7E 1C     ld a,(iy+ehIpSource+2)
+0886   2E56 32 E8 CF     ld (netIpAddress+2),a
+0887   2E59 23           inc hl
+0888   2E5A A6           and (hl)
+0889   2E5B B9           cp c
+0890   2E5C C2 92 2E     jp nz,nhip_notlan
+0891   2E5F FD 7E 1D     ld a,(iy+ehIpSource+3)
+0892   2E62 32 E9 CF     ld (netIpAddress+3),a
+0893   2E65 23           inc hl
+0894   2E66 A6           and (hl)
+0895   2E67 B8           cp b
+0896   2E68 C2 92 2E     jp nz,nhip_notlan
+0897   2E6B             ; Packet came from LAN, update ARP-table
+0898   2E6B             ; Copy the packet ip and mac
+0899   2E6B             #define nh__copy_mac(fix) ld a,(iy+ehSource+fix)
+0900   2E6B             #defcont \ ld (netMacAddress+fix),a
+0901   2E6B FD 7E 06     nh__copy_mac(0)
+0901   2E6E 32 E0 CF    
+0902   2E71 FD 7E 07     nh__copy_mac(1)
+0902   2E74 32 E1 CF    
+0903   2E77 FD 7E 08     nh__copy_mac(2)
+0903   2E7A 32 E2 CF    
+0904   2E7D FD 7E 09     nh__copy_mac(3)
+0904   2E80 32 E3 CF    
+0905   2E83 FD 7E 0A     nh__copy_mac(4)
+0905   2E86 32 E4 CF    
+0906   2E89 FD 7E 0B     nh__copy_mac(5)
+0906   2E8C 32 E5 CF    
+0907   2E8F CD 49 30     call arp_update
+0908   2E92             nhip_notlan:
+0909   2E92 C3 BB 2C     jp nh_packethandled
+0910   2E95             
+0911   2E95             ; *******************************
+0912   2E95             ;
+0913   2E95             ; Handle icmp-packet
+0914   2E95             ;
+0915   2E95             nhip_icmp:
+0916   2E95~            #ifdef DEBUG_HANDLEPACKET
+0917   2E95~             ld a,0
+0918   2E95~             ld c,SSeg3
+0919   2E95~             call n_to_7seg
+0920   2E95             #endif
+0921   2E95             ; Here should be checked icmp-packet's checksum
+0922   2E95             ; but it is not so important than sparing cpu
+0923   2E95             ; time for more important things
+0924   2E95             ;
+0925   2E95             ; Limit icmp-packet size
+0926   2E95             ; If size is bigger than ICMP_MAX_SIZE
+0927   2E95             ; then just drop the packet
+0928   2E95             ; (Absolut maximum is 254)
+0929   2E95 AF           xor a
+0930   2E96 DD BE 03     cp (ix+nBufTocLen+1)
+0931   2E99 C2 BB 2C     jp nz,nh_drop
+0932   2E9C DD 7E 02     ld a,(ix+nBufTocLen)
+0933   2E9F FE 67        cp IP_ICMP_MAX_SIZE+1
+0934   2EA1 D2 BB 2C     jp nc,nh_drop
+0935   2EA4 3E 08        ld a,ICMP_ECHO
+0936   2EA6 FD BE 22     cp (iy+ehIcmpType)
+0937   2EA9 CA B7 2E     jp z,nhicmp_echo
+0938   2EAC 3E 00        ld a,ICMP_ECHO_REPLY
+0939   2EAE FD BE 22     cp (iy+ehIcmpType)
+0940   2EB1 CA F3 2F     jp z,nhicmp_reply
+0941   2EB4 C3 31 2E     jp nhip_arpupdate
+0942   2EB7             ; *******************************
+0943   2EB7             nhicmp_echo:
+0944   2EB7~            #ifdef DEBUG_HANDLEPACKET
+0945   2EB7~             ld a,0
+0946   2EB7~             ld c,SSeg4
+0947   2EB7~             call n_to_7seg
+0948   2EB7             #endif
+0949   2EB7             ; Check that is the icmp echo-reply
+0950   2EB7             ; denied totaly and if it is then
+0951   2EB7             ; just drop the packet
+0952   2EB7 3A C6 CF     ld a,(netIcmpReplyType)
+0953   2EBA FE 07        cp ICMP_DROP
+0954   2EBC CA BB 2C     jp z,nh_drop
+0955   2EBF             ; Just answer to the echo with the type
+0956   2EBF             ; and code defined in (netIcmpReply[Type,Code])
+0957   2EBF FE 03        cp ICMP_UNREACHABLE
+0958   2EC1 CC C3 2F     call z,icmp_unreachable
+0959   2EC4 FD 77 22     ld (iy+ehIcmpType),a
+0960   2EC7 FD 36 16 20  ld (iy+ehIpTtl),IP_ICMP_ECHO_TTL
+0961   2ECB             ;
+0962   2ECB             #define nhicmp__mac(fix) ld a,(iy+ehSource+fix)
+0963   2ECB             #defcont \ ld (iy+ehTarget+fix),a
+0964   2ECB             #defcont \ ld a,(HWADDRESS+fix)
+0965   2ECB             #defcont \ ld (iy+ehSource+fix),a
+0966   2ECB             #define nhicmp__ip(fix) ld a,(iy+ehIpSource+fix)
+0967   2ECB             #defcont \ ld (iy+ehIpTarget+fix),a
+0968   2ECB             #defcont \ ld a,(IpAddress+fix)
+0969   2ECB             #defcont \ ld (iy+ehIpSource+fix),a
+0970   2ECB FD 7E 06     nhicmp__mac(0)
+0970   2ECE FD 77 00    
+0970   2ED1 3A 87 20    
+0970   2ED4 FD 77 06    
+0971   2ED7 FD 7E 07     nhicmp__mac(1)
+0971   2EDA FD 77 01    
+0971   2EDD 3A 88 20    
+0971   2EE0 FD 77 07    
+0972   2EE3 FD 7E 08     nhicmp__mac(2)
+0972   2EE6 FD 77 02    
+0972   2EE9 3A 89 20    
+0972   2EEC FD 77 08    
+0973   2EEF FD 7E 09     nhicmp__mac(3)
+0973   2EF2 FD 77 03    
+0973   2EF5 3A 8A 20    
+0973   2EF8 FD 77 09    
+0974   2EFB FD 7E 0A     nhicmp__mac(4)
+0974   2EFE FD 77 04    
+0974   2F01 3A 8B 20    
+0974   2F04 FD 77 0A    
+0975   2F07 FD 7E 0B     nhicmp__mac(5)
+0975   2F0A FD 77 05    
+0975   2F0D 3A 8C 20    
+0975   2F10 FD 77 0B    
+0976   2F13 FD 7E 1A     nhicmp__ip(0)
+0976   2F16 FD 77 1E    
+0976   2F19 3A D0 CF    
+0976   2F1C FD 77 1A    
+0977   2F1F FD 7E 1B     nhicmp__ip(1)
+0977   2F22 FD 77 1F    
+0977   2F25 3A D1 CF    
+0977   2F28 FD 77 1B    
+0978   2F2B FD 7E 1C     nhicmp__ip(2)
+0978   2F2E FD 77 20    
+0978   2F31 3A D2 CF    
+0978   2F34 FD 77 1C    
+0979   2F37 FD 7E 1D     nhicmp__ip(3)
+0979   2F3A FD 77 21    
+0979   2F3D 3A D3 CF    
+0979   2F40 FD 77 1D    
+0980   2F43             ; Set up sending parameters
+0981   2F43 AF           xor a
+0982   2F44 32 D3 EA     ld (ethDataLen+1),a
+0983   2F47 FD 77 10     ld (iy+ehIpLen),a
+0984   2F4A FD 22 D0 EA  ld (ethDataAddr),iy
+0985   2F4E DD 7E 02     ld a,(ix+nBufTocLen)
+0986   2F51 32 D2 EA     ld (ethDataLen),a
+0987   2F54 D6 0E        sub ehDlcSize
+0988   2F56 FD 77 11     ld (iy+ehIpLen+1),a
+0989   2F59 3A 80 EB     ld a,(uptime)
+0990   2F5C FD 86 12     add a,(iy+ehIpId)
+0991   2F5F FD 77 12     ld (iy+ehIpId),a
+0992   2F62 FD 86 13     add a,(iy+ehIpId+1)
+0993   2F65 FD 77 13     ld (iy+ehIpId+1),a
+0994   2F68             ; Calculate checksums
+0995   2F68 FD 36 18 00  ld (iy+ehIpChecksum),0
+0996   2F6C FD 36 19 00  ld (iy+ehIpChecksum+1),0
+0997   2F70 FD 36 24 00  ld (iy+ehIcmpChecksum),0
+0998   2F74 FD 36 25 00  ld (iy+ehIcmpChecksum+1),0
+0999   2F78 FD E5        push iy
+1000   2F7A 01 14 00     ld bc,ehIpSize
+1001   2F7D ED 43 CA CF  ld (netChksumCount),bc
+1002   2F81 01 0E 00     ld bc,ehDlcSize
+1003   2F84 FD 09        add iy,bc
+1004   2F86 FD 22 C8 CF  ld (netChksumAddr),iy
+1005   2F8A CD F6 2F     call chksum
+1006   2F8D ED 5B C8 CF  ld de,(netChksumAddr)
+1007   2F91 DD 7E 02     ld a,(ix+nBufTocLen)
+1008   2F94 D6 22        sub ehDlcSize+ehIpSize
+1009   2F96 32 CA CF     ld (netChksumCount),a
+1010   2F99 AF           xor a
+1011   2F9A 32 CB CF     ld (netChksumCount+1),a
+1012   2F9D 01 14 00     ld bc,ehIpSize
+1013   2FA0 FD 09        add iy,bc
+1014   2FA2 FD 22 C8 CF  ld (netChksumAddr),iy
+1015   2FA6 CD F6 2F     call chksum
+1016   2FA9 FD E1        pop iy
+1017   2FAB FD 72 18     ld (iy+ehIpChecksum),d
+1018   2FAE FD 73 19     ld (iy+ehIpChecksum+1),e
+1019   2FB1 3A C9 CF     ld a,(netChksumAddr+1)
+1020   2FB4 FD 77 24     ld (iy+ehIcmpChecksum),a
+1021   2FB7 3A C8 CF     ld a,(netChksumAddr)
+1022   2FBA FD 77 25     ld (iy+ehIcmpChecksum+1),a
+1023   2FBD             ; Send
+1024   2FBD CD 1C 20     call ethSend
+1025   2FC0 C3 31 2E     jp nhip_arpupdate
+1026   2FC3             ; icmp-reply type is destination unreachable
+1027   2FC3             icmp_unreachable:
+1028   2FC3 FD 22 C8 CF  ld (netChksumAddr),iy
+1029   2FC7 2A C8 CF     ld hl,(netChksumAddr)
+1030   2FCA 54           ld d,h
+1031   2FCB 5D           ld e,l
+1032   2FCC 01 65 00     ld bc,ehDlcSize+ehIpSize+ehIcmpSize+ehIpSize+39
+1033   2FCF 09           add hl,bc
+1034   2FD0 EB           ex de,hl
+1035   2FD1 01 49 00     ld bc,ehDlcSize+ehIpSize+39
+1036   2FD4 09           add hl,bc
+1037   2FD5 01 3C 00     ld bc,ehIpSize+40
+1038   2FD8 ED B8        lddr
+1039   2FDA 3E 66        ld a,ehDlcSize+ehIpSize+ehIcmpSize+ehIpSize+40
+1040   2FDC DD 77 02     ld (ix+nBufTocLen),a
+1041   2FDF 3E C0        ld a,$c0
+1042   2FE1 FD 77 0F     ld (iy+ehIpTos),a
+1043   2FE4 3E 40        ld a,$40               ; No fragmentation allowed
+1044   2FE6 FD 77 14     ld (iy+ehIpOffset),a
+1045   2FE9             ; ld a,ICMP_UNREACHABLE_TTL
+1046   2FE9             ; ld (iy+ehIpTtl),a
+1047   2FE9 3A C7 CF     ld a,(netIcmpReplyCode)
+1048   2FEC FD 77 23     ld (iy+ehIcmpCode),a
+1049   2FEF             ;
+1050   2FEF 3A C6 CF     ld a,(netIcmpReplyType)
+1051   2FF2 C9           ret
+1052   2FF3             ; *******************************
+1053   2FF3             nhicmp_reply:
+1054   2FF3~            #ifdef DEBUG_HANDLEPACKET
+1055   2FF3~             ld a,1
+1056   2FF3~             ld c,SSeg4
+1057   2FF3~             call n_to_7seg
+1058   2FF3             #endif
+1059   2FF3 C3 31 2E     jp nhip_arpupdate
+1060   2FF6             ; end of handling icmp-packet 
+1061   2FF6             
+1062   2FF6             ; end of handling ip-packet 
+1063   2FF6             
+1064   2FF6             ; end of net_handlepacket
+1065   2FF6             
+1066   2FF6             ; *******************************
+1067   2FF6             ; chksum
+1068   2FF6             ; Calculates checksum of example ip-header
+1069   2FF6             ; Data address in (netChksumAddr) and count in (netChksumCount)
+1070   2FF6             ; Returns checksum in (netChksumAddr) and in hl as inversed
+1071   2FF6             chksum:
+1072   2FF6             ; push af
+1073   2FF6 C5           push bc
+1074   2FF7 D5           push de
+1075   2FF8             ; push hl
+1076   2FF8 DD E5        push ix
+1077   2FFA 21 00 00     ld hl,0
+1078   2FFD DD 2A C8 CF  ld ix,(netChksumAddr)
+1079   3001 ED 4B CA CF  ld bc,(netChksumCount)
+1080   3005 CB 38        srl b
+1081   3007 CB 19        rr c
+1082   3009 04           inc b
+1083   300A B7           or a
+1084   300B             chks_loop:
+1085   300B DD 56 00     ld d,(ix)
+1086   300E DD 5E 01     ld e,(ix+1)
+1087   3011 DD 23        inc ix
+1088   3013 DD 23        inc ix
+1089   3015 ED 5A        adc hl,de
+1090   3017 0D           dec c
+1091   3018 C2 0B 30     jp nz,chks_loop
+1092   301B 05           dec b
+1093   301C C2 0B 30     jp nz,chks_loop
+1094   301F 11 00 00     ld de,0
+1095   3022 ED 5A        adc hl,de
+1096   3024 3A CA CF     ld a,(netChksumCount)
+1097   3027 E6 01        and 1
+1098   3029 CA 38 30     jp z,chks_noodd
+1099   302C DD 56 00     ld d,(ix)
+1100   302F 1E 00        ld e,0
+1101   3031 ED 5A        adc hl,de
+1102   3033 11 00 00     ld de,0
+1103   3036 ED 5A        adc hl,de
+1104   3038             chks_noodd:
+1105   3038 7C           ld a,h
+1106   3039 EE FF        xor $ff
+1107   303B 32 C9 CF     ld (netChksumAddr+1),a
+1108   303E 7D           ld a,l
+1109   303F EE FF        xor $ff
+1110   3041 32 C8 CF     ld (netChksumAddr),a
+1111   3044 DD E1        pop ix
+1112   3046             ; pop hl
+1113   3046 D1           pop de
+1114   3047 C1           pop bc
+1115   3048             ; pop af
+1116   3048 C9           ret 
+1117   3049             
+1118   3049             ; *******************************
+1119   3049             ; arp_update
+1120   3049             ; Updates ARP-table
+1121   3049             ; Incoming packets IP-address must be stored in (netIpAddress)
+1122   3049             ; and MAC-address in (netMacAddress)
+1123   3049             arp_update:
+1124   3049             ; Pushs and pops should be enabled if this routine
+1125   3049             ; is called from else where than net_handlepacket
+1126   3049             ; push af
+1127   3049             ; push bc
+1128   3049             ; push de
+1129   3049             ; push hl
+1130   3049 FD E5        push iy
+1131   304B DD E5        push ix
+1132   304D 0E 11        ld c,nArpTables+1
+1133   304F 11 0C 00     ld de,nArp1TabSize
+1134   3052 DD 21 44 CC  ld ix,netArpTable-nArp1TabSize
+1135   3056             aup_findupdate:
+1136   3056 AF           xor a
+1137   3057 DD 19        add ix,de
+1138   3059 0D           dec c
+1139   305A CA 8A 30     jp z,aup_noold
+1140   305D DD BE 00     cp (ix+nArpTabStat)
+1141   3060 CA 56 30     jp z,aup_findupdate
+1142   3063 3A E6 CF     ld a,(netIpAddress)
+1143   3066 DD BE 08     cp (ix+nArpTabIp)
+1144   3069 C2 56 30     jp nz,aup_findupdate
+1145   306C 3A E7 CF     ld a,(netIpAddress+1)
+1146   306F DD BE 09     cp (ix+nArpTabIp+1)
+1147   3072 C2 56 30     jp nz,aup_findupdate
+1148   3075 3A E8 CF     ld a,(netIpAddress+2)
+1149   3078 DD BE 0A     cp (ix+nArpTabIp+2)
+1150   307B C2 56 30     jp nz,aup_findupdate
+1151   307E 3A E9 CF     ld a,(netIpAddress+3)
+1152   3081 DD BE 0B     cp (ix+nArpTabIp+3)
+1153   3084 C2 56 30     jp nz,aup_findupdate
+1154   3087 C3 E9 30     jp aup_end
+1155   308A             aup_noold:
+1156   308A 0E 11        ld c,nArpTables+1
+1157   308C 16 00        ld d,0
+1158   308E 1E 0C        ld e,nArp1TabSize
+1159   3090 DD 21 44 CC  ld ix,netArpTable-nArp1TabSize
+1160   3094 AF           xor a
+1161   3095             aup_findempty:
+1162   3095 DD 19        add ix,de
+1163   3097 0D           dec c
+1164   3098 CA A4 30     jp z,aup_noempty
+1165   309B DD BE 00     cp (ix+nArpTabStat)
+1166   309E C2 95 30     jp nz,aup_findempty
+1167   30A1 C3 D5 30     jp aup_ipend
+1168   30A4             aup_noempty:
+1169   30A4 0E 10        ld c,nArpTables
+1170   30A6 16 00        ld d,0
+1171   30A8 1E 0C        ld e,nArp1TabSize
+1172   30AA FD 21 50 CC  ld iy,netArpTable
+1173   30AE DD 21 50 CC  ld ix,netArpTable
+1174   30B2 DD 7E 28     ld a,(ix+nArpDate)
+1175   30B5             aup_findoldest:
+1176   30B5 FD 19        add iy,de
+1177   30B7 0D           dec c
+1178   30B8 CA D5 30     jp z,aup_ipend
+1179   30BB FD BE 01     cp (iy+nArpTabDate)
+1180   30BE DA B5 30     jp c,aup_findoldest
+1181   30C1 AF           xor a
+1182   30C2 FD BE 00     cp (iy+nArpTabStat)
+1183   30C5 DD 7E 01     ld a,(ix+nArpTabDate)
+1184   30C8 CA B5 30     jp z,aup_findoldest
+1185   30CB FD E5        push iy
+1186   30CD DD E1        pop ix
+1187   30CF DD 7E 01     ld a,(ix+nArpTabDate)
+1188   30D2 C3 B5 30     jp aup_findoldest
+1189   30D5             aup_ipend:
+1190   30D5 ED 4B E6 CF  ld bc,(netIpAddress)
+1191   30D9 ED 5B E8 CF  ld de,(netIpAddress+2)
+1192   30DD DD 71 08     ld (ix+nArpTabIp),c
+1193   30E0 DD 70 09     ld (ix+nArpTabIp+1),b
+1194   30E3 DD 73 0A     ld (ix+nArpTabIp+2),e
+1195   30E6 DD 72 0B     ld (ix+nArpTabIp+3),d
+1196   30E9             aup_end:
+1197   30E9 3E 28        ld a,nArpDate
+1198   30EB ED 4B E0 CF  ld bc,(netMacAddress)
+1199   30EF ED 5B E2 CF  ld de,(netMacAddress+2)
+1200   30F3 2A E4 CF     ld hl,(netMacAddress+4)
+1201   30F6 DD 77 00     ld (ix+nArpTabStat),a
+1202   30F9 DD 77 01     ld (ix+nArpTabDate),a
+1203   30FC DD 71 02     ld (ix+nArpTabMAC),c
+1204   30FF DD 70 03     ld (ix+nArpTabMAC+1),b
+1205   3102 DD 73 04     ld (ix+nArpTabMAC+2),e
+1206   3105 DD 72 05     ld (ix+nArpTabMAC+3),d
+1207   3108 DD 75 06     ld (ix+nArpTabMAC+4),l
+1208   310B DD 74 07     ld (ix+nArpTabMAC+5),h
+1209   310E DD E1        pop ix
+1210   3110 FD E1        pop iy
+1211   3112             ; pop hl
+1212   3112             ; pop de
+1213   3112             ; pop bc
+1214   3112             ; pop af
+1215   3112 C9           ret
+1216   3113             ; end of arp_update
+1217   3113             
+1218   3113             ; end of TCP/IP & ARP
+1219   3113             ;**************************************************************
+1220   3113             
+1221   3113             ; Something for testing
+1222   3A00             .org $3a00
+1223   3A00             test1:
+1224   3A00 06 00        ld b,0
+1225   3A02             t1_loop:
+1226   3A02 ED 79        out (c),a
+1227   3A04 10 FC        djnz t1_loop
+1228   3A06 C9           ret
+1229   3A07             
+1230   3A20             .org $3a20
+1231   3A20             test2:
+1232   3A20 06 00        ld b,0
+1233   3A22             t2_loop:
+1234   3A22 ED 79        out (c),a
+1235   3A24 3C           inc a
+1236   3A25 10 FB        djnz t2_loop
+1237   3A27 C9           ret
+1238   3A28             
+1239   3A20             .org $3a20
+1240   3A20             test4:
+1241   3A20 0E E0        ld c,$e0
+1242   3A22 06 00        ld b,0
+1243   3A24             t4_loop:
+1244   3A24 79           ld a,c
+1245   3A25 D3 01        out (SSeg1),a
+1246   3A27 AF           xor a
+1247   3A28 ED 79        out (c),a
+1248   3A2A 10 F8        djnz t4_loop
+1249   3A2C 11 E8 03     ld de,1000
+1250   3A2F CD 54 05     call Delayms
+1251   3A32 0C           inc c
+1252   3A33 C2 24 3A     jp nz,t4_loop
+1253   3A36 C9           ret
+1254   3A37             
+1255   3A60             .org $3a60
+1256   3A60             test3:
+1257   3A60 06 00        ld b,0
+1258   3A62             t3_loop:
+1259   3A62 D3 E0        out ($e0),a
+1260   3A64 D3 E1        out ($e1),a
+1261   3A66 D3 E2        out ($e2),a
+1262   3A68 D3 E3        out ($e3),a
+1263   3A6A D3 E4        out ($e4),a
+1264   3A6C D3 E5        out ($e5),a
+1265   3A6E D3 E6        out ($e6),a
+1266   3A70 D3 E7        out ($e7),a
+1267   3A72             
+1268   3A72 D3 E8        out ($e8),a
+1269   3A74 D3 E9        out ($e9),a
+1270   3A76 D3 EA        out ($ea),a
+1271   3A78 D3 EB        out ($eb),a
+1272   3A7A D3 EC        out ($ec),a
+1273   3A7C D3 ED        out ($ed),a
+1274   3A7E D3 EE        out ($ee),a
+1275   3A80 D3 EF        out ($ef),a
+1276   3A82             
+1277   3A82 D3 F0        out ($f0),a
+1278   3A84 D3 F1        out ($f1),a
+1279   3A86 D3 F2        out ($f2),a
+1280   3A88 D3 F3        out ($f3),a
+1281   3A8A D3 F4        out ($f4),a
+1282   3A8C D3 F5        out ($f5),a
+1283   3A8E D3 F6        out ($f6),a
+1284   3A90 D3 F7        out ($f7),a
+1285   3A92             
+1286   3A92 D3 F8        out ($f8),a
+1287   3A94 D3 F9        out ($f9),a
+1288   3A96 D3 FA        out ($fa),a
+1289   3A98 D3 FB        out ($fb),a
+1290   3A9A D3 FC        out ($fc),a
+1291   3A9C D3 FD        out ($fd),a
+1292   3A9E D3 FE        out ($fe),a
+1293   3AA0 D3 FF        out ($ff),a
+1294   3AA2             
+1295   3AA2 10 BE        djnz t3_loop
+1296   3AA4 C9           ret
+1297   3AA5             
+1298   3AA5             ;
+1299   3AA5             #ifdef ALONE
+1300   3AA5             .end
+1301   3AA5             #endif
+tasm: Number of errors = 0

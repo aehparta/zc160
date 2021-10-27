@@ -1,0 +1,38 @@
+ 1. +5Vcc
+ 2. GND, 0V
+ 3. CS0, first select signal
+ 4. CS1, second select signal
+ 5. A1
+ 6. A0
+ 7. A3
+ 8. A2
+ 9. A5
+10. A4
+11. A7
+12. A6
+13. A9
+14. A8
+15. A11
+16. A10
+17. A13
+18. A12
+19. A15
+20. A14
+21. /RD
+22. /WR
+23. /IORQ
+24. /MREQ
+25. /WAIT
+26. /HALT
+27. /INT
+28. /NMI
+29. /RESET OUT
+30. M1
+31. D1
+32. D0
+33. D3
+34. D2
+35. D5
+36. D4
+37. D7
+38. D6

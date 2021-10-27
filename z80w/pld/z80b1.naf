@@ -1,0 +1,16 @@
+RST  i
+A15  i
+A14  i
+A13  i
+MREQ  i
+A5  i
+A6  i
+A7  i
+IORQ  i
+INV_RESET  o
+RESET  o
+CE0  o
+CE1  o
+CE23  o
+CE47  o
+IOCE0  o

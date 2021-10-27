@@ -1,0 +1,7675 @@
+;
+;  D52 V3.4.1 8052 Disassembly of z80wos.bin
+;  2013/03/07 14:33
+;
+	org	0
+;
+X0000:	addc	a,r6
+	mov	dptr,#Xd3a3
+	clr	c
+	jnc	X000e
+	nop	
+	clr	c
+	xrl	a,r3
+	nop	
+;
+	org	0ch
+;
+	anl	a,r2
+	nop	
+X000e:	nop	
+	mov	r0,76h
+	mov	a,r5
+X0012:	orl	a,r5
+	nop	
+;
+	org	18h
+;
+	mov	@r0,#0edh
+	orl	a,r5
+X001b:	nop	
+;
+	org	20h
+;
+X0020:	mov	@r0,#0edh
+	orl	a,r5
+X0023:	nop	
+X0024:	nop	
+;
+	org	28h
+;
+X0028:	mov	@r0,#0edh
+	orl	a,r5
+X002b:	nop	
+;
+	org	30h
+;
+	mov	@r0,#0edh
+X0032:	orl	a,r5
+	nop	
+;
+	org	38h
+;
+	movx	@r1,a
+	xch	a,r5
+	dec	@r1
+	jb	makstr,X002b
+X003e:	orl	a,r5
+	nop	
+	inc	a
+	inc	r4
+	inc	r5
+	jb	xdata,X004b
+	jb	makstp,X0012
+	dec	a
+	dec	r4
+X004b:	dec	r5
+	jb	xdata,X0064
+	jb	makstp,X001b
+	add	a,#2ch
+X0054:	add	a,r5
+	jb	xdata,X007d
+	jb	makstp,X0024
+	xrl	79h,a
+	jb	28h.4,X00d5
+	xrl	a,@r1
+	xrl	a,rb0r0
+	nop	
+X0064:	nop	
+;
+	org	66h
+;
+	clr	c
+	add	a,#0fh
+	mov	a,r5
+	orl	a,0f5h
+	mov	a,3eh
+	mul	ab
+	setb	c
+	ajmp	X003e
+;
+	orl	c,/rs0
+	ljmp	X3ecd
+;
+	setb	c
+	rr	a
+	addc	a,r6
+X007a:	mov	a,r1
+X007b:	setb	c
+X007c:	inc	a
+X007d:	addc	a,r2
+	mov	r7,#0eah
+X0080:	ajmp	X012e
+;
+	dec	a
+X0083:	xch	a,r5
+	cjne	r5,#5,X00c5
+	mov	r7,a
+	mov	@r0,#0d3h
+	ajmp	X00d3
+;
+	ljmp	Xd303
+;
+	setb	c
+X0090:	inc	a
+	addc	a,r2
+	mov	r7,#0eah
+	ajmp	X013b
+;
+	dec	a
+	xch	a,r5
+	cjne	r5,#5,X007c
+	acall	X07ed
+	orl	a,r5
+X009e:	mov	a,adcon
+	ajmp	X015a
+;
+	dec	a
+	orl	a,@r1
+	mov	a,@r0
+	inc	r7
+	orl	a,r7
+	mov	r0,#6
+	nop	
+	inc	r1
+	mov	a,@r0
+	sjmp	X0054
+;
+	ajmp	X06e1
+;
+	xch	a,r1
+	mov	a,adcon
+	inc	@r0
+	mov	r7,a
+	jnb	20h.2,X0083
+X00b8:	cjne	r0,#21h,X0115
+	dec	a
+	xch	a,rb0r6
+	nop	
+	mov	a,@r0
+	inc	r7
+X00c1:	orl	a,r7
+	inc	r1
+X00c3:	ajmp	X0678
+;
+X00c5:	mov	@r0,tmh2
+	mov	r1,#0c1h
+X00c9:	ajmp	X07c9
+;
+	mov	0e5h,a
+X00cd:	xch	a,rb0r6
+	mov	r7,a
+	jnb	20h.2,X009e
+X00d3:	cjne	r0,#21h,X0130
+	dec	a
+	mov	adcon,a
+	inc	@r0
+	nop	
+	xch	a,r3
+	addc	a,r7
+X00dd:	xch	a,r3
+	addc	a,r7
+	xch	a,r3
+	addc	a,r7
+X00e1:	xch	a,r3
+	addc	a,r7
+	orl	a,r7
+	inc	r1
+	ajmp	X067e
+;
+	mov	a,r5
+	mov	r1,#0ch
+	acall	X07c5
+	ajmp	X015a
+;
+	dec	a
+	inc	@r0
+	nop	
+X00f1:	mov	a,@r0
+	inc	r7
+	orl	a,r7
+	inc	r1
+	ajmp	X0678
+;
+	mov	@r0,tmh2
+	mov	r1,#0c1h
+	ajmp	X07f1
+;
+	xch	a,r1
+	mov	a,adcon
+X0100:	ajmp	X014a
+;
+	dec	a
+	mov	rb0r6,a
+X0105:	nop	
+	xch	a,r3
+	addc	a,r7
+	xch	a,r3
+	addc	a,r7
+	xch	a,r3
+	addc	a,r7
+	xch	a,r3
+X010d:	addc	a,r7
+	orl	a,r7
+	inc	r1
+	orl	a,@r0
+	xch	a,r5
+	addc	a,r7
+	ajmp	X00f1
+;
+X0115:	ajmp	X014a
+;
+	dec	a
+	inc	@r0
+	nop	
+	mov	a,@r0
+	inc	r7
+	orl	a,r7
+	inc	r1
+	orl	a,@r0
+	xch	a,r5
+	addc	a,r7
+X0121:	ajmp	X00c1
+;
+	ajmp	X07c9
+;
+	mov	0d5h,a
+	addc	a,r6
+	ajmp	X00d3
+;
+	ret	
+;
+	mov	r0,#0d3h
+	ajmp	X013e
+;
+	org	130h
+;
+X0130:	setb	c
+	ret	
+;
+	acall	X0002
+	nop	
+	xch	a,r5
+	anl	a,#5
+	addc	a,r6
+	ajmp	X00d3
+;
+X013b:	ret	
+;
+	acall	X06f1
+X013e:	xch	a,r1
+	mov	adcon,a
+	djnz	3eh,X0149
+	setb	c
+	ret	
+;
+X0146:	mov	r0,#0d3h
+	ajmp	X013e
+;
+X014a:	inc	a
+	setb	c
+	ret	
+;
+	acall	X0002
+	nop	
+	xch	a,r5
+	anl	a,#5
+	addc	a,r6
+	ajmp	X00d3
+;
+	ret	
+;
+	acall	X06c1
+	acall	X07c9
+	mov	adcon,a
+	inc	@r0
+	ajmp	X00cd
+;
+	add	a,rb0r1
+	inc	@r0
+	inc	@r0
+	xch	a,r5
+	add	a,rb0r1
+	inc	@r0
+	inc	r4
+	xch	a,r5
+	add	a,rb0r1
+	inc	@r0
+	jbc	rclk,X0195
+	ajmp	X0006
+;
+	addc	a,r0
+	xch	a,r5
+	add	a,rb0r1
+	inc	@r0
+	sjmp	X0146
+;
+X0179:	add	a,rb0r1
+	ajmp	X06f1
+;
+X017d:	xch	a,r1
+	xch	a,rb0r6
+X0180:	ajmp	X00cd
+;
+	add	a,rb0r1
+	ajmp	X06c9
+;
+	mov	adcon,a
+	addc	a,r6
+	dec	@r1
+	orl	a,@r0
+	cjne	r0,#28h,X0194
+	xch	a,r5
+	addc	a,r7
+	ajmp	X0023
+;
+	dec	r0
+	mov	@r0,a
+X0194:	ajmp	X06f1
+;
+	xch	a,r1
+	mov	adcon,a
+	inc	r4
+	addc	a,r6
+	dec	r1
+	inc	r5
+	add	a,r0
+	jbc	2fh.6,X019f
+	dec	@r1
+	add	a,r0
+	inc	r3
+	mov	r6,a
+	dec	r0
+	add	a,r0
+	inc	@r1
+	orl	a,@r1
+	xch	a,r5
+	addc	a,r7
+	ajmp	X0023
+;
+	dec	r0
+	mov	a,r3
+	ajmp	X064f
+;
+	acall	X07c9
+	mov	adcon,a
+	addc	a,r6
+	dec	@r1
+	orl	a,@r0
+	cjne	r0,#28h,X01c4
+	xch	a,r5
+	addc	a,r7
+	ajmp	X0023
+;
+	xch	a,r5
+	anl	a,#5
+	dec	r0
+	movx	@r1,a
+X01c4:	ajmp	X06f1
+;
+	xch	a,r1
+	xch	a,0f6h
+	sjmp	X0212
+;
+	xch	a,r5
+	add	a,rb0r1
+	ajmp	X06c9
+;
+	addc	a,r6
+	mov	r6,a
+	setb	c
+	inc	s1adr
+	inc	@r0
+	xch	a,r3
+	orl	a,@r1
+	xch	a,r2
+	acall	X0205
+	xch	a,r3
+	orl	a,r7
+	xch	a,r2
+	orl	a,r3
+	inc	rcap2h
+	anl	a,@r1
+	xch	a,r2
+	orl	a,rb0r5
+	xch	a,r3
+	anl	a,r7
+	xch	a,r2
+	addc	a,r7
+	inc	3eh
+	mov	r5,a
+	setb	c
+	inc	s1adr
+	inc	@r0
+	xch	a,r3
+	orl	a,r7
+	xch	a,r2
+	orl	a,r0
+	inc	rcap2h
+	anl	a,@r1
+	xch	a,r2
+	orl	rb0r5,a
+	xch	a,r3
+	anl	a,r7
+	xch	a,r2
+	addc	a,r4
+	inc	3eh
+	mov	r3,a
+	setb	c
+	inc	s1adr
+	inc	@r0
+X0205:	xch	a,r3
+	orl	a,@r1
+	xch	a,r2
+	addc	a,r1
+	inc	rcap2h
+	orl	a,r7
+	xch	a,r2
+	add	a,r5
+	inc	rcap2h
+	anl	a,@r1
+	xch	a,r2
+X0212:	ajmp	X0105
+;
+	xch	a,r3
+	anl	a,r7
+	xch	a,r2
+	dec	rb0r5
+	addc	a,r6
+	mov	@r1,a
+	setb	c
+	inc	s1adr
+	inc	@r0
+	xch	a,r3
+	orl	a,@r1
+	xch	a,r2
+	addc	a,@r0
+X0223:	inc	rcap2h
+	orl	a,r7
+	xch	a,r2
+	add	a,r2
+	inc	rcap2h
+	anl	a,@r1
+	xch	a,r2
+	dec	r6
+	inc	rcap2h
+	anl	a,r7
+	xch	a,r2
+	lcall	X053e
+	mov	a,r7
+	setb	c
+	inc	s1adr
+	inc	@r0
+	xch	a,r3
+	orl	a,@r1
+	xch	a,r2
+	rlc	a
+	inc	rcap2h
+	orl	a,r7
+	xch	a,r2
+	add	a,@r1
+	inc	rcap2h
+	anl	a,@r1
+	xch	a,r2
+	dec	r3
+	inc	rcap2h
+	anl	a,r7
+	xch	a,r2
+	inc	r7
+	inc	3eh
+	djnz	r7,X0223
+	inc	s1adr
+	inc	@r0
+	xch	a,r3
+	orl	a,@r1
+	xch	a,r2
+	jnb	20h.5,X0224
+	orl	a,r7
+	xch	a,r2
+	add	a,#5
+	xch	a,r3
+	anl	a,@r1
+	xch	a,r2
+	dec	r0
+	inc	rcap2h
+	anl	a,r7
+	xch	a,r2
+	inc	r4
+	inc	3eh
+	mov	r7,a
+	xch	a,r1
+	xch	a,47h
+	addc	a,r6
+	mov	r5,a
+	setb	c
+	inc	s1adr
+	inc	@r0
+	xch	a,r3
+	orl	a,@r1
+	mov	r0,#0c1h
+	xch	a,r1
+	mov	a,3ah
+	jb	idsm,X02ae
+	dec	r7
+	mov	a,r2
+	addc	a,r2
+	add	a,r2
+	mov	a,r2
+	mov	r6,a
+	mov	r7,a
+	jb	22h.1,X02c4
+	nop	
+	reti	
+;
+	add	a,r2
+	mov	a,r2
+	add	a,r2
+	ret	
+;
+	mov	a,r2
+	ret	
+;
+	add	a,@r0
+	mov	a,r2
+	add	a,r2
+	add	a,#0eah
+	ret	
+;
+	add	a,r0
+	mov	a,r2
+	xch	a,r5
+	pop	rb0r1
+	mov	r6,a
+	mov	r7,a
+	jb	25h.1,X02d8
+	dec	r6
+	mov	a,r2
+	mov	r6,a
+	mov	r7,a
+	add	a,r0
+	movx	@r0,a
+	add	a,r2
+	ret	
+;
+	mov	a,r2
+	ret	
+;
+	add	a,@r0
+	mov	a,r2
+	add	a,r2
+	add	a,#0eah
+	ret	
+;
+X02ae:	add	a,r0
+	mov	a,r2
+	addc	a,r2
+	dec	r7
+	mov	a,r2
+	addc	a,r5
+	reti	
+;
+	dec	r7
+	mov	a,r2
+	jb	clrti,X02f8
+	mov	r7,a
+	reti	
+;
+	dec	r6
+	mov	a,r2
+	addc	a,r2
+	jb	idsm,X02f4
+	dec	r7
+	mov	a,r2
+X02c4:	dec	r0
+	pop	32h
+	ajmp	X01ea
+;
+	addc	a,r2
+	dec	r6
+	mov	a,r2
+	ajmp	X0121
+;
+	mov	a,r2
+X02cf:	cjne	r6,#20h,X0302
+	add	a,r2
+	ret	
+;
+	mov	a,r2
+	addc	a,r6
+	nop	
+	cjne	r4,#20h,X02e0
+	cjne	r5,#20h,X02e0
+	clr	c
+	subb	a,@r0
+	ljmp	X2a26
+;
+	mov	a,r2
+	cjne	r4,#20h,X02f4
+	cjne	r5,#20h,X02f4
+	add	a,r2
+	add	a,r0
+	mov	a,r2
+	cjne	r4,#20h,X02fb
+	cjne	r5,#20h,X02fb
+	dec	r0
+X02f3:	inc	r6
+X02f4:	add	a,r3
+	ret	
+;
+	add	a,@r0
+	mov	a,r2
+X02f8:	clr	c
+	subb	a,@r0
+	ljmp	X2b22
+;
+	add	a,r0
+	mov	a,r2
+	clr	c
+	subb	a,@r0
+	ljmp	X3a21
+;
+	mov	a,r2
+	reti	
+;
+	dec	r6
+	mov	a,r2
+	ajmp	X07c9
+;
+	mov	0e5h,a
+	xch	a,r5
+	mov	r6,#1
+	addc	a,r6
+	nop	
+	xch	a,r5
+	xch	a,@r1
+	ajmp	X0021
+;
+	addc	a,r5
+	rrc	a
+	xch	a,r5
+	mov	rb0r1,@r0
+	ajmp	X07f1
+;
+	djnz	0e5h,X036f
+	anl	a,r0
+	reti	
+;
+	dec	r6
+	mov	a,r2
+	addc	a,r6
+	jc	X02f3
+	xch	a,@r1
+	ajmp	X0006
+;
+	addc	a,r6
+	xch	a,r5
+	addc	a,r7
+	ajmp	X007a
+;
+	xch	a,r5
+	mov	r6,a
+	nop	
+	addc	a,r6
+	ajmp	X02cd
+;
+	xch	a,@r1
+	ajmp	X0006
+;
+	ajmp	X003e
+;
+	sjmp	X036d
+;
+	jb	idsm,X030b
+	mov	@r1,#2
+	mov	r6,a
+	jbc	i2cfg.2,X02cf
+	rr	a
+	mov	r6,a
+	dec	@r1
+	jb	20h.6,X038c
+	addc	a,r6
+	dec	@r1
+	clr	c
+	djnz	r6,X0352
+	mov	r6,a
+	dec	0c2h
+X0352:	anl	a,r2
+	rr	a
+	anl	3eh,#15h
+	clr	c
+	djnz	r6,X035d
+	mov	r6,a
+	jbc	tr2,X03c5
+	rr	a
+	mov	r6,a
+	acall	X00ca
+	mov	r1,#3
+	clr	c
+	addc	a,r5
+	rr	a
+	addc	a,r6
+	ajmp	X00b8
+;
+	xch	a,r2
+	addc	a,r5
+	rr	a
+X036d:	inc	a
+	addc	a,r6
+X036f:	ajmp	X0090
+;
+	xch	a,@r0
+	ajmp	X02cd
+;
+	xch	a,@r1
+	ajmp	X00c3
+;
+	addc	a,r5
+	rr	a
+	addc	a,r6
+	nop	
+	cjne	r0,#0cah,X03bb
+	rr	a
+	inc	3eh
+	ajmp	X0090
+;
+	xch	a,@r0
+	ajmp	X02cd
+;
+	xch	a,@r1
+	ajmp	X00c3
+;
+	addc	a,r5
+	rr	a
+	xrl	a,r7
+X038c:	mov	r0,#0feh
+	ajmp	X0020
+;
+	ajmp	X017d
+;
+	xch	a,r3
+	add	a,@r1
+	xch	a,r3
+	add	a,@r1
+	xch	a,r3
+	add	a,@r1
+	xch	a,r3
+	add	a,@r1
+	mov	a,@r0
+	movx	@dptr,a
+	xrl	a,r7
+	mov	r2,#0e6h
+	inc	r7
+	cjne	a,57h,X0420
+	xch	a,r3
+	addc	a,r7
+	xch	a,r3
+	addc	a,r7
+	xch	a,r3
+	addc	a,r7
+	xch	a,r3
+	addc	a,r7
+	inc	th2
+	xch	a,r3
+	rr	a
+	clr	c
+	addc	a,r5
+	rr	a
+	mov	r6,a
+	nop	
+	jb	24h.5,X0434
+	mov	a,@r0
+	inc	r7
+	xrl	a,r7
+	mov	r2,#0e6h
+	movx	@dptr,a
+	cjne	a,57h,X043d
+	xch	a,r5
+	xch	a,r3
+	rr	a
+	addc	a,r6
+	orl	th2,a
+	xch	a,@r1
+	ajmp	X00c3
+;
+	addc	a,r5
+	rr	a
+	xch	a,rb0r6
+	nop	
+	mov	a,21h
+	orl	a,r2
+	dec	a
+	orl	a,r7
+	inc	r1
+	orl	a,@r0
+	xch	a,r5
+	addc	a,r7
+	ajmp	X00e1
+;
+	ajmp	X06c9
+;
+	clr	c
+	djnz	r6,X03e1
+	ajmp	X07d1
+;
+X03e0:	xch	a,r1
+X03e1:	mov	0e5h,a
+	xch	a,r5
+	mov	r6,#1
+	addc	a,r6
+	nop	
+	xch	a,r5
+	xch	a,@r1
+	ajmp	X0021
+;
+	add	a,#13h
+	xch	a,r5
+	mov	rb0r1,@r0
+	ajmp	X07f1
+;
+	xch	a,r5
+	inc	r1
+	inc	a
+	xch	a,r1
+	mov	0e5h,a
+	xch	a,r5
+	mov	r6,#1
+X03fc:	addc	a,r6
+	nop	
+	xch	a,r5
+	xch	a,@r1
+	ajmp	X0021
+;
+	reti	
+;
+	rrc	a
+	xch	a,r5
+	mov	rb0r1,@r0
+	ajmp	X07f1
+;
+	xch	a,0d5h
+	anl	a,#5dh
+	reti	
+;
+	dec	r6
+	mov	a,r2
+	addc	a,r6
+	jc	X03e0
+	xch	a,@r1
+	ajmp	X0006
+;
+	addc	a,r6
+	xch	a,r5
+	addc	a,r7
+	ajmp	X007c
+;
+	xch	a,r5
+	mov	r6,a
+	nop	
+	mov	r5,#0cdh
+X0420:	mov	r6,a
+	nop	
+	addc	a,r6
+	ajmp	X02cd
+;
+	xch	a,@r1
+	ajmp	X0006
+;
+	rr	a
+	addc	a,r6
+	sjmp	X045e
+;
+	jb	idsm,X03fc
+	mov	@r1,#2
+	mov	r6,a
+	jbc	i2cfg.2,X04b1
+	inc	a
+	mov	r6,a
+	dec	@r1
+	jb	20h.5,X0479
+	dec	@r1
+	clr	c
+X043d:	inc	r1
+	inc	pwena
+	dec	0c2h
+	orl	a,r3
+	inc	a
+	xrl	6bh,a
+	addc	a,r6
+	dec	0c3h
+	inc	r1
+	inc	pwena
+	jbc	tr2,X04a7
+	inc	a
+	mov	r6,a
+	acall	X00ca
+	xrl	a,r2
+	inc	a
+	clr	c
+	add	a,r6
+	inc	a
+	addc	a,r6
+	rr	a
+	cjne	r0,#0cah,X048b
+	inc	a
+X045e:	inc	a
+	addc	a,r6
+	rr	a
+	mov	dptr,#Xc641
+	xch	a,r5
+	xch	a,@r1
+	ajmp	X00c3
+;
+	add	a,r6
+	inc	a
+	addc	a,r6
+	nop	
+	cjne	r0,#0cah,X049d
+	inc	a
+	inc	3eh
+	rr	a
+	mov	dptr,#Xc641
+	xch	a,r5
+	xch	a,@r1
+	ajmp	X00c3
+;
+	add	a,r6
+	inc	a
+	orl	a,r7
+	mov	r0,#0feh
+	rr	a
+	jb	24h.1,X04fc
+	xch	a,r3
+	add	a,@r1
+	xch	a,r3
+	add	a,@r1
+	xch	a,r3
+	add	a,@r1
+	xch	a,r3
+	add	a,@r1
+X048b:	mov	a,@r0
+	movx	@dptr,a
+	orl	a,r7
+	mov	r4,#0e6h
+	inc	r7
+	acall	X0567
+	mov	r1,#0cbh
+	addc	a,r7
+	xch	a,r3
+	addc	a,r7
+	xch	a,r3
+	addc	a,r7
+	xch	a,r3
+	addc	a,r7
+	inc	th2
+	mov	@r0,a
+	inc	a
+	clr	c
+	add	a,r6
+	inc	a
+	mov	r6,a
+	ljmp	X2011
+;
+X04a7:	mov	r1,#0e6h
+	inc	r7
+	orl	a,r7
+	mov	r4,#0e6h
+	movx	@dptr,a
+	acall	X0567
+	mov	r1,#5
+	xch	a,r5
+	mov	@r0,a
+	inc	a
+	clr	c
+	add	a,r6
+	inc	a
+	mov	r6,a
+	ajmp	X0020
+;
+	ajmp	X0179
+;
+	xch	a,r3
+	add	a,@r1
+	xch	a,r3
+	add	a,@r1
+	xch	a,r3
+	add	a,@r1
+	xch	a,r3
+	add	a,@r1
+	mov	a,@r0
+	movx	@dptr,a
+	orl	a,r7
+	mov	r5,#0e6h
+	inc	r7
+	acall	X056f
+	mov	r1,#0cbh
+	addc	a,r7
+	xch	a,r3
+	addc	a,r7
+	xch	a,r3
+	addc	a,r7
+	xch	a,r3
+	addc	a,r7
+	inc	th2
+	mov	@r0,a
+	inc	a
+	clr	c
+	add	a,r6
+	inc	a
+	mov	r6,a
+	nop	
+	jb	24h.5,X055b
+	mov	a,@r0
+	inc	r7
+	orl	a,r7
+	mov	r5,#0e6h
+	movx	@dptr,a
+	acall	X056f
+	mov	r1,#0cdh
+	mov	@r0,a
+	inc	a
+	addc	a,r6
+	orl	a,#0cdh
+	xch	a,@r1
+	ajmp	X00c3
+;
+	add	a,r6
+	inc	a
+	xch	a,rb0r6
+	nop	
+	mov	a,21h
+	orl	a,r2
+X04fc:	dec	a
+	orl	a,r7
+	inc	r1
+	orl	a,@r0
+	xch	a,r5
+	addc	a,r7
+	ajmp	X00e1
+;
+	ajmp	X06c9
+;
+	clr	c
+	inc	r1
+	inc	0d1h
+	ajmp	X06c9
+;
+	addc	a,r6
+	nop	
+	xch	a,r1
+	addc	a,r6
+	ajmp	X00c9
+;
+	addc	a,r6
+	ljmp	Xc93e
+;
+	rr	a
+	xch	a,r1
+	addc	a,r6
+	inc	a
+	xch	a,r1
+	addc	a,r6
+	inc	cmh0
+	addc	a,r6
+	inc	@r0
+	xch	a,r1
+	addc	a,r6
+	inc	@r1
+	xch	a,r1
+	addc	a,r6
+	inc	r0
+	xch	a,r1
+	addc	a,r6
+	inc	r1
+	xch	a,r1
+	addc	a,r6
+	inc	r2
+	xch	a,r1
+	addc	a,r6
+	inc	r3
+	xch	a,r1
+	addc	a,r6
+	inc	r4
+	xch	a,r1
+	addc	a,r6
+	inc	r5
+	xch	a,r1
+	addc	a,r6
+	inc	r6
+	xch	a,r1
+	addc	a,r6
+	inc	r7
+	xch	a,r1
+	addc	a,r6
+	jbc	ct2,X057e
+	acall	X00c9
+	addc	a,r6
+	lcall	Xc93e
+	rrc	a
+	xch	a,r1
+	addc	a,r6
+	dec	a
+	xch	a,r1
+	addc	a,r6
+	dec	cmh0
+X054e:	addc	a,r6
+	dec	@r0
+	xch	a,r1
+	addc	a,r6
+	dec	@r1
+	xch	a,r1
+	mov	adcon,a
+	djnz	0ddh,X053e
+	mov	r7,rb2r4
+X055b:	ajmp	X007b
+;
+	ajmp	X00dd
+;
+	add	a,r3
+	inc	r3
+	cjne	r0,#20h,X055e
+	ajmp	X007b
+;
+	ajmp	X001b
+;
+	cjne	r2,#20h,X055e
+	djnz	r5,X054e
+	acall	X06c1
+X056f:	acall	X07c9
+	addc	a,r2
+	addc	a,r4
+	mov	a,r2
+	mov	r6,a
+	inc	r0
+	addc	a,r6
+	nop	
+	xch	a,r0
+	cjne	r4,#0c8h,X05aa
+	nop	
+	xch	a,0d5h
+	mov	a,tmh2
+	anl	a,r3
+	addc	a,r6
+	mov	a,r2
+	ajmp	X0000
+;
+	movx	@dptr,a
+	dec	r1
+	addc	a,r0
+	add	a,r7
+	inc	r1
+	addc	a,r0
+	add	a,r4
+	ajmp	X07e5
+;
+	dec	r1
+	ret	
+;
+	addc	a,r6
+	mov	a,r2
+	ajmp	X0080
+;
+	mov	a,r4
+	inc	r1
+	add	a,r3
+	addc	a,r6
+	dec	r0
+	mov	@r1,#2bh
+	addc	a,r6
+	dec	@r1
+	mov	@r1,#3ah
+	addc	a,r4
+	mov	a,r2
+	addc	a,r4
+	reti	
+;
+	addc	a,r4
+	mov	a,r2
+	xch	a,r3
+	add	a,@r1
+	ajmp	X0140
+;
+X05aa:	mov	a,r2
+	inc	@r0
+	nop	
+	orl	a,r7
+	inc	r1
+	mov	a,r5
+	anl	a,r3
+	addc	a,r6
+	mov	a,r2
+	jmp	@a+dptr
+;
+	rl	a
+	orl	c,27h.2
+	addc	a,r4
+	mov	a,r2
+	ajmp	X07d1
+;
+	ajmp	X06c9
+;
+	mov	adcon,a
+	djnz	47h,X05fc
+	addc	a,r4
+	mov	a,r2
+	cjne	r0,#0dah,X05fb
+	inc	@r0
+X05c8:	mov	r7,ip
+	xch	a,r2
+	addc	a,#6
+	addc	a,r2
+	addc	a,r5
+	mov	a,r2
+	mov	r6,a
+	ajmp	X00ca
+;
+	addc	a,#6
+	mov	@r0,a
+	ajmp	X0032
+;
+	addc	a,r5
+	mov	a,r2
+	inc	r6
+	nop	
+	mov	r6,#23h
+	inc	r4
+	djnz	r2,X05c8
+	inc	pwena
+	dec	@r1
+	clr	tirun
+	inc	2bh
+	add	a,r3
+	inc	r5
+	xch	a,r2
+	addc	a,#6
+	mov	a,adcon
+	xch	a,r3
+	jb	20h.5,X05f8
+	dec	@r0
+	nop	
+	anl	a,r0
+	ajmp	X0140
+;
+X05f8:	mov	a,r2
+	dec	r1
+	anl	a,r6
+X05fb:	rl	a
+X05fc:	anl	a,@r0
+	rl	a
+	mov	r1,#4eh
+	rl	a
+	orl	a,@r0
+	add	a,@r0
+	nop	
+	xrl	a,r7
+	dec	r1
+X0606:	mov	a,79h
+	subb	a,4fh
+	mov	r0,#9ch
+	orl	a,@r1
+	ajmp	X0180
+;
+	mov	a,r4
+	dec	r1
+	mov	a,r3
+	ajmp	X07d5
+;
+	acall	X0080
+	mov	a,r4
+	dec	r1
+	acall	X06ed
+	anl	c,/0c0h.1
+	xch	a,r3
+	jb	22h.6,X0620
+X0620:	anl	a,r0
+	ajmp	X0140
+;
+	mov	a,r2
+	dec	r1
+	anl	a,r6
+	rl	a
+	anl	a,@r0
+	ajmp	X0180
+;
+	mov	a,r4
+	dec	r1
+	add	a,r3
+	add	a,r3
+	mov	a,r3
+	ajmp	X0706
+;
+	org	632h
+;
+	mov	a,r5
+	cjne	r0,#3ah,X0673
+	mov	a,r2
+	mov	a,@r0
+	mov	r6,a
+	reti	
+;
+	addc	a,r5
+	mov	a,r2
+	acall	X06c1
+	acall	X07c9
+	mov	adcon,a
+	djnz	0e5h,X0694
+	addc	a,r2
+	addc	a,r4
+	mov	a,r2
+	cjne	r1,#0dah,X0696
+	inc	@r1
+	mov	r7,0b9h
+	xch	a,r2
+X064f:	orl	a,r3
+	inc	@r1
+	xch	a,r3
+	ajmp	X010d
+;
+	inc	r5
+	inc	@r0
+	nop	
+	ajmp	X0140
+;
+	mov	a,r2
+	inc	r1
+	orl	a,r6
+	rl	a
+	orl	a,@r0
+	rl	a
+	anl	a,r6
+	rl	a
+	anl	a,@r0
+	mov	r3,#91h
+	orl	a,r7
+	mov	r2,#98h
+	orl	a,@r1
+	addc	a,r6
+	dec	@r1
+	ajmp	X0180
+;
+	mov	a,r4
+	dec	r1
+	mov	a,r5
+	cjne	r1,#23h,X0695
+	anl	a,#5dh
+	xch	a,r5
+	anl	a,r3
+	ajmp	X0006
+;
+X0678:	inc	r4
+	xch	a,r5
+	add	a,rb0r1
+	xch	a,r5
+	movx	@dptr,a
+X067e:	inc	@r0
+	addc	a,r6
+	dec	@r1
+	reti	
+;
+	dec	r6
+	mov	a,r2
+	addc	a,r6
+	jb	26h.2,X06a8
+	mov	a,r2
+	mov	a,r5
+	orl	a,r3
+	reti	
+;
+	mov	a,r2
+	mov	a,r5
+	orl	22h,#0eah
+	mov	a,r5
+	orl	a,r3
+	addc	a,#0eah
+X0695:	mov	a,r5
+X0696:	orl	24h,#0eah
+	addc	a,r6
+	mov	r7,a
+	reti	
+;
+	add	a,r2
+	mov	a,r2
+	xch	a,r5
+	mov	@r1,#2
+	mov	r6,a
+	dec	@r1
+	xch	a,r2
+	orl	a,r3
+	inc	@r1
+	mov	r6,a
+	acall	X00ca
+	cpl	c
+	inc	@r0
+X06ab:	mov	r6,a
+	rrc	a
+	xch	a,r2
+	acall	X0606
+	clr	c
+	subb	a,r6
+	inc	@r0
+	mov	r2,#0bch
+	jb	21h.4,X0733
+	cjne	r5,#20h,X06c3
+	xch	a,r5
+	movx	@dptr,a
+	inc	@r0
+	addc	a,r6
+	acall	X00c3
+X06c1:	subb	a,r6
+	inc	@r0
+X06c3:	addc	a,r6
+	dec	a
+	add	a,r3
+	addc	a,r5
+	jb	xactv,X0697
+	movx	@dptr,a
+	inc	@r0
+	addc	a,r6
+	acall	X00c3
+	subb	a,r6
+	inc	@r0
+	mov	a,rb0r6
+	dec	a
+	rl	a
+X06d5:	mov	r6,#0feh
+	dec	@r1
+	add	a,r0
+	jbc	idle,X06f4
+	add	a,r0
+	inc	r4
+	inc	20h
+	movx	@r1,a
+X06e1:	xch	a,r5
+	movx	@dptr,a
+	inc	@r0
+	addc	a,r6
+	rrc	a
+	ajmp	X06c3
+;
+	subb	a,r6
+	inc	@r0
+	addc	a,r6
+X06eb:	rrc	a
+	ajmp	X07c3
+;
+	subb	a,r6
+	inc	@r0
+	mov	a,rb1r6
+	dec	a
+	addc	a,r6
+X06f4:	nop	
+	xch	a,r5
+	xch	a,@r1
+X06f7:	ajmp	X0006
+;
+	org	6fah
+;
+	xch	a,r5
+	subb	a,@r1
+	ajmp	X003e
+;
+	dec	r1
+	cjne	r1,#20h,X0717
+	mov	a,rb1r6
+	dec	a
+	addc	a,r6
+X0706:	jc	X06d5
+	xch	a,@r1
+	ajmp	X0006
+;
+	ajmp	X00cd
+;
+	subb	a,@r1
+X070e:	ajmp	X003e
+;
+	dec	r1
+	cjne	r1,#20h,X0717
+	ajmp	X07e1
+;
+	xch	a,r1
+X0717:	mov	r7,ip
+	add	a,r0
+	dec	@r0
+	addc	a,r6
+	jc	X06eb
+	xch	a,@r1
+	ajmp	X0021
+;
+	inc	a
+	jbc	rclk,X06ab
+	ajmp	X00e1
+;
+	addc	a,r6
+	jc	X06f7
+	xch	a,@r1
+	ajmp	X00cd
+;
+	subb	a,@r1
+	ajmp	X00e1
+;
+	xch	a,r1
+	xch	a,r5
+	mov	r6,#1
+	addc	a,r6
+	nop	
+	xch	a,r5
+	xch	a,@r1
+	ajmp	X00e1
+;
+	mov	a,th2
+	subb	a,@r1
+	ajmp	X003e
+;
+	jc	X070e
+X0741:	xch	a,@r1
+	ajmp	X0021
+;
+	inc	a
+	jbc	rclk,X06ce
+	ajmp	X00e1
+;
+	xch	a,r1
+	ajmp	X07d1
+;
+	ajmp	X06f1
+;
+	xch	a,r1
+	movx	@r1,a
+	nop	
+;
+	org	754h
+;
+	inc	@r0
+	mov	r7,a
+	ajmp	X0100
+;
+	jb	22h.1,X075b
+X075b:	movx	a,@dptr
+	dec	r2
+	orl	a,r7
+	addc	a,r6
+	mov	r2,rb2r2
+	dec	r2
+	mov	r6,a
+	mov	r2,79h
+	lcall	X2847
+	mov	r2,#0e6h
+	dec	r4
+	xch	a,r3
+	addc	a,r7
+	xch	a,r3
+	addc	a,r7
+	mov	r6,a
+	nop	
+	add	a,r0
+	dec	r4
+	mov	r6,a
+	ajmp	X0028
+;
+	dec	r4
+	mov	r6,a
+	ljmp	X281c
+;
+	mov	r6,a
+	rr	a
+	add	a,r0
+	dec	r4
+	mov	r6,a
+	inc	a
+	add	a,r0
+	dec	r4
+	mov	r6,a
+	inc	28h
+	dec	r4
+	mov	r6,a
+	inc	@r0
+	add	a,r0
+	dec	r4
+	mov	r6,a
+	inc	@r1
+	add	a,r0
+	dec	r4
+	xch	a,r3
+	sjmp	X07aa
+;
+	dec	r4
+	xch	a,r3
+X0794:	mov	rb3r0,r0
+	dec	r0
+	xch	a,r3
+	mov	dptr,#X1814
+	xch	a,r3
+	subb	a,r0
+	dec	r0
+	jbc	exen2,X0741
+	dec	r0
+	inc	r4
+	xch	a,r3
+	mov	r0,rb3r0
+	inc	r0
+	xch	a,r3
+	anl	c,/23h.0
+X07aa:	inc	a
+	xch	a,r3
+	cjne	r0,#18h,X07af
+X07af:	dec	r2
+	orl	a,r7
+	addc	a,r6
+	anl	a,rb2r2
+	dec	r2
+	mov	r6,a
+	anl	a,79h
+	lcall	X2847
+	mov	r2,#0e6h
+	dec	r4
+	xch	a,r3
+	addc	a,r7
+	xch	a,r3
+	addc	a,r7
+	mov	r6,a
+X07c3:	nop	
+	add	a,r0
+X07c5:	dec	r4
+	mov	r6,a
+	ajmp	X0028
+;
+X07c9:	dec	r4
+	mov	r6,a
+	ljmp	X281c
+;
+	mov	r6,a
+	rr	a
+	add	a,r0
+X07d1:	dec	r4
+	mov	r6,a
+	inc	a
+	add	a,r0
+X07d5:	dec	r4
+	mov	r6,a
+	inc	28h
+	dec	r4
+	mov	r6,a
+	inc	@r0
+	add	a,r0
+	dec	r4
+	mov	r6,a
+	inc	@r1
+	add	a,r0
+X07e1:	dec	r4
+	xch	a,r3
+	sjmp	X07fd
+;
+X07e5:	dec	r4
+	xch	a,r3
+	mov	rb3r0,r0
+	dec	r0
+	xch	a,r3
+	mov	dptr,#X1814
+	xch	a,r3
+	subb	a,r0
+	dec	r0
+X07f1:	jbc	exen2,X0794
+	dec	r0
+	inc	r4
+	xch	a,r3
+	mov	r0,rb3r0
+	inc	r0
+	xch	a,r3
+	anl	c,/23h.0
+X07fd:	inc	a
+	xch	a,r3
+	cjne	r0,#18h,X0802
+X0802:	rrc	a
+	add	a,r5
+	clr	2bh.4
+X0806:	inc	@r1
+	mov	r0,#0cbh
+	addc	a,r7
+	xch	a,r3
+	addc	a,r7
+	xch	a,r3
+	addc	a,r7
+X080e:	xch	a,r3
+	addc	a,r7
+	orl	a,r7
+	mov	r0,#0cbh
+	add	a,@r1
+	xch	a,r3
+	add	a,@r1
+	xch	a,r3
+	add	a,@r1
+	xch	a,r3
+	add	a,@r1
+	mov	a,@r0
+	movx	@dptr,a
+	acall	X0d4f
+	mov	r2,#0e6h
+	dec	r4
+X0821:	xch	a,r3
+X0822:	addc	a,r7
+X0823:	xch	a,r3
+	addc	a,r7
+	mov	r6,a
+	nop	
+X0827:	add	a,r0
+X0828:	add	a,r4
+	mov	r6,a
+	ajmp	X0828
+;
+	add	a,r4
+	mov	r6,a
+	ljmp	X282c
+;
+	mov	r6,a
+X0832:	rr	a
+	add	a,r0
+	add	a,r4
+	mov	r6,a
+	inc	a
+	add	a,r0
+	inc	r4
+	mov	r6,a
+X083a:	inc	28h
+	inc	r4
+	mov	r6,a
+X083e:	inc	@r0
+	add	a,r0
+	inc	r4
+	mov	r6,a
+	inc	@r1
+	add	a,r0
+	inc	r4
+	xch	a,r3
+	ajmp	X0c18
+;
+	dec	r4
+	xch	a,r3
+	mov	rb3r0,r1
+	dec	r0
+	xch	a,r3
+	acall	X0c18
+	dec	a
+	xch	a,r3
+	subb	a,r1
+	dec	r0
+	jbc	exen2,X07f8
+	dec	r0
+	inc	r4
+	xch	a,r3
+	mov	r1,rb3r0
+	inc	r0
+	xch	a,r3
+	acall	X0d18
+	inc	a
+	xch	a,r3
+	cjne	r1,#18h,X0865
+X0865:	mov	r1,#0d3h
+	inc	@r1
+	add	a,0c2h
+	anl	a,r4
+	inc	@r1
+	mov	r0,#0d3h
+	inc	@r1
+	mov	r6,a
+	mov	r7,a
+	add	a,r0
+	dec	a
+	addc	a,r6
+	xch	a,r0
+	setb	c
+	ajmp	X08d3
+;
+	ljmp	Xd303
+;
+	setb	c
+X087c:	inc	a
+	ajmp	X0900
+;
+	inc	r4
+	nop	
+	add	a,r5
+	jnb	xactv,X08aa
+	jnb	xstr,X08b9
+	movx	@dptr,a
+	mov	r7,a
+	addc	a,r6
+	mov	r7,a
+	setb	c
+	ajmp	X08d3
+;
+	ljmp	Xd303
+;
+	setb	c
+	inc	a
+	setb	c
+	inc	rb2r1
+	cpl	a
+	ajmp	X08cd
+;
+	anl	a,#5
+	addc	a,r6
+	nop	
+	setb	c
+	ajmp	X08d3
+;
+	ljmp	Xd303
+;
+	setb	c
+	inc	a
+	acall	X08f4
+	ajmp	X08cd
+;
+X08aa:	anl	a,#5
+	addc	a,r6
+	mov	r7,a
+	setb	c
+	ajmp	X08d3
+;
+	ljmp	Xd303
+;
+	setb	c
+	inc	a
+	addc	a,r6
+	mov	r7,a
+	setb	c
+X08b9:	inc	@r1
+	reti	
+;
+	mov	ctcon,@r0
+	addc	a,r6
+	addc	a,@r1
+	setb	c
+	inc	dptr
+	addc	a,r6
+X08c2:	nop	
+X08c3:	setb	c
+	orl	c,/27h.6
+	ajmp	X08d3
+;
+	orl	c,/27h.6
+X08ca:	mov	@r1,#0d3h
+	inc	dptr
+X08cd:	addc	a,r6
+	inc	a
+	setb	c
+	ajmp	X0d3e
+;
+X08d2:	nop	
+X08d3:	setb	c
+	ajmp	X0d3e
+;
+	cjne	@r1,#0d3h,X087c
+	addc	a,r6
+	subb	a,@r0
+	setb	c
+	mov	c,27h.6
+	subb	a,r1
+	setb	c
+	mov	c,24h.1
+	nop	
+;
+	org	8e4h
+;
+	ret	
+;
+	sjmp	X08d2
+;
+	ret	
+;
+	anl	c,obfc
+X08ea:	ret	
+;
+X08eb:	div	ab
+	mov	a,r3
+	mov	r7,0d3h
+	ajmp	X0eaf
+;
+	reti	
+;
+	addc	a,r4
+	mov	a,r2
+X08f4:	reti	
+;
+X08f5:	addc	a,r5
+	mov	a,r2
+	ajmp	X0900
+;
+	org	8fah
+;
+	ret	
+;
+	addc	a,r6
+	mov	a,r2
+	ret	
+;
+	jc	X08ea
+X0900:	ajmp	X0900
+;
+	inc	a
+	xch	a,r5
+	acall	X0b05
+	reti	
+;
+	mov	r7,#0eah
+	addc	a,r2
+	mov	r7,#0eah
+	ajmp	X09a7
+;
+	rrc	a
+	xch	a,r5
+	cjne	r5,#5,X0934
+	clr	22h.3
+	xch	a,r5
+	cjne	r5,#5,X0953
+X0919:	addc	a,@r0
+	mov	a,r2
+X091b:	mov	r6,a
+	dec	@r1
+	add	a,r0
+X091e:	acall	X0821
+	mov	r7,a
+	inc	r7
+	ret	
+;
+	reti	
+;
+	mov	a,r2
+	ajmp	X09ff
+;
+	ajmp	X0822
+;
+	addc	a,#0eah
+	addc	a,r6
+	dec	@r1
+	reti	
+;
+	addc	a,@r0
+	mov	a,r2
+	addc	a,r6
+	mov	r7,a
+	reti	
+;
+	inc	r4
+X0934:	mov	a,r2
+	mov	r7,32h
+	nop	
+	mov	a,r2
+	reti	
+;
+	ajmp	X08ea
+;
+	reti	
+;
+	ljmp	Xea32
+;
+	rr	a
+	mov	a,r2
+	reti	
+;
+X0943:	inc	a
+	mov	a,r2
+X0945:	reti	
+;
+	inc	tm2con
+	mov	a,r5
+	anl	a,@r0
+	addc	a,r6
+	subb	a,r0
+	setb	c
+	rl	a
+	addc	a,r6
+	nop	
+	setb	c
+	ajmp	X093e
+;
+X0953:	ajmp	X08d3
+;
+	ret	
+;
+	xch	a,r5
+	anl	a,r3
+X0958:	ajmp	X083a
+;
+	mov	r7,#0eah
+	ajmp	X09d1
+;
+	rrc	a
+	xch	a,r5
+	cjne	r5,#5,X09a1
+	xrl	a,r1
+	ajmp	X0905
+;
+	dec	a
+	mov	r6,a
+	xrl	a,r1
+	add	a,r0
+	inc	@r0
+	xch	a,r5
+	nop	
+	add	a,r2
+	ajmp	X09e9
+;
+	rrc	a
+	addc	a,r2
+	mov	r7,#0eah
+	xch	a,r5
+	cjne	r5,#5,X0945
+	mov	r6,#1
+	inc	@r0
+	inc	r6
+	xch	a,r5
+	add	a,rb0r1
+	ajmp	X099f
+;
+	inc	r7
+	acall	X0800
+	jb	rclk,X090d
+	ajmp	X083e
+;
+	jc	X0958
+	xch	a,@r1
+X098c:	ajmp	X0821
+;
+	cpl	c
+	inc	r7
+	acall	X0800
+	jb	rclk,X091b
+	ajmp	X0806
+;
+	inc	r7
+	xch	a,r5
+	add	a,rb0r1
+X099b:	inc	@r0
+	jb	rclk,X09de
+X099f:	ajmp	X083e
+;
+X09a1:	mov	r6,a
+	setb	c
+	inc	s1adr
+	inc	@r0
+	xch	a,r3
+X09a7:	orl	a,@r1
+	jb	makstp,X09e5
+	mov	r7,#0eah
+	ajmp	X0914
+;
+	dec	a
+	xch	a,r5
+	cjne	r5,#5,X09f2
+	mov	r7,a
+	reti	
+;
+	dec	r6
+	mov	a,r2
+	xch	a,r5
+	mov	r6,#1
+	inc	@r0
+	inc	r7
+	xch	a,r5
+	add	a,rb0r1
+	addc	a,r6
+	nop	
+	xch	a,r5
+	xch	a,@r1
+	ajmp	X0821
+;
+	xch	a,r5
+	inc	r7
+	xch	a,r5
+	mov	rb0r1,@r0
+	addc	a,r6
+	jc	X099b
+	xch	a,@r1
+	ajmp	X0806
+;
+X09d1:	addc	a,r6
+	xch	a,r5
+	addc	a,r7
+X09d4:	ajmp	X083e
+;
+	sjmp	X0a0a
+;
+	jb	idsm,X09fc
+	nop	
+;
+	org	9ddh
+;
+X09dd:	ret	
+;
+X09de:	ret	
+;
+	mov	a,r2
+	ajmp	X0900
+;
+	org	9e3h
+;
+X09e3:	ret	
+;
+	add	a,#0eah
+	addc	a,r6
+	mov	r7,a
+	reti	
+;
+X09e9:	add	a,r2
+	mov	a,r2
+	xch	a,r5
+X09ec:	mov	@r1,#2
+	mov	r6,a
+	dec	@r1
+	xch	a,r2
+	anl	a,r3
+X09f2:	inc	r2
+	mov	r6,a
+	jbc	0c0h.2,X09f7
+X09f7:	inc	r2
+	ajmp	X09dd
+;
+	inc	r7
+	inc	r6
+X09fc:	jbc	0c0h.3,X0a42
+X09ff:	inc	r2
+	mov	r6,a
+	acall	X08c2
+	inc	r5
+	inc	r2
+	ajmp	X09e3
+;
+	inc	r7
+	inc	r6
+	acall	X08c3
+X0a0b:	orl	rb1r2,#0feh
+	lcall	Xc21a
+	inc	r2
+	ajmp	X09f7
+;
+X0a14:	inc	r7
+	inc	r6
+	lcall	Xc343
+	inc	r2
+	mov	r6,a
+	rrc	a
+	clr	24h.7
+	inc	r2
+X0a1f:	ajmp	X09ec
+;
+	inc	r7
+	inc	r6
+	rrc	a
+	clr	c
+	orl	rb1r2,#3eh
+	jc	X09f7
+	xch	a,@r1
+	ajmp	X0806
+;
+	addc	a,r6
+	xch	a,r5
+	addc	a,r7
+	ajmp	X0821
+;
+	inc	a
+	jbc	21h.6,X0a49
+	xch	a,r5
+	subb	a,@r1
+	ajmp	X083e
+;
+	ajmp	X0acd
+;
+	xch	a,@r1
+	ajmp	X080e
+;
+	org	0a40h
+;
+	clr	c
+	mov	a,r3
+X0a42:	inc	r1
+	mov	a,r3
+	addc	a,r6
+	jc	X0a14
+	xch	a,@r1
+	ajmp	X0821
+;
+	inc	a
+	jbc	rclk,X09d4
+	ajmp	X083e
+;
+	jc	X0a1f
+	xch	a,@r1
+	ajmp	X08eb
+;
+	xch	a,r5
+	mov	rb0r1,@r0
+	clr	c
+	mov	a,r3
+	inc	r1
+	mov	r1,#0feh
+X0a5d:	mov	r7,a
+	xch	a,r2
+	djnz	rb1r1,X0a70
+	mov	r7,a
+X0a63:	mov	r6,a
+	jbc	tr2,X0ae1
+	inc	r2
+	mov	r6,a
+	acall	X08ca
+	movc	a,@a+pc
+	inc	r2
+	mov	r6,a
+	lcall	Xca89
+	inc	r2
+	mov	r6,a
+	rrc	a
+	xch	a,r2
+	mov	rb1r2,r7
+	clr	c
+	mov	a,r3
+	inc	r1
+	ajmp	X0943
+;
+	jbc	rclk,X0a14
+	inc	r2
+	clr	c
+	cjne	r0,#9,X0a51
+	acall	X0a0b
+	clr	c
+	cjne	r0,#9,X0a57
+	cpl	21h.6
+	clr	c
+	cjne	r0,#9,X0a5d
+	add	a,r1
+	inc	r6
+	clr	c
+	cjne	r0,#9,X0a63
+	anl	a,r3
+	ajmp	X08f5
+;
+	djnz	22h,X0a9c
+X0a9c:	mov	a,r2
+	addc	a,r6
+	nop	
+	xch	a,r5
+	xch	a,@r1
+	ajmp	X08cd
+;
+	mov	rb0r1,@r0
+	rl	a
+	mov	r6,#16h
+	ljmp	Xfe17
+;
+	add	a,r0
+	rrc	a
+	addc	a,r6
+	jc	X0a7d
+	xch	a,@r1
+	ajmp	X08cd
+;
+	mov	rb0r1,@r0
+	rl	a
+	mov	r6,#0cdh
+	orl	a,@r1
+	inc	r3
+	mov	r6,a
+	dec	@r1
+	add	a,r0
+	ljmp	X1601
+;
+	addc	a,r6
+	dec	@r1
+	reti	
+;
+	dec	r6
+	mov	a,r2
+	addc	a,r6
+	jb	26h.2,X0ae9
+	mov	a,r2
+	mov	a,2ah
+	reti	
+;
+X0acd:	mov	a,r2
+	ret	
+;
+	ret	
+;
+	mov	a,r2
+	add	a,r2
+	addc	a,#0eah
+	ret	
+;
+	add	a,#0eah
+	ajmp	X0f3e
+;
+	org	0adah
+;
+	reti	
+;
+	add	a,r2
+	mov	a,r2
+	xch	a,r5
+	mov	@r1,#2
+	mov	r6,a
+X0ae1:	dec	@r1
+	xch	a,r2
+	orl	a,r6
+	inc	r3
+	mov	r6,a
+X0ae6:	acall	X08ca
+	add	a,r4
+X0ae9:	inc	r3
+	mov	r6,a
+	rrc	a
+	xch	a,r2
+X0aed:	movx	@r0,a
+	inc	r2
+	clr	c
+	djnz	r5,X0afc
+	addc	a,r6
+	ljmp	Xba28
+;
+	reti	
+;
+	addc	a,r6
+	nop	
+	xch	a,r5
+	xch	a,@r1
+	ajmp	X08cd
+;
+	mov	rb0r1,@r0
+	rl	a
+	mov	r6,#16h
+	ljmp	Xfe17
+;
+X0b05:	jb	21h.7,X0aed
+	ajmp	X0919
+;
+	jbc	27h.6,X0b4d
+	xch	a,r5
+	xch	a,@r1
+	ajmp	X08cd
+;
+	mov	rb0r1,@r0
+	ajmp	X0f18
+;
+	rrc	a
+	addc	a,r6
+X0b17:	jc	X0ae6
+	xch	a,@r1
+	ajmp	X08cd
+;
+	mov	rb0r1,@r0
+	rl	a
+	mov	r6,#0cdh
+	orl	a,@r1
+	inc	r3
+	mov	r6,a
+	dec	@r1
+	add	a,r0
+	ljmp	X1601
+;
+	clr	c
+	djnz	r5,X0b36
+	dec	r6
+	ljmp	X3a01
+;
+	mov	a,r2
+	cjne	r4,#20h,X0b3b
+	addc	a,r2
+	nop	
+X0b36:	mov	a,r2
+	cjne	r5,#0cah,X0b7e
+	inc	r3
+X0b3b:	xch	a,r5
+	orl	a,@r1
+	inc	r3
+	dec	r5
+	jb	ma1,X0b05
+	mov	@r1,a
+	inc	r2
+	clr	c
+	djnz	r5,X0b51
+	addc	a,r6
+	dec	2bh
+	addc	a,r5
+	jb	xactv,X0b17
+	acall	X0ef1
+	xch	a,r1
+X0b51:	mov	adcon,a
+	djnz	0e5h,X0b90
+	inc	r0
+X0b57:	mov	a,r2
+	mov	r6,a
+	dec	@r1
+	add	a,r0
+	dec	r5
+	ajmp	X0900
+;
+	movx	a,@dptr
+	ret	
+;
+	jbc	idsm,X0b85
+	rrc	a
+	mov	a,r2
+	add	a,r3
+	add	a,r3
+	ret	
+;
+	inc	@r0
+	mov	a,r2
+	addc	a,r6
+	dec	@r1
+	reti	
+;
+	inc	r0
+X0b6e:	mov	a,r2
+	addc	a,r6
+	nop	
+	reti	
+;
+	inc	r7
+	mov	a,r2
+	addc	a,r6
+	nop	
+	reti	
+;
+	inc	r6
+	mov	a,r2
+	xch	a,r5
+	mov	r6,#1
+	addc	a,r6
+	nop	
+X0b7e:	xch	a,r5
+	xch	a,@r1
+	ajmp	X0821
+;
+	inc	r7
+	rrc	a
+	xch	a,r5
+X0b85:	mov	rb0r1,@r0
+	addc	a,r6
+	jc	X0b57
+	xch	a,@r1
+	ajmp	X0821
+;
+	add	a,r6
+	jbc	rclk,X0b17
+	ajmp	X083e
+;
+	dec	@r1
+	reti	
+;
+	dec	r6
+	mov	a,r2
+	addc	a,r6
+	jbc	26h.2,X0bbb
+	mov	a,r2
+	ajmp	X0900
+;
+	org	0b9fh
+;
+	ret	
+;
+	ret	
+;
+	mov	a,r2
+	ajmp	X0900
+;
+	org	0ba5h
+;
+	ret	
+;
+	add	a,#0eah
+	addc	a,r6
+	mov	r7,a
+	reti	
+;
+	add	a,r2
+	mov	a,r2
+	xch	a,r5
+	mov	@r1,#2
+	mov	r6,a
+	dec	@r1
+	jb	xstr,X0bf3
+	dec	@r1
+	reti	
+;
+	dec	r6
+	mov	a,r2
+	addc	a,r6
+	ajmp	X0832
+;
+	inc	r5
+	mov	a,r2
+	xch	a,r5
+	mov	r6,#1
+	inc	@r0
+	inc	r6
+	xch	a,r5
+	add	a,rb0r1
+	add	a,r2
+	inc	@r0
+	mov	a,r2
+	xch	a,r5
+	xch	a,r0
+	inc	r5
+	addc	a,r6
+	jbc	26h.2,X0bf0
+	mov	a,r2
+	add	a,r2
+	reti	
+;
+	mov	a,r2
+	ret	
+;
+	ret	
+;
+	mov	a,r2
+	add	a,r2
+	addc	a,#0eah
+	ret	
+;
+	add	a,#0eah
+	addc	a,r6
+	mov	r7,a
+	reti	
+;
+	add	a,r2
+	mov	a,r2
+	xch	a,r5
+	mov	@r1,#2
+	mov	r6,a
+	jbc	i2cfg.2,X0bf6
+	inc	r5
+	mov	r6,a
+	dec	@r1
+	xch	a,r2
+	add	a,#0eh
+	mov	r6,a
+X0bf0:	jbc	0c0h.2,X0bf0
+X0bf3:	inc	r3
+	xch	a,r5
+	xrl	a,r2
+X0bf6:	ljmp	Xcaac
+;
+	inc	r4
+	clr	c
+	mov	rb1r5,r2
+	mov	r6,a
+	acall	X08c2
+	inc	r3
+	inc	r4
+	xch	a,r5
+	xrl	a,r2
+	ljmp	Xcadf
+;
+	inc	r4
+	clr	c
+	cjne	@r1,#0ch,X0c0a
+	rrc	a
+	clr	23h.1
+	inc	r4
+	xch	a,r5
+	xrl	a,r2
+	ljmp	Xcaf6
+;
+	inc	r4
+	clr	c
+	xch	a,r3
+X0c18:	inc	r4
+	mov	r6,a
+	dec	rcap2l
+	xrl	rb1r5,#0feh
+	lcall	Xc22c
+	inc	r4
+	xch	a,r5
+	xrl	a,r2
+	ljmp	Xca9c
+;
+	inc	r5
+	clr	c
+	addc	a,r5
+	inc	r4
+	mov	r6,a
+	dec	a
+	clr	27h.2
+	inc	r4
+	xch	a,r5
+	xrl	a,r2
+	ljmp	Xcaa8
+;
+	inc	r5
+	clr	c
+	jmp	@a+dptr
+;
+X0c39:	inc	r4
+	clr	c
+	movx	a,@r0
+	inc	r3
+	xch	a,4fh
+	addc	a,r2
+	inc	r6
+	mov	a,r2
+	orl	a,@r1
+	mov	r1,#0f5h
+	mov	a,th2
+	mov	r6,#1
+	addc	a,r6
+	nop	
+	xch	a,r5
+	xch	a,@r1
+	ajmp	X0821
+;
+	orl	a,r0
+	rrc	a
+	xch	a,r5
+	mov	rb0r1,@r0
+	ajmp	X0ff1
+;
+	xch	a,r5
+	dec	r4
+	rr	a
+	mov	r6,a
+	dec	28h
+	lcall	X48f5
+	mov	r0,#32h
+	inc	r6
+	mov	a,r2
+	acall	X0f06
+	nop	
+	xch	a,r5
+	inc	r2
+	rr	a
+	mov	r6,a
+	dec	28h
+	ljmp	Xed41
+;
+	ajmp	X0ec3
+;
+	cjne	@r0,#0bh,X0c39
+	orl	a,r7
+	addc	a,r2
+	inc	r7
+	mov	a,r2
+	orl	a,@r1
+	mov	r1,#0f5h
+	mov	a,th2
+	mov	r6,#1
+	addc	a,r6
+	nop	
+	xch	a,r5
+	xch	a,@r1
+	ajmp	X0821
+;
+	orl	a,r0
+	rrc	a
+	xch	a,r5
+	mov	rb0r1,@r0
+	ajmp	X0ff1
+;
+	xch	a,r5
+	dec	r4
+	rr	a
+	mov	r6,a
+	dec	28h
+	dec	48h
+	orl	a,@r1
+	mov	r1,#32h
+	inc	r7
+	mov	a,r2
+	mov	a,r5
+	mov	r0,#0eh
+	rr	a
+X0c9d:	cjne	@r1,#0cdh,X0c6b
+	nop	
+	addc	a,r6
+	mov	r7,a
+	setb	c
+	ajmp	X08d3
+;
+	ljmp	X78c1
+;
+	clr	c
+	cjne	@r0,#0bh,X0cce
+	xrl	a,r2
+	acall	X08cd
+	subb	a,rb1r2
+	addc	a,r6
+	dec	@r1
+	clr	c
+	cjne	@r0,#0bh,X0c9d
+	add	a,r2
+	inc	@r0
+	mov	a,r2
+	add	a,r3
+	ret	
+;
+	inc	@r0
+	mov	a,r2
+	addc	a,r6
+	ajmp	X0832
+;
+	inc	r5
+	mov	a,r2
+	xch	a,r5
+	xch	a,r0
+	inc	r5
+	ajmp	X0fc3
+;
+	movx	a,@r0
+	inc	r3
+	mov	a,2ah
+	inc	@r0
+X0cce:	mov	a,r2
+	rl	a
+	ret	
+;
+	inc	@r0
+	mov	a,r2
+	addc	a,r6
+	ajmp	X0832
+;
+	inc	r5
+	mov	a,r2
+	xch	a,r5
+	xch	a,r0
+	inc	r5
+	ajmp	X0fc3
+;
+	movx	a,@r0
+	inc	r3
+	mov	a,2ah
+	inc	@r0
+	mov	a,r2
+	add	a,r3
+	add	a,r3
+	add	a,r3
+	add	a,r3
+	ret	
+;
+	inc	@r0
+	mov	a,r2
+	addc	a,r6
+X0ceb:	ajmp	X0832
+;
+	inc	r5
+	mov	a,r2
+	xch	a,r5
+	xch	a,r0
+	inc	r5
+	ajmp	X0fc3
+;
+	movx	a,@r0
+	inc	r3
+	mov	a,2ah
+	inc	@r0
+	mov	a,r2
+	rl	a
+	rl	a
+	rl	a
+	rl	a
+	ret	
+;
+	inc	@r0
+	mov	a,r2
+	addc	a,r6
+	ajmp	X0832
+;
+	inc	r5
+	mov	a,r2
+	xch	a,r5
+	xch	a,r0
+	inc	r5
+	ajmp	X0fc3
+;
+	movx	a,@r0
+	inc	r3
+	mov	a,adcon
+	add	a,r2
+	inc	@r0
+	mov	a,r2
+	rl	a
+	rl	a
+	orl	a,@r0
+	orl	a,r7
+	addc	a,r2
+	inc	r5
+X0d18:	mov	a,r2
+	mov	r6,a
+	nop	
+	jb	23h.0,X0d96
+	reti	
+;
+	inc	r1
+	mov	a,r2
+	ret	
+;
+	inc	r2
+	mov	a,r2
+	mov	a,@r0
+	movx	@dptr,a
+	orl	a,@r1
+	mov	r1,#0e6h
+	inc	r7
+	anl	c,/2eh.7
+	addc	a,r6
+	ajmp	X0832
+;
+	inc	r5
+	mov	a,r2
+	rl	a
+	clr	c
+	acall	X0a0d
+	mov	r0,#32h
+	inc	r1
+	mov	a,r2
+	ret	
+;
+	inc	r2
+	mov	a,r2
+	mov	a,@r0
+	inc	r7
+X0d3e:	orl	a,@r1
+	mov	r1,#0cbh
+	add	a,@r1
+	xch	a,r3
+	add	a,@r1
+	xch	a,r3
+	add	a,@r1
+	xch	a,r3
+	add	a,@r1
+	mov	a,@r0
+	movx	@dptr,a
+	anl	c,/2eh.7
+	addc	a,r6
+	nop	
+	reti	
+;
+X0d4f:	inc	r5
+	mov	a,r2
+	addc	a,r6
+	nop	
+	reti	
+;
+	inc	r4
+	mov	a,r2
+	add	a,r3
+	add	a,r3
+	ret	
+;
+	inc	@r0
+	mov	a,r2
+	xch	a,r5
+	xch	a,r0
+	inc	r5
+	ajmp	X0ee1
+;
+	clr	c
+	movx	a,@r0
+	inc	r3
+	mov	a,2ah
+	inc	r2
+	mov	a,r2
+	addc	a,r2
+	inc	r4
+	mov	a,r2
+	mov	r6,a
+	mov	r7,a
+	add	a,r0
+X0d6d:	jbc	0c0h.5,X0daa
+	inc	r1
+	mov	a,r2
+	orl	a,@r0
+	mov	@r1,#78h
+	reti	
+;
+	inc	r1
+	mov	a,r2
+	addc	a,r6
+	ajmp	X0832
+;
+	inc	r5
+	mov	a,r2
+	ajmp	X0e2b
+;
+	add	a,r3
+	ret	
+;
+	inc	@r0
+	mov	a,r2
+	xch	a,r5
+	xch	a,r0
+	inc	r5
+	ajmp	X0fc3
+;
+	movx	a,@r0
+X0d89:	inc	r3
+	mov	a,2ah
+	inc	@r0
+	mov	a,r2
+	rl	a
+	rl	a
+	xch	a,r5
+X0d91:	ajmp	X0f03
+;
+	add	a,r3
+	add	a,r3
+	ret	
+;
+X0d96:	inc	@r0
+	mov	a,r2
+	ajmp	X0fc3
+;
+	cjne	@r0,#0bh,X0dc7
+	jbc	idsm,X0d6d
+	ajmp	X0f03
+;
+	mov	r6,a
+	dec	rcap2l
+	cjne	@r0,#0bh,X0d91
+	mov	0e5h,a
+X0daa:	add	a,r2
+	rrc	a
+	mov	a,r2
+	xch	a,r5
+	ajmp	X0f03
+;
+	mov	r6,a
+	dec	28h
+	inc	r4
+	ret	
+;
+	rrc	a
+	mov	a,r2
+	addc	a,r2
+	xch	a,rb1r5
+	reti	
+;
+X0dbb:	lcall	Xeacd
+	lcall	Xeae1
+	acall	X0fc3
+	cjne	@r0,#0bh,X0d89
+	nop	
+X0dc7:	nop	
+	mov	adcon,a
+	xch	a,r5
+	mov	r6,#1
+	addc	a,r6
+	nop	
+	xch	a,r5
+	xch	a,@r1
+	ajmp	X08cd
+;
+X0dd3:	mov	@r0,a
+	inc	r5
+	add	a,r3
+	add	a,r3
+	orl	a,@r0
+	xch	a,r5
+	addc	a,r7
+	ajmp	X0823
+;
+X0ddc:	orl	a,@r0
+	xch	a,r5
+	addc	a,r7
+	ajmp	X0823
+;
+	orl	a,@r0
+	xch	a,r5
+	addc	a,r7
+	ajmp	X0823
+;
+	orl	a,@r0
+	xch	a,r5
+	addc	a,r7
+	ajmp	X082b
+;
+	addc	a,r6
+	jc	X0dbb
+	xch	a,@r1
+	ajmp	X08cd
+;
+	mov	@r0,a
+	inc	r5
+X0df3:	clr	c
+	rrc	a
+	inc	r6
+	inc	r6
+	ljmp	X7ccd
+;
+	mov	r6,a
+	nop	
+	mov	r5,#0cdh
+	mov	r6,a
+X0dff:	nop	
+	inc	@r0
+	addc	a,r2
+	xch	a,r5
+	addc	a,r7
+	ajmp	X087e
+;
+	xch	a,r5
+	mov	r6,a
+	nop	
+	inc	@r0
+	jb	rclk,X0e4c
+	ajmp	X0823
+;
+	inc	r5
+	jb	acc.6,X0ddc
+	addc	a,r2
+	inc	r5
+	mov	a,r2
+	orl	a,@r1
+	addc	a,r6
+	orl	a,@r0
+	mov	dptr,#Xcdc7
+	ajmp	X082b
+;
+	add	a,r3
+	add	a,r3
+	add	a,r3
+	ajmp	X0ef1
+;
+	xch	a,r1
+	ajmp	X0fd1
+;
+	ajmp	X0ef1
+;
+	xch	a,r1
+	mov	0e5h,a
+X0e2b:	xch	a,3eh
+X0e2d:	sjmp	X0e61
+;
+	jb	idsm,X0dff
+	mov	r6,#1
+	inc	@r0
+	inc	r4
+	xch	a,r5
+	add	a,rb0r1
+	addc	a,r2
+	addc	a,r4
+	mov	a,r2
+	mov	r6,a
+	nop	
+	clr	2ah.2
+	inc	r6
+	ajmp	X098c
+;
+	rrc	a
+	xch	a,r5
+	mov	rb0r1,@r0
+	xch	a,r5
+	mov	@r1,#2
+	mov	r6,a
+	dec	@r1
+X0e4c:	clr	28h.7
+	inc	r6
+	clr	c
+	mov	r6,rb1r6
+	addc	a,r6
+	nop	
+	xch	a,r5
+	xch	a,@r1
+	ajmp	X0821
+;
+	subb	a,r5
+	rrc	a
+	xch	a,r5
+	mov	rb0r1,@r0
+	addc	a,r6
+	jc	X0e2d
+	xch	a,@r1
+X0e61:	ajmp	X0821
+;
+	mov	th2,rb2r3
+	mov	rb0r1,@r0
+	inc	r6
+	ajmp	X083e
+;
+	orl	a,@r0
+	xch	a,r5
+	xch	a,@r1
+	ajmp	X0806
+;
+	jnb	2fh.1,X0df3
+	orl	a,@r1
+	xch	a,r5
+	addc	a,r7
+	ajmp	X08cd
+;
+	mov	@r1,#2
+	mov	r6,a
+	acall	X08c2
+	mov	rb1r6,@r1
+	inc	r5
+	clr	2dh.2
+	inc	r6
+	inc	r4
+	clr	c
+	xrl	a,r2
+	inc	r6
+	mov	r6,a
+	rrc	a
+	clr	p1.7
+	inc	r6
+	addc	a,r2
+	addc	a,r4
+	mov	a,r2
+	cjne	r1,#0cah,X0efc
+	inc	r6
+	inc	r4
+	clr	c
+	xrl	a,r2
+	inc	r6
+	mov	r6,a
+X0e98:	dec	0c2h
+	subb	a,r7
+	inc	r6
+	clr	c
+	mov	r6,rb1r6
+	mov	r6,a
+	dec	@r1
+	clr	2dh.2
+	inc	r6
+	mov	r1,#0cdh
+	jc	X0eae
+	xch	a,r5
+	mov	r6,#1
+	clr	c
+	anl	rb1r6,a
+X0eae:	ajmp	X0ee1
+;
+	acall	X0fc9
+	mov	0e5h,a
+	xch	a,th2
+	mov	r6,#1
+	inc	@r0
+	inc	r4
+	xch	a,r5
+	add	a,rb0r1
+	addc	a,r6
+	nop	
+	xch	a,r5
+	xch	a,@r1
+X0ec1:	ajmp	X0821
+;
+X0ec3:	xrl	a,@r0
+	rrc	a
+	xch	a,r5
+	mov	rb0r1,@r0
+	addc	a,r6
+	jc	X0e98
+	xch	a,@r1
+	ajmp	X083a
+;
+	mov	th2,ctcon
+	mov	r6,a
+	nop	
+	addc	a,r2
+	div	ab
+	mov	a,r3
+X0ed6:	xch	a,r5
+	mov	r6,a
+	nop	
+	addc	a,r2
+	movc	a,@a+pc
+	mov	a,r3
+	xch	a,r5
+	mov	r6,a
+	nop	
+	inc	@r0
+	xrl	a,#0cdh
+	addc	a,r7
+	ajmp	X083a
+;
+	anl	c,obfc
+	xch	a,r5
+X0ee8:	mov	r6,a
+	nop	
+	inc	@r0
+	xrl	a,r0
+	xch	a,r5
+	addc	a,r7
+	ajmp	X083a
+;
+	ajmp	X0ceb
+;
+	xch	a,r5
+	mov	r6,a
+	nop	
+	inc	@r0
+	xrl	a,r5
+	xch	a,r5
+	addc	a,r7
+	ajmp	X083a
+;
+	sjmp	X0ee8
+;
+	xch	a,r5
+	mov	r6,a
+	nop	
+	inc	@r0
+X0f01:	jmp	@a+dptr
+;
+X0f02:	xch	a,r5
+X0f03:	addc	a,r7
+	ajmp	X08cd
+;
+X0f06:	pop	rb0r1
+	ajmp	X091e
+;
+	mov	a,r2
+	cjne	r6,#0cah,X0ed6
+	inc	r6
+	reti	
+;
+	dec	r6
+	mov	a,r2
+	mov	r6,a
+	dec	@r1
+X0f14:	clr	cprl2
+	inc	r6
+	ajmp	X0ee1
+;
+	acall	X0fc9
+	mov	adcon,a
+	djnz	0e5h,X0f01
+	acall	X0ec1
+X0f22:	acall	X0fc9
+	movx	@r1,a
+	mov	adcon,a
+	mov	a,3eh
+	acall	X0dd3
+	inc	dptr
+	addc	a,r6
+	subb	a,@r1
+	setb	c
+	mov	c,27h.6
+X0f31:	subb	a,r1
+	setb	c
+	mov	c,27h.2
+	sjmp	X0f22
+;
+	xch	a,@r0
+	ajmp	X0827
+;
+	reti	
+;
+	sjmp	X0f28
+;
+	mov	r6,a
+X0f3e:	jz	X0f02
+	mov	rb1r7,r7
+	mov	r7,32h
+	sjmp	X0f31
+;
+	addc	a,r2
+	ajmp	X0ceb
+;
+	xch	a,@r0
+	ajmp	X0827
+;
+	reti	
+;
+	ajmp	X0ceb
+;
+	mov	r6,a
+	jz	X0f14
+	mov	rb1r7,r7
+	mov	r7,32h
+	ajmp	X0ceb
+;
+	addc	a,r2
+	anl	c,obfc
+	xch	a,@r0
+	ajmp	X0827
+;
+	reti	
+;
+	anl	c,obfc
+	mov	r6,a
+	add	a,#0c2h
+	mov	rb1r7,r7
+	mov	r7,32h
+	anl	c,obfc
+	addc	a,r2
+	movc	a,@a+pc
+	mov	a,r3
+	xch	a,@r0
+	ajmp	X0827
+;
+	reti	
+;
+	movc	a,@a+pc
+	mov	a,r3
+	mov	r6,a
+	nop	
+	clr	tf1
+	inc	r7
+	addc	a,r2
+	div	ab
+	mov	a,r3
+	xch	a,@r0
+	ajmp	X0827
+;
+	reti	
+;
+	div	ab
+	mov	a,r3
+	mov	r6,a
+	nop	
+	clr	tf1
+	inc	r7
+	addc	a,r2
+	mov	adch,ctcon
+	ajmp	X0827
+;
+	reti	
+;
+	mov	3ah,ctcon
+	mov	ctcon,@r0
+	mov	a,r6
+	jbc	rs0,X0f9d
+	reti	
+;
+	mov	ctcon,@r0
+	ajmp	X0fc1
+;
+	acall	X0ffb
+X0f9d:	mov	a,r5
+	orl	a,5ah
+	addc	a,r0
+	jnb	24h.0,X0ffb
+	xrl	a,73h
+	mov	a,#4fh
+	anl	2ch,#20h
+	xrl	79h,a
+	jb	28h.4,X1025
+	xrl	a,@r1
+	xrl	a,rb2r7
+	mov	@r0,#65h
+	orl	c,2eh.3
+	xrl	a,r1
+	xrl	a,r7
+	xrl	a,r6
+	jb	2ch.2,X0fed
+	add	a,r6
+	addc	a,@r1
+	jnb	22h.7,X1005
+	jnc	X1019
+	jb	2dh.0,X1028
+	xrl	a,r4
+	mov	a,#65h
+	xrl	a,#2eh
+	dec	@r1
+	orl	a,r1
+	xrl	a,r6
+	jnz	X1046
+X0fd1:	mov	a,#20h
+	jb	2ch.3,X1045
+	xrl	a,r5
+	xrl	a,r5
+	ajmp	X0b6e
+;
+	xrl	a,#3ah
+	dec	@r1
+	addc	a,r6
+	xrl	a,r0
+	xrl	a,6ch
+	jnz	X0ffa
+	addc	a,r6
+	xrl	a,r0
+	xrl	a,78h
+	xrl	a,64h
+	xrl	a,r1
+	mov	a,#17h
+	addc	a,r6
+X0fed:	mov	@r0,#69h
+	xrl	a,77h
+X0ff1:	jb	2dh.4,X1063
+	xrl	a,@r1
+	jmp	@a+dptr
+;
+	dec	@r1
+	addc	a,r6
+	mov	@r0,#69h
+X0ffa:	xrl	a,77h
+	jb	2eh.5,X106f
+	mov	a,#69h
+	xrl	a,r5
+	xrl	a,rb2r7
+	jb	24h.0,X1027
+	jb	24h.0,X102a
+	jb	24h.0,X102d
+	jb	24h.0,X1030
+	jb	24h.0,X1033
+	jb	24h.0,X1036
+	jb	24h.0,X1030
+X1019:	add	a,r2
+	add	a,r5
+	add	a,r5
+	add	a,r5
+	add	a,r5
+	add	a,r5
+	add	a,r5
+	add	a,r5
+	xrl	a,6eh
+	xrl	a,#2dh
+X1025:	add	a,r5
+	add	a,r5
+X1027:	add	a,r5
+X1028:	add	a,r5
+	add	a,r5
+X102a:	add	a,r5
+	add	a,r5
+	add	a,r2
+X102d:	dec	@r1
+	jnc	X10a2
+X1030:	xrl	a,73h
+	jmp	@a+dptr
+;
+X1033:	jb	28h.5,X10a4
+X1036:	mov	a,#65h
+	orl	c,25h.6
+	add	a,r6
+	add	a,r6
+	add	a,r6
+	add	a,r6
+	add	a,r6
+	add	a,r6
+	add	a,r6
+	add	a,r6
+	dec	@r1
+	rl	a
+	anl	a,73h
+X1046:	xrl	a,20h
+	orl	4bh,#31h
+	jb	2ch.1,X10bc
+	xrl	a,#20h
+	orl	4bh,#33h
+	jb	2eh.4,X10c5
+	jb	22h.7,X107c
+	orl	c,2dh.7
+	xrl	a,r4
+	xrl	a,r4
+	jb	2eh.5,X10d0
+	jb	2ch.1,X10d1
+X1063:	xrl	a,#20h
+	xrl	a,#6fh
+	mov	@r1,#6eh
+	jb	24h.0,X108c
+	dec	@r1
+	orl	4bh,#30h
+	addc	a,r2
+	jb	29h.0,X10d9
+	xrl	a,r4
+	jnz	X1097
+	jb	24h.0,X109a
+	jb	24h.0,X109d
+	jb	24h.0,X10a0
+	jb	22h.7,X10d6
+	xrl	a,r0
+	xrl	a,r7
+	mov	@r1,#20h
+	mov	a,#68h
+	xrl	a,r1
+	jmp	@a+dptr
+;
+	jb	2dh.0,X10f3
+	xrl	a,r4
+	jnz	X10b1
+	jb	24h.0,X10b4
+	jb	24h.0,X10ae
+X1097:	orl	4bh,#31h
+X109a:	addc	a,r2
+	jb	29h.0,X1103
+	mov	r0,#65h
+X10a0:	xrl	a,#69h
+X10a2:	mov	a,#20h
+X10a4:	jb	24h.0,X10c7
+	jb	24h.0,X10ca
+	jb	22h.7,X10fa
+	xrl	a,6dh
+	xrl	a,r7
+	orl	c,2fh.1
+	jb	2dh.0,X111a
+	mov	r0,#20h
+	xrl	a,64h
+	xrl	a,r1
+	mov	a,#6fh
+X10bc:	orl	c,24h.0
+	jb	24h.0,X10d8
+	ajmp	X126c
+;
+	jmp	@a+dptr
+;
+	xrl	a,r7
+X10c5:	jb	2ch.6,X1137
+	orl	c,24h.0
+X10ca:	orl	a,r1
+	add	a,r7
+	orl	a,r7
+	add	a,r5
+	mov	73h,#61h
+X10d1:	xrl	a,@r1
+	xrl	a,20h
+	jb	22h.7,X111a
+	orl	a,r3
+X10d8:	reti	
+;
+X10d9:	addc	a,r2
+	jb	2ah.6,X1146
+	xrl	a,77h
+	jb	2eh.5,X1152
+	mov	a,#69h
+	xrl	a,r5
+	xrl	a,20h
+	jb	24h.0,X110a
+	dec	@r1
+	orl	4bh,#33h
+	addc	a,r2
+	jb	2ah.6,X115b
+	xrl	a,77h
+	jb	2dh.4,X1166
+	xrl	a,@r1
+	jmp	@a+dptr
+;
+	jb	24h.0,X111c
+	jb	24h.0,X111f
+	dec	@r1
+	anl	68h,#69h
+X1103:	xrl	a,@r0
+	mov	a,#3ah
+	jb	24h.0,X1129
+	jb	24h.0,X112c
+	jb	24h.0,X112f
+	jb	24h.0,X1132
+	jb	24h.0,X112c
+	anl	a,73h
+	ajmp	X1367
+;
+	xrl	a,20h
+	xrl	a,r7
+X111c:	xrl	a,@r0
+	jb	2ah.3,X1188
+	xrl	a,r1
+	xrl	a,@r0
+	mov	a,#20h
+	xrl	a,r1
+	jmp	@a+dptr
+;
+	jb	24h.0,X1149
+X1129:	dec	@r1
+	xrl	a,r5
+	ajmp	X1372
+;
+	xrl	a,r3
+	xrl	a,64h
+	jb	2eh.7,X119c
+	mov	a,#68h
+	jb	2bh.6,X1190
+	add	a,r4
+	jb	24h.0,X115c
+	jb	24h.0,X1156
+	mov	@r1,#68h
+	xrl	a,72h
+	xrl	a,20h
+	anl	a,r0
+X1146:	jb	2dh.1,X11bc
+X1149:	jb	2eh.3,X11bb
+	xrl	a,r5
+	xrl	a,20h
+	xrl	a,r3
+	xrl	a,79h
+X1152:	jb	22h.7,X1178
+	jnc	X11c9
+	xrl	a,73h
+	jmp	@a+dptr
+;
+	jb	28h.5,X11cb
+	mov	a,#65h
+	orl	c,24h.0
+	mov	a,#6fh
+	jb	2ch.5,X11de
+X1166:	xrl	a,r1
+	mov	a,#17h
+	dec	@r1
+	rl	a
+	anl	a,70h
+	addc	a,r2
+	orl	4bh,#31h
+	jb	28h.4,X11e3
+	mov	@r1,#6eh
+	addc	a,r2
+	orl	4bh,#33h
+	jb	24h.0,X119d
+	jb	22h.7,X11c5
+	xrl	a,r6
+	mov	a,#65h
+	orl	c,27h.2
+	jb	28h.5,X1200
+X1188:	xrl	a,r1
+	mov	a,#20h
+	xrl	a,r0
+	xrl	a,78h
+	xrl	a,64h
+X1190:	xrl	a,r1
+	mov	a,#20h
+	dec	@r1
+	orl	4bh,#30h
+	addc	a,r2
+	jb	28h.3,X1203
+	xrl	a,r7
+X119c:	xrl	a,r7
+X119d:	jmp	@a+dptr
+;
+	xrl	a,20h
+	ajmp	X1364
+;
+	xrl	a,#72h
+	xrl	a,73h
+	jmp	@a+dptr
+;
+	jb	22h.7,X11ed
+	orl	a,r3
+	reti	
+;
+	addc	a,r2
+	jb	29h.1,X11df
+	orl	a,r7
+	jb	2dh.7,X1229
+	mov	a,#70h
+	mov	74h,#20h
+	jb	24h.0,X11dc
+X11bc:	jb	22h.7,X121d
+	orl	4bh,#32h
+	addc	a,r2
+	jb	29h.2,X123b
+	xrl	a,r5
+	jnz	X11e9
+X11c9:	mov	a,#6fh
+X11cb:	jb	2dh.6,X11ee
+	jb	24h.0,X11f1
+	jb	22h.7,X1217
+	orl	a,r3
+	addc	a,#3ah
+	jb	29h.1,X1209
+	orl	a,r7
+	jb	2dh.1,X124c
+X11de:	jnz	X1255
+	mov	a,#20h
+	jb	24h.0,X1205
+	jb	24h.0,X11ff
+	anl	a,r6
+X11e9:	orl	4bh,#34h
+	addc	a,r2
+X11ed:	jb	28h.3,X1251
+	xrl	a,r4
+X11f1:	xrl	a,r4
+	jb	2eh.4,X1264
+	jb	2dh.6,X1218
+	jb	24h.0,X121b
+	jb	22h.7,X123f
+	xrl	a,@r0
+X11ff:	mov	a,#65h
+	orl	c,24h.0
+X1203:	mov	a,#68h
+X1205:	xrl	a,r1
+	jmp	@a+dptr
+;
+	jb	2ch.3,X1279
+	xrl	a,r5
+	xrl	a,r5
+	ajmp	X136e
+;
+	xrl	a,#20h
+	jb	22h.7,X1287
+	xrl	a,r0
+	xrl	a,20h
+	mov	@r0,#61h
+X1218:	xrl	a,r4
+	mov	65h,#20h
+	orl	c,2ch.5
+	ajmp	X1364
+;
+	jb	2ch.6,X1295
+	xrl	a,r7
+	xrl	a,r5
+	jb	22h.7,X128f
+	xrl	a,r1
+X1229:	mov	@r0,#65h
+	xrl	a,r6
+	jb	2eh.0,X129e
+	orl	c,2eh.4
+	jb	2dh.1,X12a7
+	jb	2eh.3,X129c
+	xrl	a,6eh
+	jb	24h.0,X1253
+	xrl	a,r1
+	xrl	a,r6
+	jb	26h.7,X12b4
+	xrl	a,67h
+	xrl	a,r5
+	xrl	a,6eh
+	mov	a,#73h
+	jb	2ch.1,X12be
+	jb	2dh.0,X12b3
+	mov	r0,#2eh
+	dec	@r1
+X1251:	orl	4bh,#31h
+	addc	a,r2
+X1255:	jb	2ah.2,X12c7
+	xrl	a,r4
+	xrl	a,r4
+	jb	2dh.5,X12c2
+	xrl	a,r5
+	xrl	a,r7
+	orl	c,2fh.1
+	jb	2eh.5,X12d4
+X1264:	jb	22h.7,X12c5
+	orl	4bh,#31h
+	addc	a,r2
+	jb	2ah.5,X12de
+	jb	2ch.2,X12ea
+	jb	26h.4,X1294
+	jb	24h.0,X1297
+	jb	24h.0,X129a
+	dec	@r1
+	orl	4bh,#33h
+	addc	a,r2
+	jb	2ah.2,X12f1
+	xrl	a,r4
+	xrl	a,r4
+	jb	2dh.5,X12ec
+X1287:	xrl	a,r5
+	add	a,r6
+	jb	2ch.4,X12fb
+	mov	@r1,#6eh
+	jb	22h.7,X12ef
+	orl	4bh,#33h
+X1294:	addc	a,r2
+X1295:	jb	28h.4,X1307
+	mov	@r1,#6eh
+X129a:	jb	2ch.2,X1316
+	jb	26h.4,X12c0
+	jb	24h.0,X12c3
+	jb	22h.7,X12e9
+	orl	a,r3
+X12a7:	addc	a,3ah
+	jb	2ah.5,X131a
+	xrl	a,#6fh
+	jb	24h.0,X12d1
+	jb	24h.0,X12d4
+X12b4:	jb	24h.0,X12d7
+	jb	24h.0,X12d1
+	anl	a,6eh
+	xrl	a,#6fh
+X12be:	jb	2dh.1,X132f
+	jb	2dh.5,X1333
+	jmp	@a+dptr
+;
+X12c5:	mov	a,#20h
+X12c7:	xrl	61h,#73h
+	xrl	a,73h
+	add	a,r6
+	jb	22h.7,X1300
+	add	a,r5
+X12d1:	orl	a,@r0
+	addc	a,r2
+	jb	28h.3,X133e
+	ajmp	X136e
+;
+	xrl	a,@r1
+	xrl	a,20h
+	xrl	a,r5
+	xrl	a,6dh
+X12de:	xrl	a,r7
+	orl	c,2fh.1
+	jb	24h.0,X12fb
+	anl	a,r6
+	orl	4bh,#30h
+	addc	a,r2
+X12e9:	jb	29h.0,X1351
+X12ec:	xrl	a,r4
+	jnz	X130f
+X12ef:	jb	24h.0,X1312
+	jb	24h.0,X1315
+	jb	24h.0,X1318
+	dec	@r1
+	rl	a
+	jnc	X136e
+	xrl	a,73h
+	jmp	@a+dptr
+;
+	jb	28h.5,X1370
+	mov	a,#65h
+	orl	c,24h.0
+	mov	a,#6fh
+	jb	2ch.5,X1383
+	xrl	a,r1
+	mov	a,#17h
+	dec	@r1
+X130f:	anl	a,@r1
+	xrl	a,73h
+X1312:	mov	a,#4fh
+	anl	20h,#48h
+	xrl	a,78h
+	xrl	a,64h
+	xrl	a,r1
+	mov	a,#20h
+	mov	@r0,#30h
+	add	a,r6
+	reti	
+;
+	addc	a,rb2r7
+	orl	a,@r1
+	xrl	a,r1
+	mov	@r0,#65h
+	jb	2ch.1,X138f
+	xrl	a,#72h
+	xrl	a,73h
+X132f:	jmp	@a+dptr
+;
+	addc	a,r2
+	dec	@r1
+	orl	a,@r1
+X1333:	xrl	a,r1
+	mov	@r0,#65h
+	jb	2eh.7,X13a8
+	orl	c,2ch.4
+	addc	a,r2
+	dec	@r1
+	orl	a,@r1
+X133e:	xrl	a,r1
+	mov	@r0,#65h
+	jb	2ch.2,X13bd
+	mov	a,#65h
+	addc	a,r2
+	dec	@r1
+	orl	a,@r1
+	xrl	a,r1
+	mov	@r0,#65h
+	jb	29h.1,X137e
+	orl	a,r7
+	add	a,r5
+X1351:	ajmp	X1364
+;
+	xrl	a,#72h
+	xrl	a,73h
+	jmp	@a+dptr
+;
+	addc	a,r2
+	dec	@r1
+	orl	a,@r1
+	xrl	a,r1
+	mov	@r0,#65h
+	jb	2ch.4,X13c6
+	xrl	a,r4
+	ajmp	X1379
+;
+X1364:	addc	a,r2
+	dec	@r1
+	anl	79h,#73h
+	mov	a,#65h
+	xrl	a,r5
+	jb	2eh.5,X13df
+	mov	a,#69h
+	xrl	a,r5
+X1372:	xrl	a,3ah
+	dec	@r1
+	jnb	26h.0,X13a8
+	jnb	26h.0,X13df
+	jnb	26h.0,X13e6
+X137e:	jnb	26h.0,X13ee
+	jnb	26h.0,X13f7
+	dec	@r1
+	addc	a,r6
+	orl	a,r4
+	xrl	a,r7
+	xrl	a,@r1
+	jb	24h.3,X13a3
+	orl	a,r6
+	xrl	a,r7
+	jb	2dh.4,X1400
+	xrl	a,@r1
+	jmp	@a+dptr
+;
+	jb	2ch.3,X1408
+	xrl	a,61h
+	mov	a,#65h
+	xrl	a,#2eh
+	dec	@r1
+	anl	a,@r0
+	xrl	a,r1
+	xrl	a,77h
+	jb	2dh.4,X1413
+	xrl	a,@r1
+	addc	a,r2
+	dec	@r1
+	anl	a,r2
+X13a8:	addc	a,r0
+	jnb	24h.0,X1403
+	xrl	a,73h
+	mov	a,#4fh
+	anl	20h,#62h
+	jnb	25h.6,X13ed
+	jnb	24h.0,X141b
+	mov	r1,#20h
+	orl	a,#75h
+X13bd:	xrl	a,@r1
+	xrl	a,2eh
+	mov	r7,a
+	dec	@r1
+	anl	74h,#61h
+	orl	c,2eh.4
+	xrl	a,r1
+	xrl	a,r6
+	xrl	a,@r1
+	jb	2eh.5,X143d
+	add	a,r6
+	add	a,r6
+	mov	r7,a
+	dec	@r1
+	jnc	X1445
+	xrl	a,r7
+	xrl	69h,a
+	xrl	a,r6
+	xrl	a,@r1
+	jb	2ch.6,X144a
+	orl	c,24h.0
+	orl	a,r6
+	orl	a,r1
+X13df:	orl	20h,#40h
+	orl	a,r1
+	anl	41h,#2eh
+X13e6:	add	a,r6
+	mov	r7,a
+	dec	@r1
+X13e9:	orl	a,r6
+	orl	a,r1
+	orl	20h,#66h
+X13ee:	xrl	a,r7
+	mov	6eh,#64h
+	add	a,r4
+	jb	2eh.3,X145b
+	xrl	a,20h
+	orl	a,r6
+	xrl	a,74h
+	jb	2dh.4,X146d
+	xrl	a,@r1
+	add	a,r0
+X1400:	acall	X1129
+	add	a,r6
+X1403:	mov	r7,a
+	dec	@r1
+	orl	a,r6
+	xrl	a,r7
+	jb	29h.6,X1453
+	orl	20h,#66h
+	xrl	a,r7
+	mov	6eh,#64h
+	add	a,r6
+	mov	r7,a
+X1413:	dec	@r1
+	orl	a,@r1
+	xrl	a,r7
+	xrl	a,r1
+	xrl	a,r6
+	xrl	a,@r1
+	jb	2eh.4,X148b
+	jb	2eh.3,X1493
+	ajmp	X1372
+;
+	mov	a,#20h
+	mov	70h,#2dh
+	xrl	a,r5
+	xrl	a,r7
+	xrl	a,#65h
+	add	a,r6
+	add	a,r6
+	mov	r7,a
+	dec	@r1
+	orl	50h,#55h
+	jb	2dh.0,X1495
+	xrl	a,r4
+	mov	a,#65h
+	xrl	a,#2eh
+	mov	r7,a
+	dec	@r1
+	orl	50h,#55h
+	jb	2eh.7,X14a2
+	xrl	a,r3
+	xrl	a,64h
+	jb	2eh.5,X14b7
+	add	a,r6
+	mov	r7,a
+	dec	@r1
+X144a:	jnb	26h.1,X147f
+	rlc	a
+	addc	a,#35h
+	addc	a,@r0
+	addc	a,@r1
+	addc	a,r0
+X1453:	addc	a,r1
+	ajmp	X1242
+;
+	orl	44h,#45h
+	orl	a,@r0
+	ajmp	X14b7
+;
+	clr	p1.2
+	cjne	a,#98h,X13e9
+	cpl	c
+	sjmp	X13f4
+;
+	orl	c,/tr0
+	xch	a,r1
+	mov	t2con,@r0
+	mov	a,r0
+	nop	
+;
+	org	146dh
+;
+X146d:	nop	
+;
+	org	147fh
+;
+X147f:	nop	
+;
+	org	148bh
+;
+X148b:	nop	
+;
+	org	1493h
+;
+X1493:	nop	
+;
+	org	1495h
+;
+X1495:	nop	
+;
+	org	14a2h
+;
+X14a2:	nop	
+;
+	org	14b7h
+;
+X14b7:	nop	
+;
+	org	1601h
+;
+X1601:	nop	
+;
+	org	17f3h
+;
+X17f3:	nop	
+;
+	org	1814h
+;
+X1814:	nop	
+;
+	org	1ff1h
+;
+X1ff1:	nop	
+;
+	org	2000h
+;
+X2000:	clr	c
+X2001:	mov	20h,r5
+	mov	a,2ah
+	cjne	r6,#0eah,X1ff1
+	mov	a,2ah
+	push	tm2con
+	mov	a,r1
+	mov	a,2ah
+	clr	idsm
+X2011:	mov	a,r1
+	mov	a,2ah
+	swap	a
+	mov	a,r2
+	mov	a,r1
+	mov	a,2ah
+	xch	a,@r0
+	mov	a,r2
+	mov	a,r1
+	mov	a,2ah
+	xch	a,r0
+	mov	a,r2
+	mov	a,r1
+X2021:	orl	a,r6
+	xrl	a,r7
+X2023:	jb	28h.5,X209a
+	xrl	a,r0
+	xrl	a,72h
+	xrl	a,r6
+	xrl	a,74h
+	jb	29h.6,X2078
+	orl	rb2r7,#66h
+X2032:	xrl	a,r7
+	mov	6eh,#64h
+	add	a,r6
+	dec	@r1
+	jnc	X20ac
+	xrl	a,r7
+	xrl	69h,a
+	xrl	a,r6
+X203e:	xrl	a,@r1
+	jb	29h.6,X208b
+	orl	2eh,#2eh
+	add	a,r6
+	dec	@r1
+	orl	a,r6
+	xrl	a,74h
+	jb	29h.4,X20bc
+	xrl	a,@r1
+	jb	28h.3,X20c3
+	xrl	a,61h
+	mov	a,#65h
+	xrl	a,#2eh
+	mov	r7,a
+	dec	@r1
+X2059:	mov	r7,a
+	dec	@r1
+	mov	r7,a
+;
+	org	2062h
+;
+	jc	X2097
+	addc	a,r0
+	subb	a,r2
+	orl	54h,a
+	xrl	a,73h
+	mov	a,#20h
+	jnz	X20cf
+	xrl	6bh,#65h
+	mov	a,#2eh
+	anl	65h,#6eh
+	xrl	a,#20h
+X2078:	xrl	79h,a
+	jb	28h.4,X20f2
+	xrl	a,@r1
+	xrl	a,27h
+	jmp	@a+dptr
+;
+	jb	2bh.2,X20bc
+	jnb	24h.1,X20a8
+	ajmp	X2000
+;
+	org	208bh
+;
+X208b:	ljmp	X17f3
+;
+	ajmp	X2100
+;
+	inc	a
+	xch	a,r5
+	acall	X2305
+	reti	
+;
+	cjne	a,tm2con,X20b9
+	orl	a,@r1
+	jb	rclk,X2059
+	inc	21h
+	nop	
+;
+	org	20a0h
+;
+	ret	
+;
+X20a1:	clr	a
+	mov	a,r2
+X20a3:	ret	
+;
+	mov	a,@r0
+	mov	a,r2
+	ret	
+;
+X20a7:	mov	a,r0
+X20a8:	mov	a,r2
+	ret	
+;
+	mov	a,r2
+	mov	a,r2
+X20ac:	ret	
+;
+	mov	a,r4
+	mov	a,r2
+	ret	
+;
+	mov	a,r6
+	mov	a,r2
+	ret	
+;
+	movx	@dptr,a
+	mov	a,r2
+	ret	
+;
+	movx	@r0,a
+	mov	a,r2
+X20b8:	ret	
+;
+X20b9:	cpl	a
+	mov	a,r2
+	ret	
+;
+X20bc:	mov	@r0,a
+	mov	a,r2
+	ret	
+;
+	inc	r0
+	mov	a,r3
+	ret	
+;
+X20c2:	mov	r0,a
+X20c3:	mov	a,r2
+	ret	
+;
+	mov	r2,a
+	mov	a,r2
+	ret	
+;
+	mov	r4,a
+	mov	a,r2
+	ret	
+;
+	mov	r6,a
+	mov	a,r2
+	ret	
+;
+	org	20cfh
+;
+X20cf:	mov	a,r3
+	ret	
+;
+	ljmp	Xeb22
+;
+	inc	a
+	mov	a,r3
+	ret	
+;
+X20d7:	inc	@r0
+	mov	a,r3
+	ret	
+;
+	jb	obfc,X2117
+	cjne	a,tm2con,X2101
+	addc	a,r0
+	jb	rclk,X20a1
+	inc	21h
+	anl	a,r1
+	jb	rclk,X20a7
+	inc	th2
+	mov	r6,#1
+	ajmp	X2138
+;
+X20f0:	jb	rclk,X2079
+	ajmp	X2011
+;
+	mov	a,r0
+	rr	a
+X20f7:	xch	a,r5
+	anl	a,#5
+	addc	a,r6
+	xrl	a,r1
+	reti	
+;
+	ajmp	X24ea
+;
+	xch	a,r5
+X2100:	add	a,r6
+X2101:	rl	a
+	mov	r6,a
+	xrl	a,r1
+	jb	20h.5,X2128
+	ajmp	X2120
+;
+	addc	a,r6
+	xrl	a,r1
+	reti	
+;
+	ajmp	X24ea
+;
+	addc	a,r2
+	cjne	a,tm2con,X20f7
+	xch	a,r5
+X2113:	cjne	r5,#5,X2137
+X2116:	anl	a,r1
+X2117:	jb	rclk,X20d7
+	inc	th2
+	mov	r6,#1
+	ajmp	X27cd
+;
+X2120:	mov	rb0r1,@r0
+X2122:	addc	a,r6
+	jc	X20f2
+	xch	a,@r1
+	ajmp	X2023
+;
+X2128:	xch	a,r5
+	mov	rb0r1,@r0
+	acall	X20e8
+	rr	a
+	xch	a,r5
+	anl	a,#5
+	xch	a,r5
+	mov	r6,#1
+	addc	a,r2
+	ajmp	X24ea
+;
+X2137:	mov	r6,a
+X2138:	xrl	a,r1
+	xch	a,r2
+	jc	X215d
+	xch	a,r5
+	inc	r0
+	jb	makstr,X20f0
+	reti	
+;
+	anl	c,idsm
+	xch	a,r5
+	mov	r6,#1
+	addc	a,r2
+	ajmp	X24ea
+;
+	xch	a,r1
+X214b:	addc	a,r0
+	rlc	a
+	addc	a,r1
+	jnb	24h.0,X21b9
+	mov	@r1,#2dh
+	ajmp	X2364
+;
+	xrl	a,#72h
+	xrl	a,73h
+	jmp	@a+dptr
+;
+	dec	@r1
+	jmp	@a+dptr
+;
+	ajmp	X2376
+;
+	xrl	a,20h
+	xrl	a,@r0
+	ajmp	X2369
+;
+	xrl	a,r4
+	xrl	a,64h
+	add	a,r6
+	dec	@r1
+X2168:	ajmp	X27f5
+;
+	xch	a,0d5h
+	mov	a,3eh
+	ajmp	X21d3
+;
+	movx	a,@dptr
+	addc	a,r2
+	mov	r4,tm2con
+	mov	r6,a
+	ljmp	X3e48
+;
+	jb	20h.2,X21b9
+	orl	a,r1
+	setb	c
+	mov	a,r6
+	mov	r7,0d3h
+	mov	a,r2
+	setb	c
+	mov	a,r3
+X2183:	addc	a,r6
+	jb	rs0,X2173
+	addc	a,r6
+	ljmp	Xd3ed
+;
+	addc	a,r2
+	acall	X25ea
+	setb	c
+	clr	a
+X2190:	addc	a,r2
+	cpl	idsm
+	setb	c
+	ajmp	X273a
+;
+X2196:	cpl	c
+	mov	a,r2
+	addc	a,r5
+	setb	c
+	movx	a,@r1
+	addc	a,r4
+	setb	c
+	movx	a,@r0
+	addc	a,r6
+	mov	r7,a
+	setb	c
+	mov	a,@r1
+	mov	r7,0d3h
+	mov	a,r7
+	addc	a,r6
+X21a6:	ajmp	X23d3
+;
+	movx	a,@dptr
+	mov	r7,32h
+	anl	c,/idsm
+	inc	@r0
+	inc	@r0
+	inc	r6
+	ajmp	X2721
+;
+X21b2:	mov	20h,@r1
+	mov	r6,#0edh
+	mov	r1,#57h
+	mov	a,r5
+X21b9:	mov	r0,#23h
+	inc	r4
+	cjne	r2,#28h,X21c4
+	addc	a,r6
+	xrl	a,r1
+	reti	
+;
+	anl	c,/idsm
+X21c4:	inc	20h
+	mov	a,r5
+	addc	a,r2
+	anl	c,/idsm
+	mov	r6,a
+	nop	
+	add	a,r0
+X21cd:	dec	r3
+	xch	a,r5
+	mov	r6,#1
+	ajmp	X214b
+;
+X21d3:	ajmp	X21cd
+;
+	mov	rb0r1,@r0
+	addc	a,r6
+	jc	X21a7
+	xch	a,@r1
+X21db:	ajmp	X2023
+;
+	xch	a,r5
+	mov	rb0r1,@r0
+X21e0:	acall	X20e8
+	rr	a
+	xch	a,r5
+	anl	a,#5
+	xch	a,r5
+	mov	r6,#1
+	addc	a,r2
+	cpl	idsm
+	setb	c
+	mov	a,@r1
+	addc	a,r6
+	ajmp	X21d3
+;
+	movx	a,@dptr
+	ajmp	X27d1
+;
+	ajmp	X26f1
+;
+	xch	a,r1
+X21f7:	ajmp	X27f5
+;
+	xch	a,3eh
+	mov	r7,a
+	setb	c
+	mov	a,@r1
+	addc	a,r6
+	addc	a,r7
+	setb	c
+	mov	a,r7
+	addc	a,r6
+	ret	
+;
+	setb	c
+	movx	a,@dptr
+	addc	a,r6
+	nop	
+	setb	c
+	mov	a,r5
+	addc	a,r6
+	inc	a
+	setb	c
+	mov	a,r4
+	ajmp	X26f1
+;
+	xch	a,r1
+	orl	a,r6
+	orl	a,78h
+	jnb	26h.0,X2247
+	jb	2ch.4,X228c
+	xrl	a,r1
+	mov	@r0,#65h
+X221d:	orl	c,2eh.3
+	jb	24h.0,X2242
+	jb	24h.0,X2245
+X2225:	dec	@r1
+	orl	79h,a
+	jb	28h.4,X22a0
+	xrl	a,@r1
+	xrl	a,2eh
+	jb	29h.5,X22a0
+	jmp	@a+dptr
+;
+	mov	a,#6ch
+	mov	r1,#20h
+	jb	24h.0,X2259
+	jb	22h.7,X229f
+	xrl	a,r7
+	jnz	X22a8
+	xrl	a,64h
+	jb	2ch.6,X22b6
+	xrl	a,r7
+X2245:	xrl	a,r5
+	jb	2dh.4,X22b2
+	xrl	a,r6
+	mov	78h,#20h
+	jb	24h.0,X2267
+	xrl	a,r3
+	xrl	a,72h
+	xrl	a,r6
+	xrl	a,6ch
+	jb	2ch.4,X22cb
+X2259:	xrl	a,r1
+	mov	@r0,#65h
+	orl	c,2eh.3
+	jb	24h.0,X2281
+	jb	24h.0,X2284
+	dec	@r1
+	mov	@r1,#72h
+X2267:	xrl	a,r1
+	mov	a,#74h
+	xrl	a,6eh
+	jb	2ch.2,X22e8
+	jb	24h.0,X2292
+	jb	24h.0,X2295
+	jb	24h.0,X2298
+	jb	22h.7,X22bf
+	xrl	a,r7
+	xrl	a,r6
+	ajmp	X236c
+;
+	xrl	a,#20h
+X2281:	orl	65h,a
+	xrl	6bh,#65h
+	orl	c,25h.6
+	jb	24h.0,X22ab
+	jb	24h.0,X22ae
+	dec	@r1
+	dec	@r1
+	orl	a,r6
+	xrl	a,r7
+X2292:	jb	29h.6,X22da
+X2295:	anl	a,r3
+	acall	X212c
+X2298:	reti	
+;
+	anl	a,r5
+	jnb	26h.0,X22cd
+	jb	2ch.6,X230f
+X22a0:	mov	6eh,#64h
+	add	a,r6
+	dec	@r1
+	dec	@r1
+	anl	65h,a
+X22a8:	jmp	@a+dptr
+;
+	xrl	a,74h
+X22ab:	jb	2ch.6,X230f
+X22ae:	xrl	a,r1
+	xrl	a,r4
+	xrl	a,64h
+X22b2:	jb	2dh.7,X2323
+	dec	@r1
+X22b6:	orl	a,r6
+	orl	a,5bh
+	acall	X212c
+	reti	
+;
+	anl	a,r5
+	jnb	26h.0,X22f0
+	add	a,r5
+	orl	a,r6
+	orl	a,r1
+	orl	2eh,#17h
+	orl	a,r6
+	orl	a,31h
+	jnb	26h.0,X22fc
+	add	a,r5
+X22cd:	orl	a,r6
+	orl	a,r1
+	orl	rb2r7,#64h
+	xrl	a,74h
+	xrl	a,63h
+	mov	a,#65h
+	xrl	a,#2eh
+X22da:	dec	@r1
+	orl	a,r6
+	orl	a,32h
+	jnb	26h.0,X2311
+	add	a,r5
+	orl	a,r6
+	orl	a,r1
+	orl	rb2r7,#64h
+	xrl	a,74h
+	xrl	a,63h
+	mov	a,#65h
+	xrl	a,#2eh
+	dec	@r1
+X22f0:	orl	a,r6
+	orl	a,2dh
+	xrl	6fh,#6dh
+	jnz	X2359
+	mov	a,#69h
+	xrl	6ch,a
+X22fc:	xrl	a,20h
+	orl	74h,#72h
+	xrl	a,r7
+	xrl	a,r6
+	add	a,r5
+	dec	@r1
+X2305:	orl	a,r6
+	orl	a,r1
+	orl	20h,#64h
+	xrl	a,74h
+	xrl	a,63h
+	mov	a,#65h
+X2310:	xrl	a,#2eh
+	dec	@r1
+	orl	61h,a
+	xrl	a,#20h
+	orl	a,r6
+	orl	a,78h
+	jnb	26h.0,X234d
+	jb	2ch.3,X238c
+	xrl	a,r7
+	xrl	a,r6
+	xrl	a,rb2r7
+	xrl	a,#65h
+	mov	a,#65h
+	xrl	74h,#65h
+X232b:	xrl	a,#2eh
+X232d:	dec	@r1
+	djnz	r3,X2310
+	reti	
+;
+	mov	r6,tm2con
+	mov	r6,a
+	mov	r7,a
+	jb	20h.3,X22fb
+	ajmp	X2424
+;
+X233a:	addc	a,r6
+	ajmp	X23d3
+;
+	movx	a,@dptr
+X233e:	djnz	r3,X232d
+	reti	
+;
+	mov	r5,tm2con
+	addc	a,r6
+	mov	r7,a
+	setb	c
+	mov	a,r5
+	addc	a,r6
+	jb	rs0,X232b
+	djnz	r3,X233a
+X234d:	mov	r6,a
+	nop	
+	add	a,r0
+	inc	r5
+	addc	a,r2
+	mov	r6,tm2con
+	setb	c
+	movx	a,@dptr
+	addc	a,r2
+	mov	r5,tm2con
+X2359:	setb	c
+	mov	a,r5
+	clr	c
+	ajmp	X2424
+;
+	xch	a,r5
+	acall	X2028
+	mov	r6,a
+	dec	@r1
+	add	a,r0
+X2364:	dec	r3
+	ajmp	X21a6
+;
+	ret	
+;
+	xch	a,r5
+X2369:	mov	r6,#1
+	xch	a,r5
+X236c:	mov	rb0r1,@r0
+	addc	a,r6
+	jc	X233e
+	xch	a,@r1
+	ajmp	X2023
+;
+	xch	a,r5
+	mov	rb0r1,@r0
+	acall	X20b8
+	inc	r3
+	xch	a,r5
+	anl	a,#5
+	xch	a,r5
+	mov	r6,#1
+	addc	a,r6
+	ajmp	X21d3
+;
+X2383:	movx	a,@dptr
+	addc	a,r6
+	orl	a,r0
+	setb	c
+	mov	a,r6
+	mov	r7,0d3h
+	mov	a,r2
+	setb	c
+X238c:	mov	a,r3
+	setb	c
+	mov	a,r7
+	addc	a,r6
+	mov	r7,a
+	setb	c
+	mov	a,@r1
+	addc	a,r6
+	jb	rs0,X2383
+	addc	a,r6
+	ljmp	Xd3ed
+;
+	addc	a,r6
+	jb	rs0,X2389
+	mov	r7,0d3h
+	mov	a,r3
+	setb	c
+	mov	a,r0
+X23a4:	setb	c
+	mov	a,r1
+X23a6:	addc	a,r6
+	inc	r2
+	setb	c
+	movx	a,@dptr
+	addc	a,r6
+X23ab:	ljmp	X32ac
+;
+	mov	a,r2
+	inc	@r0
+	jbc	24h.1,X2336
+	mov	a,r2
+	djnz	r3,X23a6
+	mov	@r1,#23h
+	anl	a,@r1
+	djnz	r3,X23ab
+	mov	@r1,#23h
+	cjne	r2,#28h,X23c5
+	addc	a,r6
+	ajmp	X2032
+;
+	mov	r4,tm2con
+X23c5:	inc	20h
+	mov	a,r4
+	jb	24h.5,X23cc
+	movc	a,@a+pc
+X23cc:	mov	a,r2
+	ajmp	X2183
+;
+	mov	a,r2
+	dec	@r0
+	jbc	2fh.6,X23d6
+	rr	a
+	rl	a
+X23d6:	rl	a
+	dec	20h
+	mov	r0,a
+	addc	a,r6
+	orl	a,r1
+	setb	c
+	mov	a,r6
+	addc	a,r6
+	jc	X2413
+	acall	X25ea
+	xch	a,@r0
+	inc	r4
+	reti	
+;
+	cpl	idsm
+	addc	a,r6
+	sjmp	X241d
+;
+	cpl	c
+	mov	a,r2
+	dec	r0
+	inc	r7
+	addc	a,r6
+	jb	26h.2,X23a4
+	mov	a,r2
+	xch	a,@r0
+	inc	r4
+	reti	
+;
+	cpl	idsm
+	addc	a,r6
+	jc	X242e
+	cpl	c
+	mov	a,r2
+	dec	@r0
+	inc	@r0
+	ajmp	X2183
+;
+	mov	a,r2
+	ajmp	X20a3
+;
+	mov	a,r2
+	mov	r6,#2
+	rl	a
+	rr	a
+	dec	20h
+	mov	r1,a
+	xch	a,r5
+	xrl	a,r1
+	ajmp	X2121
+;
+	jbc	25h.0,X2436
+	cjne	r6,#0eah,X2438
+	mov	24h,r1
+	ret	
+;
+	push	tm2con
+	ajmp	X21f7
+;
+	ajmp	X2122
+;
+	clr	idsm
+	ajmp	X2168
+;
+X2424:	ajmp	X2122
+;
+	swap	a
+	mov	a,r2
+	ajmp	X2196
+;
+	add	a,#22h
+	xch	a,@r0
+	mov	a,r2
+X242e:	ajmp	X2152
+;
+	add	a,@r1
+	ret	
+;
+	xch	a,r0
+	mov	a,r2
+	addc	a,r2
+	acall	X24ea
+	orl	a,@r1
+X2438:	addc	a,r2
+	mov	idsm,c
+	cjne	r0,#20h,X2455
+	mov	r6,a
+	anl	a,@r1
+	jb	27h.0,X247d
+	mov	r4,tm2con
+	mov	r6,a
+	ljmp	X3e02
+;
+	ajmp	X21db
+;
+	ret	
+;
+	add	a,r0
+	addc	a,r2
+	addc	a,r6
+	ajmp	X2021
+;
+	xch	a,@r0
+	ret	
+;
+	dec	r0
+	rlc	a
+X2455:	mov	r6,a
+	nop	
+	jb	20h.5,X24d2
+	mov	r6,a
+	orl	a,r1
+	add	a,r0
+	clr	a
+	addc	a,r2
+	movc	a,@a+pc
+	mov	a,r2
+	mov	r6,a
+	nop	
+	jb	22h.5,X24a0
+	div	ab
+	mov	a,r2
+	mov	r6,a
+	nop	
+	jb	21h.6,X24a7
+	mov	pwena,tm2con
+	dec	r5
+	jb	20h.7,X24b2
+	rr	a
+	ajmp	X21f0
+;
+	ret	
+;
+	dec	r0
+	inc	r6
+	ajmp	X2113
+;
+	rl	a
+X247d:	addc	a,r6
+	inc	a
+	dec	r0
+	inc	@r1
+	addc	a,r6
+	xrl	a,r1
+	ajmp	X2190
+;
+	ret	
+;
+	dec	r0
+	nop	
+	xch	a,r1
+	ajmp	X27cd
+;
+	acall	X2028
+	xch	a,r5
+	xrl	a,r1
+	ajmp	X21cd
+;
+	mov	r0,a
+	ajmp	X21f5
+;
+	acall	X27c9
+	ajmp	X27f5
+;
+	mov	a,adcon
+	djnz	3eh,X24bd
+	setb	c
+	movx	a,@dptr
+	addc	a,r6
+X24a0:	inc	r2
+	reti	
+;
+	mov	r6,#0ebh
+	addc	a,r2
+	mov	r6,#0ebh
+X24a7:	addc	a,r5
+	xch	a,r2
+	mov	a,@r0
+	add	a,#32h
+	mov	r6,#0ebh
+	djnz	r3,X2497
+	mov	r6,a
+	nop	
+X24b2:	xch	a,r2
+	mov	a,@r0
+	add	a,#47h
+	mov	a,@r0
+	jbc	0c0h.2,X24c1
+	add	a,78h
+	mov	a,@r0
+X24bd:	ajmp	X20c2
+;
+	mov	a,r3
+	add	a,#78h
+	mov	a,@r0
+	inc	a
+	clr	obfc
+	add	a,#78h
+	mov	a,@r0
+	ljmp	Xc2f1
+;
+	add	a,#78h
+	mov	a,@r0
+	inc	r0
+	clr	xactv
+X24d2:	add	a,#78h
+	mov	a,@r0
+	jc	X2499
+	acall	X2225
+	mov	r0,#0e6h
+	jb	0c0h.2,X2536
+	add	a,3eh
+	ret	
+;
+	setb	c
+	movx	a,@dptr
+	clr	c
+	mul	ab
+	add	a,#0d1h
+	ajmp	X26e1
+;
+X24e9:	acall	X27c9
+	xch	a,r5
+	mov	25h,@r0
+	clr	c
+	djnz	r7,X2515
+	mov	r7,32h
+	ajmp	X21eb
+;
+	addc	a,r6
+	ljmp	Xd3e7
+;
+	clr	c
+	djnz	r7,X2520
+	mov	r7,32h
+	ajmp	X21eb
+;
+	addc	a,r6
+	inc	r0
+	setb	c
+	mov	a,@r1
+	clr	c
+	djnz	r7,X252b
+	djnz	r3,X24e9
+	mov	a,@r0
+	inc	a
+	orl	a,@r1
+	addc	a,r6
+	ajmp	X21d3
+;
+	movx	a,@dptr
+	add	a,r2
+	movx	@dptr,a
+	mov	a,r2
+	rl	a
+	ret	
+;
+X2515:	movx	@dptr,a
+	mov	a,r2
+	acall	X2032
+	nop	
+	xch	a,r5
+	anl	a,#5
+	mov	r7,0d3h
+	mov	a,r2
+X2520:	setb	c
+	mov	a,r3
+	cjne	r0,#0cah,X2556
+	add	a,s1adr
+X2527:	mov	a,@r1
+	mov	a,@r0
+	inc	r2
+	mov	r6,a
+X252b:	nop	
+	clr	26h.1
+	add	a,rb0r6
+	ajmp	X203e
+;
+	ljmp	Xd3ed
+;
+	addc	a,r6
+X2536:	ret	
+;
+	setb	c
+	movx	a,@dptr
+	xch	a,r5
+	mov	25h,@r0
+	addc	a,r6
+	jbc	rs0,X2527
+	addc	a,r2
+	nop	
+;
+	org	2543h
+;
+	setb	c
+	mov	a,r5
+	mov	r7,ip
+X2547:	xch	a,r2
+	orl	a,r6
+	add	a,3eh
+	add	a,@r0
+	setb	c
+	movx	a,@dptr
+	clr	c
+	djnz	r7,X2575
+	addc	a,r6
+	jc	X2527
+	mov	a,@r1
+X2555:	clr	c
+X2556:	djnz	r7,X257c
+	djnz	r3,X2547
+	xrl	a,r7
+	add	a,@r0
+	nop	
+	mov	a,r5
+	anl	a,r3
+	clr	a
+	mov	a,r2
+	dec	r1
+	ret	
+;
+X2563:	clr	a
+	mov	a,r2
+	djnz	r3,X2555
+	xrl	a,r7
+	add	a,@r0
+	nop	
+X256a:	mov	a,r5
+	anl	a,r3
+	mov	a,@r0
+	mov	a,r2
+	dec	r1
+X256f:	ret	
+;
+	mov	a,@r0
+	mov	a,r2
+	djnz	r3,X2563
+	xrl	a,r7
+X2575:	add	a,@r0
+	nop	
+	mov	a,r5
+	anl	a,r3
+	mov	a,r0
+	mov	a,r2
+	dec	r1
+X257c:	ret	
+;
+	mov	a,r0
+	mov	a,r2
+	addc	a,r6
+	jb	rs0,X256a
+	clr	c
+	djnz	r7,X25aa
+X2586:	mov	0e5h,a
+	xch	a,0d5h
+	addc	a,r6
+	inc	r2
+X258c:	reti	
+;
+	mov	r7,#0ebh
+	addc	a,r2
+	mov	r7,#0ebh
+	addc	a,r5
+	xch	a,r2
+	addc	a,#27h
+	reti	
+;
+	mov	r7,#0ebh
+	addc	a,r6
+	jz	X256f
+	movx	a,@dptr
+	djnz	r3,X2586
+	orl	a,@r1
+	reti	
+;
+	mov	r4,#0ebh
+	addc	a,r6
+	jb	rs0,X2587
+X25a7:	djnz	r3,X258c
+	addc	a,r4
+X25aa:	anl	a,r7
+	reti	
+;
+	mov	r5,#0ebh
+	addc	a,r2
+	cpl	c
+	mov	a,r2
+	addc	a,r5
+	cjne	r3,#0d2h,X256f
+	add	a,3ah
+	cpl	idsm
+	anl	a,r7
+	mov	r0,#0bbh
+	xch	a,r2
+	addc	a,#27h
+	addc	a,r6
+	ret	
+;
+	setb	c
+	movx	a,@dptr
+	addc	a,r6
+	inc	a
+	orl	a,@r1
+	setb	c
+	mov	a,r2
+	mov	r7,0d3h
+	mov	a,r3
+	setb	c
+	mov	a,r0
+	mov	r3,#0d3h
+	mov	a,r1
+	addc	a,r6
+	inc	r2
+	setb	c
+X25d3:	movx	a,@dptr
+	ajmp	X2116
+;
+	mov	a,r3
+	addc	a,r2
+	mov	r4,tm2con
+	mov	r6,a
+	ljmp	Xc2f0
+;
+	add	a,rcap2h
+	addc	a,r0
+	djnz	r3,X25d3
+	mov	@r1,#23h
+	djnz	r3,X25a7
+	mov	@r1,#23h
+	inc	0c2h
+	ajmp	X2725
+;
+	clr	c
+	mov	r0,a
+	add	a,s1adr
+	movx	@dptr,a
+	mov	@r1,#23h
+	inc	0c2h
+	ajmp	X2725
+;
+	addc	a,r6
+	jc	X25ce
+	mov	a,@r1
+	add	a,r2
+	dec	r0
+	mov	a,r3
+	anl	a,#3eh
+	inc	a
+	add	a,r3
+	addc	a,r5
+	jb	xactv,X2629
+	dec	r0
+	mov	a,r3
+	dec	a
+	mov	r3,#82h
+	mov	a,r5
+	anl	a,r3
+	dec	@r1
+	mov	a,r3
+	cjne	r3,#0cah,X2652
+	add	a,@r0
+	addc	a,r4
+	cjne	r3,#0cah,X2657
+	add	a,@r0
+	mov	a,r5
+	orl	a,r3
+	cpl	c
+	mov	a,r2
+	ajmp	X24ed
+;
+	orl	a,r3
+	cpl	idsm
+	acall	X24bb
+	xch	a,r2
+	addc	a,r7
+	add	a,@r0
+	addc	a,r5
+	cjne	r3,#0cah,X266a
+	add	a,@r0
+	addc	a,r2
+	mov	r4,#0ebh
+	reti	
+;
+	cjne	a,#0eah,X2670
+	setb	c
+	movx	a,@r1
+	add	a,r2
+	movx	@r0,a
+	mov	a,r2
+	rl	a
+	ret	
+;
+	movx	@r0,a
+	mov	a,r2
+	clr	c
+	mov	25h,r7
+	addc	a,r2
+	dec	r1
+	mov	a,r3
+	mov	r6,a
+	nop	
+	clr	2ch.0
+	add	a,@r0
+	addc	a,r2
+	dec	r0
+	mov	a,r3
+	mov	r6,a
+	addc	a,r4
+	setb	2eh.3
+	add	a,@r0
+	add	a,r2
+	movx	@r0,a
+	mov	a,r2
+X2652:	rl	a
+	ret	
+;
+	movx	@r0,a
+	mov	a,r2
+	add	a,r2
+X2657:	mov	@r0,a
+	mov	a,r2
+	rl	a
+	ret	
+;
+	mov	@r0,a
+	mov	a,r2
+	clr	c
+	dec	r4
+	add	a,@r1
+	mov	a,r5
+	anl	a,r3
+	dec	r0
+	mov	a,r3
+	addc	a,r6
+	inc	0bah
+	djnz	r2,X26b8
+	add	a,@r0
+X266a:	clr	2eh.3
+	add	a,@r0
+	addc	a,r6
+	mov	a,r6
+	cjne	r3,#0dah,X26c1
+	add	a,@r0
+	addc	a,r2
+	dec	@r0
+	mov	a,r3
+	mov	a,@r0
+	inc	r7
+	mov	r6,a
+	ajmp	X20c2
+;
+	inc	@r0
+	add	a,@r1
+	add	a,r2
+	dec	r0
+	mov	a,r3
+	ret	
+;
+	mov	@r1,a
+	xch	a,r7
+	xch	a,r5
+	rr	a
+	add	a,r2
+	mov	r6,a
+	mov	r7,a
+	xch	a,r2
+	xch	a,r0
+	add	a,@r0
+	addc	a,r6
+	ret	
+;
+	setb	c
+	movx	a,@dptr
+	addc	a,r2
+	dec	r0
+	mov	a,r3
+	setb	c
+	mov	a,r2
+	addc	a,r2
+	dec	r1
+	mov	a,r3
+	setb	c
+	mov	a,r3
+	addc	a,r6
+	inc	a
+	setb	c
+	mov	a,r0
+	addc	a,r2
+	mov	r5,#0ebh
+	setb	c
+	mov	a,r1
+	addc	a,r6
+	inc	r2
+	setb	c
+	movx	a,@dptr
+	mov	a,r5
+	anl	a,r3
+X26a8:	dec	r0
+	mov	a,r3
+	mov	a,r5
+	anl	0f7h,#0cfh
+	addc	a,r6
+	movx	@dptr,a
+	reti	
+;
+	mov	r4,a
+	xch	a,r7
+	addc	a,r6
+	nop	
+	reti	
+;
+	mov	r3,a
+	xch	a,r7
+X26b8:	xch	a,r5
+	inc	@r0
+	add	a,r2
+	mov	r6,a
+	mov	r7,a
+	clr	ov
+	add	a,@r0
+	addc	a,r6
+X26c1:	ajmp	X21d3
+;
+	movx	a,@dptr
+	addc	a,r6
+	ret	
+;
+	setb	c
+	movx	a,@dptr
+	add	a,r2
+	inc	r0
+	mov	a,r3
+	rl	a
+	ret	
+;
+	inc	r0
+	mov	a,r3
+	clr	c
+	addc	a,#27h
+	addc	a,r6
+	jc	X26a8
+	mov	a,@r1
+	add	a,r2
+	mov	r0,a
+	mov	a,r2
+	acall	X2001
+	nop	
+	dec	r1
+	ret	
+;
+	mov	r0,a
+	mov	a,r2
+	add	a,r2
+X26e1:	mov	r2,a
+	mov	a,r2
+	dec	r6
+	nop	
+	mov	a,r5
+	anl	a,r2
+	ret	
+;
+	mov	r2,a
+	mov	a,r2
+	add	a,r2
+	nop	
+	mov	a,r3
+	mov	a,r5
+	anl	a,r3
+	dec	r0
+	mov	a,r3
+X26f1:	dec	r1
+	ret	
+;
+	org	26f4h
+;
+	mov	a,r3
+	add	a,r2
+	ljmp	Xeb11
+;
+	org	26fbh
+;
+	mov	a,r5
+	anl	a,r2
+	ret	
+;
+	ljmp	Xebcd
+;
+	inc	r7
+	add	a,r2
+	clr	c
+	dec	r4
+	add	a,@r1
+	add	a,r2
+	movx	@r0,a
+	mov	a,r2
+	rl	a
+	ret	
+;
+	movx	@r0,a
+	mov	a,r2
+	addc	a,r2
+	dec	@r0
+	mov	a,r3
+	mov	a,@r0
+	inc	r0
+	xch	a,r2
+	dec	r4
+	add	a,@r1
+	add	a,r2
+	cpl	a
+	mov	a,r2
+	rl	a
+	ret	
+;
+	cpl	a
+	mov	a,r2
+	addc	a,r2
+	cpl	c
+	mov	a,r2
+	addc	a,r5
+	ajmp	X2117
+;
+	mov	a,r3
+	cjne	r6,#0d2h,X2750
+	add	a,@r1
+	ajmp	X21b2
+;
+	mov	a,r2
+	mov	r6,#32h
+	cjne	a,#0eah,X276c
+	setb	c
+	movx	a,@r1
+	clr	c
+	mov	25h,r7
+	addc	a,r6
+	inc	0d3h
+	mov	a,@r1
+	acall	X26c1
+X273a:	ajmp	X27f1
+;
+	xch	a,r1
+X273d:	anl	a,#69h
+	xrl	a,r5
+	xrl	a,6fh
+	mov	74h,#20h
+	xrl	a,@r0
+	xrl	a,r7
+	orl	c,24h.0
+	anl	a,#78h
+	jb	2ah.2,X2792
+	orl	2eh,#0ffh
+	dec	@r1
+	ajmp	X273a
+;
+	ajmp	X21eb
+;
+	mov	r6,a
+	acall	X203e
+	add	a,@r0
+	xch	a,r0
+	djnz	r3,X273d
+	mov	r6,a
+	add	a,@r0
+	addc	a,r6
+	add	a,@r0
+	xch	a,r0
+	movx	@r1,a
+	xch	a,0d5h
+	mov	a,3ah
+	mov	r4,tm2con
+	mov	r6,a
+	ljmp	Xc279
+;
+	add	a,@r1
+	add	a,r2
+	setb	idsm
+	rl	a
+	mov	r5,#0e6h
+	mov	r6,a
+	xrl	a,r7
+	ret	
+;
+	setb	idsm
+	addc	a,r6
+	ret	
+;
+	setb	c
+	movx	a,@dptr
+	addc	a,r6
+	jc	X2753
+	mov	a,@r1
+	addc	a,r2
+	setb	idsm
+	setb	c
+	mov	a,r2
+	addc	a,r2
+	setb	c
+	mov	a,r2
+	setb	c
+	mov	a,r3
+	mov	r7,0d3h
+	mov	a,r0
+	addc	a,r2
+	acall	X25ea
+	setb	c
+X2792:	mov	a,r1
+	addc	a,r6
+	lcall	Xd3e0
+	inc	r6
+	movx	@dptr,a
+	addc	a,r2
+	mov	r4,tm2con
+	mov	r6,a
+	ljmp	Xc2c0
+;
+	add	a,@r1
+	mov	a,r5
+	anl	a,r3
+	setb	idsm
+	xch	a,r3
+	addc	a,r2
+	xch	a,r3
+	dec	r3
+	dec	a
+	add	a,r2
+	pop	tm2con
+	orl	a,@r0
+	rl	a
+	mov	r6,#23h
+	setb	c
+	push	tmh2
+	ajmp	X221d
+;
+	clr	ie.5
+X27b8:	add	a,@r1
+	dec	0c2h
+	mov	r5,27h
+	clr	c
+	xch	a,27h
+	addc	a,r6
+	dec	@r1
+	clr	c
+	inc	r1
+	add	a,r0
+	ajmp	X21e0
+;
+	dec	2bh
+X27c9:	mov	r4,#0feh
+	nop	
+	xch	a,r2
+X27cd:	movx	@r0,a
+	add	a,@r1
+	djnz	r3,X27b8
+X27d1:	mov	a,@r0
+	jc	X279e
+	xch	a,r0
+	add	a,@r1
+	addc	a,r6
+	jc	X27ac
+	mov	a,@r1
+	addc	a,r2
+	acall	X25ea
+	setb	c
+	clr	a
+	addc	a,r2
+	setb	idsm
+	setb	c
+	mov	a,3ah
+	setb	c
+	mov	a,r2
+	setb	c
+	mov	a,@r0
+	addc	a,r6
+	add	a,@r0
+	setb	c
+	movx	a,@dptr
+	addc	a,r6
+	dec	@r1
+	clr	c
+	inc	r1
+X27f1:	add	a,r0
+	addc	a,r2
+	cjne	a,tm2con,X2817
+	addc	a,r5
+	add	a,@r1
+	xch	a,r5
+	cjne	r5,#5,X27c9
+	acall	X2028
+	xch	a,r5
+	xrl	a,r1
+X2800:	ajmp	X29cd
+;
+	mov	r0,a
+	ajmp	X293e
+;
+	xrl	a,r1
+	clr	c
+	inc	r1
+	add	a,r0
+X2809:	mov	0f1h,a
+	ajmp	X2fd1
+;
+	ajmp	X2efb
+;
+	xch	a,r1
+X2810:	ajmp	X2fc5
+;
+	mov	a,s1adr
+X2814:	mov	r7,a
+	setb	c
+	mov	r7,a
+X2817:	ajmp	X2900
+;
+	jbc	25h.3,X2898
+X281c:	mov	r6,a
+	nop	
+	add	a,r0
+	inc	r7
+	djnz	r3,X2809
+	mov	a,@r0
+	sjmp	X284d
+;
+	cpl	a
+	addc	a,r6
+X2827:	mov	r7,a
+	setb	c
+	mov	a,@r1
+	addc	a,r6
+	dec	@r1
+X282c:	ajmp	X2fc1
+;
+	xch	a,r1
+	addc	a,r6
+	xrl	a,r1
+	ajmp	X2fc1
+;
+	xch	a,r1
+	nop	
+;
+	org	283ah
+;
+X283a:	nop	
+;
+	org	283ch
+;
+X283c:	nop	
+;
+	org	2847h
+;
+X2847:	nop	
+;
+	org	2849h
+;
+X2849:	nop	
+;
+	org	284dh
+;
+X284d:	nop	
+;
+	org	2851h
+;
+X2851:	nop	
+;
+	org	2865h
+;
+X2865:	nop	
+;
+	org	2877h
+;
+X2877:	nop	
+;
+	org	2898h
+;
+X2898:	nop	
+;
+	org	28c2h
+;
+X28c2:	nop	
+;
+	org	28cah
+;
+X28ca:	nop	
+;
+	org	28d0h
+;
+X28d0:	nop	
+;
+	org	28d9h
+;
+X28d9:	nop	
+;
+	org	28ebh
+;
+X28eb:	nop	
+;
+	org	28fdh
+;
+X28fd:	nop	
+;
+	org	2900h
+;
+X2900:	nop	
+;
+	org	2912h
+;
+X2912:	nop	
+;
+	org	292eh
+;
+X292e:	nop	
+;
+	org	293eh
+;
+X293e:	nop	
+;
+	org	295bh
+;
+X295b:	nop	
+;
+	org	29cdh
+;
+X29cd:	nop	
+;
+	org	29d4h
+;
+X29d4:	nop	
+;
+	org	29e9h
+;
+X29e9:	nop	
+X29ea:	nop	
+;
+	org	2a00h
+;
+	clr	c
+	lcall	X2cc3
+	xrl	a,r4
+	add	a,r2
+	clr	c
+	cjne	r0,#2ah,X29cd
+	xch	a,@r1
+	add	a,r3
+	clr	c
+	reti	
+;
+	add	a,r2
+	clr	c
+	mov	a,#2ch
+	push	ie
+	ajmp	X28d9
+;
+	org	2a21h
+;
+X2a21:	nop	
+;
+	org	2a24h
+;
+	inc	r2
+	xch	a,r4
+X2a26:	dec	a
+	subb	a,r0
+	dec	r6
+	xrl	a,#28h
+	jnb	26h.2,X2a2a
+	addc	a,r4
+	xch	a,r0
+	orl	a,@r0
+	subb	a,#0f5h
+	xch	a,0e5h
+	ajmp	X2827
+;
+	org	2a38h
+;
+	ajmp	X2900
+;
+X2a3a:	xch	a,r4
+	acall	X2801
+	xch	a,r4
+	addc	a,@r0
+	nop	
+	mov	a,r5
+	anl	c,/20h.1
+	inc	r3
+	nop	
+	ajmp	X29ea
+;
+	xch	a,r7
+	acall	X28eb
+	xch	a,r7
+	addc	a,@r0
+	nop	
+	mov	a,r5
+	anl	c,/20h.1
+	cjne	r7,#0,X2a74
+	jnc	X2a21
+	acall	X2851
+	xch	a,r4
+	addc	a,@r0
+	nop	
+	mov	a,r5
+	anl	c,/ea
+	reti	
+;
+	mov	@r0,a
+	xch	a,r7
+	reti	
+;
+	mov	r5,a
+	xch	a,r7
+	addc	a,r6
+	mov	r7,a
+	reti	
+;
+	org	2a67h
+;
+	xch	a,r7
+	ajmp	X2fc1
+;
+	acall	X2fc9
+	xch	a,0d5h
+	mov	a,tmh2
+	orl	a,r3
+	mov	@r1,a
+	xch	a,r7
+	mov	r7,ip
+	clr	2fh.6
+	add	a,r2
+	cjne	r1,#3eh,X2a7a
+	xch	a,r2
+	cjne	a,#2ah,X2a8a
+	addc	a,r6
+	inc	@r0
+	cjne	r0,#3eh,X2a83
+	djnz	r2,X2a3a
+	add	a,r2
+	xch	a,r2
+	cjne	a,#2ah,X2a8f
+	addc	a,r2
+	mov	@r0,a
+	xch	a,r7
+	sjmp	X2acd
+;
+	mov	r6,a
+	inc	r4
+	addc	a,r6
+	mov	r7,a
+	setb	t0
+	add	a,r2
+	ajmp	X2900
+;
+	xch	a,r4
+	acall	X280a
+X2a9c:	nop	
+	inc	r6
+	inc	a
+	mov	r7,0beh
+	xch	a,r2
+	mov	r6,2ah
+	dec	r1
+	inc	r5
+	clr	p2.0
+	add	a,r2
+	addc	a,r6
+	mov	r7,a
+	clr	c
+	cjne	a,#2ah,X2aed
+	inc	a
+	acall	X2c32
+	mov	r7,a
+	xch	a,r7
+	ajmp	X2ed1
+;
+	ajmp	X2fc9
+;
+	addc	a,r2
+	mov	r5,a
+	xch	a,r7
+	mov	r6,a
+	nop	
+	addc	a,r6
+	mov	r7,a
+	push	3eh
+	ljmp	X32fd
+;
+	xch	a,r7
+	xch	a,0d5h
+	mov	a,tmh2
+	orl	a,r3
+	mov	@r1,a
+	xch	a,r7
+	mov	r7,ip
+	clr	cy
+	add	a,r2
+	cjne	r1,#3eh,X2ad3
+	xch	a,r2
+	cjne	r5,#2bh,X2ae3
+	addc	a,r6
+	inc	@r0
+	cjne	r0,#3eh,X2adc
+	djnz	r2,X2a9c
+	add	a,r3
+	xch	a,r2
+	cjne	r5,#2bh,X2ae8
+	addc	a,r2
+	mov	@r0,a
+	xch	a,r7
+	sjmp	X2b26
+;
+	mov	r6,a
+	inc	r4
+	addc	a,r6
+	mov	r7,a
+X2aed:	setb	ip.5
+	add	a,r3
+	ajmp	X2900
+;
+	xch	a,r4
+	acall	X280a
+	nop	
+	inc	r6
+	inc	a
+	mov	r7,0beh
+	xch	a,r2
+	inc	@r1
+	add	a,r3
+	dec	r1
+	inc	r5
+	clr	xstr
+	add	a,r2
+	addc	a,r6
+	mov	r7,a
+	clr	c
+	cjne	r5,#2bh,X2b46
+	inc	a
+	acall	X2c32
+	mov	r7,a
+	xch	a,r7
+	addc	a,r2
+	mov	@r0,a
+	xch	a,r7
+	sjmp	X2b44
+;
+	mov	@r0,a
+	xch	a,r7
+	addc	a,r6
+	ajmp	X2877
+;
+	rl	a
+	jnz	X2b92
+	reti	
+;
+X2b1b:	mov	r6,a
+	xch	a,r7
+	rl	a
+	mov	a,r5
+	anl	a,r3
+	mov	@r1,a
+	xch	a,r7
+X2b22:	jmp	@a+dptr
+;
+	rl	a
+	orl	c,24h.3
+X2b26:	mov	a,r3
+	ajmp	X29e9
+;
+	xch	a,r7
+	inc	r6
+	inc	r5
+	djnz	r1,X2b1b
+	anl	a,r3
+	mov	r1,a
+	xch	a,r7
+	djnz	r1,X2ae2
+X2b33:	rl	a
+	inc	r5
+	cjne	r6,#0c2h,X2b6b
+	add	a,r3
+	addc	a,r6
+	ajmp	X2877
+;
+	addc	a,r6
+	inc	r4
+	acall	X2c12
+	rrc	a
+	djnz	r1,X2b64
+	nop	
+X2b44:	push	adat
+X2b46:	xrl	a,@r1
+	addc	a,r2
+	mov	r3,a
+	xch	a,r7
+	mov	r6,a
+	nop	
+	clr	ie.5
+	add	a,r3
+	mov	a,r5
+	orl	a,r3
+	mov	r4,a
+	xch	a,r7
+	addc	a,r2
+	mov	r4,tm2con
+	mov	r6,a
+	ljmp	Xc28f
+;
+	add	a,r3
+	inc	@r0
+	sjmp	X2b98
+;
+	mov	r6,a
+	xch	a,r7
+	addc	a,r5
+	reti	
+;
+	mov	r6,a
+	xch	a,r7
+X2b64:	clr	2dh.5
+	add	a,r3
+	addc	a,r2
+	mov	@r1,a
+	xch	a,r7
+	xch	a,r3
+X2b6b:	addc	a,r7
+	orl	a,@r1
+	mov	a,r5
+	mov	r0,#77h
+	rl	a
+	djnz	r3,X2b33
+	mov	@r1,#23h
+	inc	0c2h
+	xrl	a,r5
+	add	a,r3
+	addc	a,r2
+	mov	r6,a
+	xch	a,r7
+	mov	r6,a
+	nop	
+	clr	tr0
+	add	a,r3
+	addc	a,r2
+	mov	@r1,a
+	xch	a,r7
+	mov	a,@r0
+	ajmp	X28ca
+;
+	mov	2bh,r4
+	mov	a,r5
+	mov	r0,#77h
+	clr	c
+	ajmp	X2d2b
+;
+	inc	@r0
+	nop	
+	addc	a,r2
+X2b92:	mov	r6,a
+	xch	a,r7
+	addc	a,r5
+	reti	
+;
+	mov	r6,a
+	xch	a,r7
+X2b98:	clr	sm0
+	add	a,r3
+	addc	a,r2
+	mov	@r1,a
+	xch	a,r7
+	orl	a,@r1
+	mov	a,r5
+	cpl	ct1
+	mov	r7,rb0r5
+	clr	26h.3
+	add	a,r3
+	addc	a,r2
+	mov	r7,a
+	xch	a,r7
+	clr	c
+	cjne	r5,#2bh,X2baf
+	nop	
+X2baf:	ajmp	X28eb
+;
+	mov	a,r5
+	anl	c,/obfc
+	djnz	r1,X2b65
+	inc	0c2h
+	rlc	a
+	add	a,r3
+	addc	a,r2
+	mov	r7,a
+	xch	a,r7
+	orl	a,@r1
+	mov	r7,32h
+	mov	r5,a
+	xch	a,r7
+	mov	r0,#0e1h
+	acall	X2ec1
+	xch	a,r1
+	mov	adcon,a
+	djnz	r5,X2bb0
+	mov	r5,a
+	mov	a,0ddh
+	ajmp	X2900
+;
+	xch	a,r4
+	ajmp	X280a
+;
+X2bd3:	nop	
+	addc	a,r2
+	mov	r7,a
+	xch	a,r7
+	addc	a,r4
+	addc	a,r5
+	xch	a,r2
+	ajmp	X2f2b
+;
+X2bdc:	djnz	r5,X2be7
+	clr	c
+	djnz	r0,X2c0c
+	djnz	r5,X2c61
+	nop	
+	mov	r6,a
+X2be5:	nop	
+	xch	a,r2
+X2be7:	inc	r3
+	add	a,r4
+	mov	r7,47h
+	djnz	r5,X2c64
+	nop	
+X2bee:	djnz	r5,X2c3e
+	ajmp	X283a
+;
+	mov	@r0,a
+	xch	a,r7
+	acall	X2c32
+	mov	@r0,a
+	xch	a,r7
+	mov	r1,#0fdh
+	ajmp	X29ea
+;
+	xch	a,r7
+	djnz	r5,X2c4d
+	inc	a
+	mov	r5,a
+	inc	r1
+	mov	r5,a
+	jnz	X2c05
+X2c05:	djnz	r5,X2c2a
+	addc	a,r5
+	clr	xdata
+	add	a,r3
+	mov	r5,a
+X2c0c:	ajmp	X2fdd
+;
+	ajmp	X2fc1
+;
+	acall	X2fc9
+X2c12:	movx	@r1,a
+	mov	a,0d5h
+	xch	a,th2
+	inc	r4
+	add	a,r2
+	ajmp	X2912
+;
+	add	a,r2
+	acall	X28d0
+	xch	a,r7
+	ajmp	X2810
+;
+	org	2c22h
+;
+	mov	a,r5
+	anl	c,/clrti
+	ajmp	X29d4
+;
+	xch	a,r7
+	addc	a,r2
+	pop	cth3
+	djnz	r5,X2bd3
+	nop	
+	reti	
+;
+	xch	a,r4
+	xch	a,r7
+	addc	a,r2
+X2c32:	acall	X2ecf
+	djnz	r5,X2bdc
+	ajmp	X2832
+;
+	xch	a,r5
+	xch	a,r7
+	addc	a,r2
+X2c3b:	setb	tf2
+	djnz	r5,X2be5
+	ljmp	X32ce
+;
+X2c42:	xch	a,r7
+	addc	a,r2
+	setb	c
+	xch	a,r7
+	djnz	r5,X2bee
+	rr	a
+	reti	
+;
+	xch	a,r7
+	xch	a,r7
+	addc	a,r6
+X2c4d:	nop	
+	reti	
+;
+	xch	a,@r0
+	xch	a,r7
+	addc	a,r6
+	nop	
+	reti	
+;
+	xch	a,@r1
+	xch	a,r7
+	mov	r7,32h
+	da	a
+	mov	a,r2
+	addc	a,r2
+	acall	X2dea
+	reti	
+;
+	djnz	tm2con,X2c82
+X2c61:	addc	a,r4
+	nop	
+	ret	
+;
+X2c64:	setb	idsm
+	ajmp	X295b
+;
+	jb	24h.2,X2c3b
+X2c6b:	mov	a,r2
+	xch	a,r5
+	dec	r4
+	jb	0c0h.1,X2c42
+	ajmp	X2ffb
+;
+	xch	a,r1
+	mov	adcon,a
+X2c76:	djnz	0e5h,X2c76
+	mov	a,0ddh
+X2c7b:	mov	a,0ddh
+	ajmp	X2900
+;
+	xch	a,r4
+	ajmp	X280a
+;
+X2c82:	nop	
+X2c83:	addc	a,r2
+	mov	r7,a
+	xch	a,r7
+	addc	a,r4
+	addc	a,r5
+	xch	a,r2
+	mov	dptr,#X2cdd
+	inc	r1
+	clr	c
+	mov	2ch,@r1
+	djnz	r5,X2d10
+	nop	
+	mov	r6,a
+	ajmp	X28c2
+;
+	djnz	r1,X2cc4
+	djnz	r5,X2ce0
+	inc	a
+	inc	r6
+	nop	
+	mov	r5,a
+	ajmp	X2900
+;
+	push	pwm1
+	inc	r1
+	addc	a,r6
+	inc	r0
+	mov	r5,a
+	cjne	r6,#0ch,X2c6b
+X2ca9:	cjne	r3,#2ch,X2cea
+	nop	
+	mov	r5,a
+	cjne	r6,#0dh,X2c7b
+X2cb1:	xchd	a,@r1
+	add	a,r5
+	addc	a,r6
+	inc	@r0
+	mov	r5,a
+	cjne	r6,#0dh,X2c83
+	movx	a,@r0
+	add	a,r4
+	inc	@r0
+X2cbc:	nop	
+	djnz	r5,X2cf5
+	nop	
+;
+	org	2cc1h
+;
+	djnz	r5,X2d11
+X2cc3:	ajmp	X283a
+;
+	mov	@r0,a
+	xch	a,r7
+	acall	X2c32
+	mov	@r0,a
+	xch	a,r7
+X2ccb:	ajmp	X29ea
+;
+	xch	a,r7
+	djnz	r5,X2d1e
+	inc	a
+	inc	r1
+	jnz	X2cb1
+X2cd4:	rl	a
+	addc	a,r5
+	clr	exen2
+	add	a,r4
+	djnz	r5,X2cbc
+	mov	r5,a
+	ajmp	X2fe1
+;
+	acall	X2ec1
+X2ce0:	acall	X2fc9
+	mov	r7,pwm1
+	cjne	r6,#14h,X2ca9
+X2ce7:	cjne	r3,#2ch,X2ce7
+X2cea:	mov	r6,#15h
+	mov	r6,a
+	ajmp	X28ca
+;
+	mov	r1,a
+	add	a,r4
+	mov	r6,a
+	ljmp	Xc2bb
+;
+X2cf5:	add	a,r4
+	clr	c
+	cjne	r3,#2ch,X2d34
+	pop	cth3
+	mov	r5,a
+	cjne	r6,#26h,X2cc2
+	cjne	r3,#2ch,X2d3d
+	acall	X2ecf
+	mov	r5,a
+	cjne	r6,#27h,X2ccb
+	cjne	r3,#2ch,X2d46
+	setb	tf2
+	mov	r5,a
+	cjne	r6,#28h,X2cd4
+	cjne	r3,#2ch,X2d4f
+	setb	c
+	xch	a,r7
+	mov	r5,a
+	cjne	r6,#29h,X2cdd
+X2d1b:	cjne	r3,#2ch,X2d1b
+X2d1e:	addc	a,@r0
+	dec	rb0r2
+	mov	r5,a
+	mov	r6,#16h
+	mov	r5,a
+	mov	@r1,#20h
+	mov	r5,a
+	mov	@r1,#0
+	mov	r5,a
+X2d2b:	mov	r6,#17h
+	mov	r5,a
+	mov	@r1,#21h
+	mov	r5,a
+	mov	@r1,#1
+	mov	r5,a
+X2d34:	mov	r6,#18h
+	mov	r5,a
+	mov	@r1,#22h
+	mov	r5,a
+	mov	@r1,#2
+	mov	r5,a
+X2d3d:	mov	r6,#19h
+	mov	r5,a
+	mov	@r1,#23h
+	mov	r5,a
+	mov	@r1,#3
+	mov	r5,a
+X2d46:	mov	r6,#1ah
+	mov	r5,a
+	mov	@r1,#24h
+	mov	r5,a
+	mov	@r1,#4
+	mov	r5,a
+X2d4f:	mov	r6,#1bh
+	mov	r5,a
+	mov	@r1,#25h
+	mov	r5,a
+	mov	@r1,#5
+	addc	a,r2
+	mov	20h,@r1
+	mov	r5,a
+	mov	@r1,#16h
+	mov	r5,a
+	mov	@r1,#6
+	addc	a,r2
+	mov	20h,r0
+	mov	r5,a
+	mov	@r1,#17h
+	mov	r5,a
+	mov	@r1,#7
+	addc	a,r2
+	mov	20h,r1
+	mov	r5,a
+	mov	@r1,#18h
+	mov	r5,a
+	mov	@r1,#8
+	addc	a,r2
+	mov	20h,r2
+	mov	r5,a
+	mov	@r1,#19h
+	mov	r5,a
+	mov	@r1,#9
+	addc	a,r2
+	mov	20h,r3
+	mov	r5,a
+	mov	@r1,#1ah
+	mov	r5,a
+	mov	@r1,#0ah
+	addc	a,r2
+	mov	20h,r4
+	mov	r5,a
+	mov	@r1,#1bh
+	mov	r5,a
+	mov	@r1,#0bh
+	mov	r5,a
+	mov	r6,#1ch
+	mov	r5,a
+X2d91:	mov	@r1,#26h
+	mov	r5,a
+	mov	r6,#1dh
+	mov	r5,a
+	mov	@r1,#27h
+	mov	r5,a
+	mov	r6,#1eh
+	mov	r5,a
+	mov	@r1,#28h
+X2d9f:	mov	r5,a
+	mov	r6,#1fh
+	mov	r5,a
+	mov	@r1,#29h
+	addc	a,r2
+	pop	cth3
+	mov	r5,a
+	mov	@r1,#1ch
+	addc	a,r2
+	acall	X2ecf
+	mov	r5,a
+	mov	@r1,#1dh
+	addc	a,r2
+	setb	tf2
+	mov	r5,a
+	mov	@r1,#1eh
+	addc	a,r2
+	setb	c
+X2db9:	xch	a,r7
+	mov	r5,a
+	mov	@r1,#1fh
+	mov	r7,32h
+	da	a
+	mov	a,r2
+	addc	a,r2
+X2dc2:	acall	X2dea
+	reti	
+;
+	djnz	tm2con,X2de9
+	addc	a,r4
+	nop	
+	ret	
+;
+X2dcb:	setb	idsm
+	mov	r5,a
+	ret	
+;
+	pop	tm2con
+	xch	a,r5
+	dec	r4
+	jb	0c0h.3,X2d91
+	add	a,r4
+	addc	a,r6
+	orl	a,pwm1
+	cjne	r6,#0eh,X2d9f
+X2ddd:	cjne	r3,#2ch,X2ddd
+	mov	r6,#14h
+	mov	a,@r0
+	addc	a,r7
+	clr	pt1
+	add	a,r4
+	addc	a,r2
+	setb	c
+X2de9:	xch	a,r7
+X2dea:	mov	r5,a
+	cjne	r6,#21h,X2db0
+	acall	X292e
+	addc	a,r2
+	setb	tf2
+	mov	r5,a
+	cjne	r6,#20h,X2db9
+	acall	X292e
+X2df9:	addc	a,r2
+	acall	X2ecf
+	mov	r5,a
+	cjne	r6,#1fh,X2dc2
+	acall	X292e
+	addc	a,r2
+	pop	cth3
+	mov	r5,a
+	cjne	r6,#1eh,X2dcb
+	acall	X292e
+	mov	r5,a
+	mov	a,rb0r1
+	inc	r6
+	nop	
+	mov	r5,a
+	inc	r1
+	mov	r5,a
+	ret	
+;
+	xch	a,r0
+	xch	a,r7
+	ajmp	X2814
+;
+	org	2e19h
+;
+	mov	a,r5
+	orl	rcap2l,#0cfh
+	xch	a,r5
+	mov	@r0,a
+	add	a,r7
+	mov	r5,a
+	ajmp	X2f01
+;
+	ajmp	X2800
+;
+	inc	r1
+	setb	pt1
+	add	a,r4
+	addc	a,r6
+	ajmp	X28fd
+;
+	cjne	r6,#17h,X2df9
+	subb	a,2eh
+	mov	a,r5
+	anl	a,r3
+	xch	a,r4
+	xch	a,r7
+	mov	a,r5
+	orl	a,r3
+	xch	a,r6
+	xch	a,r7
+	ajmp	X29d4
+;
+	xch	a,r7
+	mov	r5,a
+	mov	r6,#1ah
+	reti	
+;
+	mov	a,@r0
+	xch	a,r7
+	mov	@r0,0bbh
+	clr	p1.2
+	add	a,r6
+	mov	r5,a
+	mov	r6,#1bh
+	reti	
+;
+	mov	a,@r1
+	xch	a,r7
+	rl	a
+	mov	@r0,0bah
+	clr	p1.2
+	add	a,r6
+	mov	r5,a
+	mov	r6,#1ch
+	reti	
+;
+	mov	a,r0
+	xch	a,r7
+	rl	a
+	mov	@r0,0b9h
+X2e5c:	clr	p1.2
+	add	a,r6
+	mov	r5,a
+	mov	r6,#1dh
+	reti	
+;
+	mov	a,r1
+	xch	a,r7
+	rl	a
+	mov	@r0,ip
+	clr	p1.2
+	add	a,r6
+	mov	r5,a
+	mov	r6,#6
+	reti	
+;
+	movx	a,@dptr
+	xch	a,r7
+	mov	r5,a
+	mov	r6,#7
+X2e74:	reti	
+;
+	ajmp	X2fcf
+;
+	mov	r5,a
+	mov	r6,#8
+X2e7a:	reti	
+;
+	movx	a,@r0
+X2e7c:	xch	a,r7
+	mov	r5,a
+	mov	r6,#9
+	reti	
+;
+	movx	a,@r1
+	xch	a,r7
+	mov	r5,a
+	mov	r6,#0ah
+	reti	
+;
+	clr	a
+	xch	a,r7
+	mov	r5,a
+	mov	r6,#0bh
+	reti	
+;
+	mov	a,cth3
+	xch	a,r5
+	orl	a,r1
+	jnb	0c0h.3,X2e4f
+	add	a,r4
+	mov	r7,0ddh
+	cjne	r6,#3,X2e5c
+	cjne	r3,#2ch,X2e7a
+	mov	r6,#2
+	mov	r6,a
+	xrl	a,@r1
+	setb	pt1
+	add	a,r4
+	addc	a,r6
+	inc	r0
+	mov	r5,a
+	cjne	r6,#22h,X2e74
+	cjne	@r1,#2eh,X2eeb
+	nop	
+	mov	r5,a
+	cjne	r6,#22h,X2e7c
+	movx	@r1,a
+	add	a,r7
+	clr	c
+	acall	X292e
+	addc	a,r2
+	xch	a,@r0
+	xch	a,r7
+	mov	r6,a
+	inc	@r1
+	xch	a,r2
+	cjne	r3,#2ch,X2ebe
+	rr	a
+X2ec1:	xch	a,r4
+	clr	c
+	add	a,r7
+	mov	r5,a
+	mov	@r1,#22h
+	mov	r5,a
+	addc	a,@r0
+	dec	@r0
+	jb	xdata,X2f4b
+	inc	@r0
+	mov	r5,a
+X2ecf:	mov	@r1,#0
+X2ed1:	addc	a,r2
+	mov	20h,@r1
+	mov	r5,a
+	mov	@r1,#6
+	mov	r5,a
+	mov	r6,#7
+	mov	r5,a
+	mov	@r1,#1
+	addc	a,r2
+	mov	20h,r0
+	mov	r5,a
+	mov	@r1,#7
+	mov	r5,a
+	mov	r6,#8
+	mov	r5,a
+	mov	@r1,#2
+	addc	a,r2
+	mov	20h,r1
+	mov	r5,a
+	mov	@r1,#8
+	mov	r5,a
+	mov	r6,#9
+	mov	r5,a
+	mov	@r1,#3
+	addc	a,r2
+	mov	20h,r2
+	mov	r5,a
+	mov	@r1,#9
+X2efb:	mov	r5,a
+	mov	r6,#0ah
+	mov	r5,a
+	mov	@r1,#4
+X2f01:	addc	a,r2
+	mov	20h,r3
+	mov	r5,a
+	mov	@r1,#0ah
+	mov	r5,a
+	mov	r6,#0bh
+	mov	r5,a
+	mov	@r1,#5
+	addc	a,r2
+	mov	20h,r4
+	mov	r5,a
+	mov	@r1,#0bh
+	mov	r5,a
+	mov	r6,#1ah
+	mov	r5,a
+	mov	@r1,#1eh
+	addc	a,r2
+	pop	cth3
+	mov	r5,a
+	mov	@r1,#1ah
+	mov	r5,a
+	mov	r6,#1bh
+	mov	r5,a
+	mov	@r1,#1fh
+	addc	a,r2
+	acall	X2ecf
+	mov	r5,a
+	mov	@r1,#1bh
+X2f2b:	mov	r5,a
+	mov	r6,#1ch
+	mov	r5,a
+	mov	@r1,#20h
+	addc	a,r2
+	setb	tf2
+	mov	r5,a
+	mov	@r1,#1ch
+	mov	r5,a
+	mov	r6,#1dh
+	mov	r5,a
+	mov	@r1,#21h
+	addc	a,r2
+	setb	c
+	xch	a,r7
+	mov	r5,a
+	mov	@r1,#1dh
+	mov	r7,32h
+	setb	c
+	mov	a,r2
+X2f47:	mov	r5,a
+	mov	@r1,#10h
+	mov	r5,a
+X2f4b:	ret	
+;
+	pop	tm2con
+	djnz	r5,X2fce
+	ljmp	X32d2
+;
+	mov	a,r2
+	xchd	a,@r0
+	inc	r6
+	mov	r5,a
+	mov	@r1,#11h
+	addc	a,r2
+	sjmp	X2f47
+;
+	mov	r5,a
+	mov	rb2r2,@r0
+	mov	r5,a
+	mov	@r1,#12h
+	mov	r5,a
+	mov	rb2r3,@r0
+	mov	r5,a
+	mov	@r1,#13h
+	mov	r5,a
+	addc	a,@r0
+	dec	r0
+	nop	
+	mov	r5,a
+	addc	a,@r0
+	dec	r1
+	nop	
+	mov	r5,a
+	addc	a,@r0
+	add	a,#0
+	mov	r5,a
+	addc	a,@r0
+	add	a,rb0r0
+	mov	r5,a
+	mov	a,rb0r1
+	dec	a
+	nop	
+	mov	a,r5
+	orl	rcap2l,#0cfh
+	ajmp	X280e
+;
+	org	2f84h
+;
+	mov	r5,a
+	inc	r1
+	mov	r5,a
+	ret	
+;
+	xch	a,r0
+	xch	a,r7
+	xch	a,r5
+	mov	@r0,a
+	add	a,r7
+	mov	a,r5
+	anl	a,r3
+	xch	a,r0
+	xch	a,r7
+	djnz	r5,X3011
+	ljmp	Xd622
+;
+	reti	
+;
+	xch	a,r2
+	xch	a,r7
+	mov	r7,32h
+	xch	a,r3
+	xch	a,r7
+	ajmp	X2814
+;
+	org	2fa0h
+;
+	mov	r5,a
+	inc	r1
+	mov	r5,a
+	ret	
+;
+	xch	a,r0
+	xch	a,r7
+	xch	a,r5
+	mov	@r0,a
+	add	a,r7
+	mov	r5,a
+	ajmp	X2ffd
+;
+	orl	c,23h.0
+	mov	r5,a
+	jmp	@a+dptr
+;
+	dec	r1
+	addc	a,r2
+	xch	a,r1
+	xch	a,r7
+	mov	r5,a
+	mov	@r1,#24h
+	addc	a,r2
+	xch	a,r0
+	xch	a,r7
+	mov	r5,a
+	mov	@r1,#25h
+	xch	a,r5
+	dec	r4
+	jb	0c0h.3,X2ff3
+	add	a,r6
+	mov	r5,a
+	ret	
+;
+X2fc5:	xch	a,r0
+	xch	a,r7
+	add	a,r2
+	xch	a,r0
+X2fc9:	xch	a,r7
+	anl	a,#5dh
+	ajmp	X2865
+;
+X2fce:	nop	
+X2fcf:	inc	r1
+	mov	a,r3
+X2fd1:	ajmp	X2849
+;
+	org	2fd4h
+;
+	inc	r1
+	ajmp	X283c
+;
+	org	2fd8h
+;
+	mov	a,r5
+	cjne	r0,#3eh,X3042
+	djnz	r5,X3055
+	ljmp	X3ec0
+;
+X2fe1:	mov	r5,a
+	mov	@r1,#0fh
+X2fe4:	addc	a,r6
+	jc	X2fe4
+	mov	@r1,#14h
+	addc	a,r2
+	xch	a,@r1
+	xch	a,r7
+	mov	r5,a
+	mov	@r1,#23h
+	addc	a,r2
+	xch	a,@r0
+	xch	a,r7
+	xch	a,r1
+X2ff3:	clr	c
+	acall	X292e
+	xch	a,0d5h
+	djnz	r5,X2fdf
+	ajmp	X2900
+;
+	org	2ffdh
+;
+X2ffd:	djnz	r5,X3029
+	xch	a,r0
+X3000:	xch	a,r7
+	mov	a,r5
+	orl	a,r3
+	xch	a,r2
+	xch	a,r7
+	xch	a,r3
+	addc	a,r0
+	xch	a,r3
+	dec	r1
+	inc	a
+	cjne	@r1,#0ddh,X3063
+	nop	
+	djnz	r5,X306e
+	ajmp	X30dd
+;
+	rl	a
+	djnz	r5,X3038
+	mov	a,r5
+	anl	a,r2
+	inc	r5
+	clr	21h.3
+	jnb	20h.5,X2fdf
+X301d:	inc	r3
+	jnb	22h.1,X3021
+X3021:	nop	
+	mov	a,r5
+	anl	a,r2
+	addc	a,r2
+	xch	a,r2
+X3026:	xch	a,r7
+X3027:	mov	a,@r0
+	ajmp	X30ca
+;
+	addc	a,r0
+	jnb	clrti,X3084
+	nop	
+X302f:	dec	r6
+	nop	
+	mov	a,r5
+	anl	a,r2
+	acall	X3000
+	nop	
+	mov	a,r5
+	anl	a,r2
+X3038:	mov	r4,#0eeh
+	mov	r7,a
+	reti	
+;
+	xch	a,r1
+	xch	a,r7
+	mov	r5,#0eeh
+	mov	r7,a
+X3041:	reti	
+;
+X3042:	xch	a,r0
+	xch	a,r7
+	djnz	r5,X3027
+	acall	X36c1
+	xch	a,r1
+	mov	r5,a
+	mov	a,0ddh
+	mov	a,rb1r6
+	acall	X3011
+	inc	r4
+	nop	
+	djnz	r5,X3075
+	orl	a,#0cch
+	mov	r7,0ddh
+	dec	r1
+	inc	r5
+	xch	a,r2
+X305b:	mov	30h,r2
+	djnz	r5,X301d
+X305f:	nop	
+	xch	a,r2
+	anl	a,@r0
+	jnb	27h.2,X304b
+	xch	a,r7
+	djnz	r5,X3026
+	inc	r0
+X3069:	clr	2ah.6
+	jnb	27h.2,X3055
+X306e:	xch	a,r7
+	djnz	r5,X302f
+X3071:	inc	r1
+X3072:	clr	2ah.6
+	jnb	27h.2,X305f
+	xch	a,r7
+X3078:	djnz	r5,X3038
+	inc	r2
+	clr	2ah.6
+	jnb	27h.2,X3069
+	xch	a,r7
+	djnz	r5,X3041
+	inc	r3
+X3084:	clr	2ah.6
+	jnb	0c0h.3,X3072
+	jnb	21h.6,X309d
+	dec	@r0
+	nop	
+	dec	r6
+	inc	r4
+	djnz	r5,X30b3
+	orl	a,#0cch
+	mov	r7,0ddh
+	dec	r1
+	inc	r5
+	xch	a,r2
+X3099:	mul	ab
+	jnb	clrti,X305b
+X309d:	nop	
+	clr	p1.5
+	jnb	0c0h.3,X3078
+X30a3:	jnb	21h.6,X30b6
+	dec	@r0
+	nop	
+	dec	r6
+	inc	r4
+	mov	r5,a
+	ajmp	X3150
+;
+	xch	a,r4
+	djnz	r5,X30d1
+	jnc	X307e
+	djnz	r5,X3132
+	add	a,r0
+	mov	r5,a
+X30b6:	dec	r1
+	inc	r5
+	xch	a,r2
+X30b9:	djnz	30h,X30b9
+	cjne	r6,#1,X3099
+	cjne	a,30h,X3071
+	mov	r5,a
+X30c3:	cjne	r6,#0,X30a3
+	mov	r6,#1
+	xch	a,r2
+X30c9:	cjne	a,30h,X30c9
+	mov	a,0ddh
+	ajmp	X37dd
+;
+	mov	r6,#1
+	clr	c
+	cjne	a,30h,X30c3
+	orl	a,r3
+	mov	a,@r0
+	xch	a,r7
+	mov	a,r5
+	anl	a,r3
+	mov	a,r0
+	xch	a,r7
+X30dd:	djnz	r5,X3150
+	inc	r0
+	djnz	r5,X3152
+	inc	r1
+	djnz	r5,X3158
+	inc	r2
+	djnz	r5,X315a
+	inc	r3
+	addc	a,r6
+	add	a,r0
+	mov	a,r5
+	orl	a,r3
+	movx	a,@dptr
+	xch	a,r7
+	mov	a,r5
+	anl	a,r3
+X30f1:	movx	a,@r0
+	xch	a,r7
+	add	a,r2
+	clr	a
+	xch	a,r7
+	djnz	r5,X316f
+	nop	
+	djnz	r5,X3172
+	ajmp	X30dd
+;
+	acall	X3302
+	djnz	r5,X3171
+	rr	a
+	djnz	r5,X3177
+	inc	a
+	djnz	r5,X3179
+	inc	0ddh
+	mov	rb0r6,#0ddh
+	mov	a,#7
+	djnz	r5,X30f1
+	mov	r5,a
+	ajmp	X37c9
+;
+	org	3132h
+;
+X3132:	nop	
+;
+	org	3150h
+;
+X3150:	nop	
+;
+	org	3152h
+;
+X3152:	nop	
+;
+	org	3158h
+;
+X3158:	nop	
+;
+	org	315ah
+;
+X315a:	nop	
+;
+	org	316fh
+;
+X316f:	nop	
+;
+	org	3171h
+;
+X3171:	nop	
+X3172:	nop	
+;
+	org	3177h
+;
+X3177:	nop	
+;
+	org	3179h
+;
+X3179:	nop	
+;
+	org	32ach
+;
+X32ac:	nop	
+;
+	org	32ceh
+;
+X32ce:	nop	
+;
+	org	32d2h
+;
+X32d2:	nop	
+;
+	org	32fdh
+;
+X32fd:	nop	
+;
+	org	3302h
+;
+X3302:	nop	
+;
+	org	36c1h
+;
+X36c1:	nop	
+;
+	org	37c9h
+;
+X37c9:	nop	
+;
+	org	37ddh
+;
+X37dd:	nop	
+;
+	org	38afh
+;
+X38af:	nop	
+;
+	org	38e8h
+;
+X38e8:	nop	
+;
+	org	3a00h
+;
+	inc	@r0
+X3a01:	nop	
+	mov	a,r5
+	mov	r1,#10h
+	mov	r4,a
+	xch	a,r1
+	nop	
+;
+	org	3a20h
+;
+	inc	r6
+X3a21:	movx	a,@dptr
+	inc	@r0
+	nop	
+	mov	r1,#0d3h
+	ajmp	X38af
+;
+	mov	a,r5
+	mov	r1,#10h
+	mov	r0,a
+	acall	X38e8
+	rr	a
+	xch	a,r5
+	anl	a,#5
+	inc	r4
+	clr	24h.4
+	addc	a,r2
+	xch	a,r1
+	nop	
+;
+	org	3a60h
+;
+	inc	@r0
+	nop	
+	setb	c
+	movx	a,@dptr
+	setb	c
+	ajmp	X3fd3
+;
+	movx	a,@r0
+	setb	c
+	movx	a,@r1
+	setb	c
+	clr	a
+	setb	c
+	mov	a,0d3h
+	mov	a,@r0
+	setb	c
+	mov	a,@r1
+	setb	c
+	mov	a,r0
+	setb	c
+	mov	a,r1
+	setb	c
+	mov	a,r2
+	setb	c
+	mov	a,r3
+	setb	c
+	mov	a,r4
+	setb	c
+	mov	a,r5
+	setb	c
+	mov	a,r6
+	setb	c
+	mov	a,r7
+	setb	c
+	movx	@dptr,a
+	setb	c
+	acall	X3fd3
+	movx	@r0,a
+	setb	c
+	movx	@r1,a
+	setb	c
+	cpl	a
+	setb	c
+	mov	0d3h,a
+	mov	@r0,a
+	setb	c
+	mov	@r1,a
+	setb	c
+	mov	r0,a
+	setb	c
+	mov	r1,a
+	setb	c
+	mov	r2,a
+	setb	c
+	mov	r3,a
+	setb	c
+	mov	r4,a
+	setb	c
+	mov	r5,a
+	setb	c
+	mov	r6,a
+	setb	c
+	mov	r7,a
+	jbc	ip.6,X3a6e
+;
+;	Register/Memory Equates
+;
+rb0r0	equ	0
+rb0r1	equ	1
+rb0r2	equ	2
+rb0r5	equ	5
+rb0r6	equ	6
+rb1r1	equ	9
+rb1r2	equ	0ah
+rb1r5	equ	0dh
+rb1r6	equ	0eh
+rb1r7	equ	0fh
+rb2r1	equ	11h
+rb2r2	equ	12h
+rb2r3	equ	13h
+rb2r4	equ	14h
+rb2r7	equ	17h
+rb3r0	equ	18h
+;
+;	Miscellaneous equates
+;
+;  These are addresses referenced in the code but
+;  which are in the middle of a multibyte instruction
+;  or are addresses outside the initialized space
+;
+X0002	equ	2
+X0006	equ	6
+X0021	equ	21h
+X00ca	equ	0cah
+X00d5	equ	0d5h
+X012e	equ	12eh
+X0140	equ	140h
+X0149	equ	149h
+X015a	equ	15ah
+X0195	equ	195h
+X019f	equ	19fh
+X01ea	equ	1eah
+X0224	equ	224h
+X02cd	equ	2cdh
+X02d8	equ	2d8h
+X02e0	equ	2e0h
+X02fb	equ	2fbh
+X0302	equ	302h
+X030b	equ	30bh
+X035d	equ	35dh
+X03bb	equ	3bbh
+X03c5	equ	3c5h
+X0434	equ	434h
+X0479	equ	479h
+X049d	equ	49dh
+X04b1	equ	4b1h
+X053e	equ	53eh
+X055e	equ	55eh
+X0567	equ	567h
+X057e	equ	57eh
+X0673	equ	673h
+X0694	equ	694h
+X0697	equ	697h
+X06a8	equ	6a8h
+X06c9	equ	6c9h
+X06ce	equ	6ceh
+X06ed	equ	6edh
+X06f1	equ	6f1h
+X0733	equ	733h
+X07ed	equ	7edh
+X07f8	equ	7f8h
+X0800	equ	800h
+X082b	equ	82bh
+X087e	equ	87eh
+X0905	equ	905h
+X090d	equ	90dh
+X0914	equ	914h
+X093e	equ	93eh
+X09e5	equ	9e5h
+X0a0a	equ	0a0ah
+X0a0d	equ	0a0dh
+X0a49	equ	0a49h
+X0a51	equ	0a51h
+X0a57	equ	0a57h
+X0a70	equ	0a70h
+X0a7d	equ	0a7dh
+X0afc	equ	0afch
+X0b4d	equ	0b4dh
+X0b90	equ	0b90h
+X0bbb	equ	0bbbh
+X0c0a	equ	0c0ah
+X0c6b	equ	0c6bh
+X0eaf	equ	0eafh
+X0ee1	equ	0ee1h
+X0ef1	equ	0ef1h
+X0efc	equ	0efch
+X0f18	equ	0f18h
+X0f28	equ	0f28h
+X0fc1	equ	0fc1h
+X0fc3	equ	0fc3h
+X0fc9	equ	0fc9h
+X0ffb	equ	0ffbh
+X1005	equ	1005h
+X1045	equ	1045h
+X106f	equ	106fh
+X107c	equ	107ch
+X108c	equ	108ch
+X109d	equ	109dh
+X10ae	equ	10aeh
+X10b1	equ	10b1h
+X10b4	equ	10b4h
+X10c7	equ	10c7h
+X10d0	equ	10d0h
+X10d6	equ	10d6h
+X10f3	equ	10f3h
+X10fa	equ	10fah
+X110a	equ	110ah
+X111a	equ	111ah
+X111f	equ	111fh
+X112c	equ	112ch
+X112f	equ	112fh
+X1132	equ	1132h
+X1137	equ	1137h
+X1156	equ	1156h
+X115b	equ	115bh
+X115c	equ	115ch
+X1178	equ	1178h
+X11bb	equ	11bbh
+X11c5	equ	11c5h
+X11dc	equ	11dch
+X11df	equ	11dfh
+X11e3	equ	11e3h
+X11ee	equ	11eeh
+X1200	equ	1200h
+X1209	equ	1209h
+X1217	equ	1217h
+X121b	equ	121bh
+X121d	equ	121dh
+X123b	equ	123bh
+X123f	equ	123fh
+X1242	equ	1242h
+X124c	equ	124ch
+X1253	equ	1253h
+X126c	equ	126ch
+X1279	equ	1279h
+X128f	equ	128fh
+X1297	equ	1297h
+X129c	equ	129ch
+X129e	equ	129eh
+X12b3	equ	12b3h
+X12c0	equ	12c0h
+X12c2	equ	12c2h
+X12c3	equ	12c3h
+X12d4	equ	12d4h
+X12d7	equ	12d7h
+X12ea	equ	12eah
+X12f1	equ	12f1h
+X12fb	equ	12fbh
+X1300	equ	1300h
+X1307	equ	1307h
+X1315	equ	1315h
+X1316	equ	1316h
+X1318	equ	1318h
+X131a	equ	131ah
+X1367	equ	1367h
+X136e	equ	136eh
+X1370	equ	1370h
+X1379	equ	1379h
+X1383	equ	1383h
+X138f	equ	138fh
+X13a3	equ	13a3h
+X13c6	equ	13c6h
+X13ed	equ	13edh
+X13f4	equ	13f4h
+X13f7	equ	13f7h
+X1408	equ	1408h
+X141b	equ	141bh
+X143d	equ	143dh
+X1445	equ	1445h
+X145b	equ	145bh
+X2028	equ	2028h
+X2079	equ	2079h
+X2097	equ	2097h
+X209a	equ	209ah
+X20e8	equ	20e8h
+X20f2	equ	20f2h
+X2121	equ	2121h
+X212c	equ	212ch
+X2152	equ	2152h
+X215d	equ	215dh
+X2173	equ	2173h
+X21a7	equ	21a7h
+X21eb	equ	21ebh
+X21f0	equ	21f0h
+X21f5	equ	21f5h
+X2242	equ	2242h
+X2247	equ	2247h
+X2284	equ	2284h
+X228c	equ	228ch
+X229f	equ	229fh
+X22bf	equ	22bfh
+X22cb	equ	22cbh
+X22e8	equ	22e8h
+X22fb	equ	22fbh
+X230f	equ	230fh
+X2311	equ	2311h
+X2323	equ	2323h
+X2336	equ	2336h
+X2376	equ	2376h
+X2389	equ	2389h
+X23d3	equ	23d3h
+X2413	equ	2413h
+X241d	equ	241dh
+X2436	equ	2436h
+X2497	equ	2497h
+X2499	equ	2499h
+X24bb	equ	24bbh
+X24c1	equ	24c1h
+X24ea	equ	24eah
+X24ed	equ	24edh
+X2587	equ	2587h
+X25ce	equ	25ceh
+X25ea	equ	25eah
+X2629	equ	2629h
+X2670	equ	2670h
+X2721	equ	2721h
+X2725	equ	2725h
+X2750	equ	2750h
+X2753	equ	2753h
+X276c	equ	276ch
+X279e	equ	279eh
+X27ac	equ	27ach
+X27f5	equ	27f5h
+X2801	equ	2801h
+X280a	equ	280ah
+X280e	equ	280eh
+X2832	equ	2832h
+X2a2a	equ	2a2ah
+X2a74	equ	2a74h
+X2a7a	equ	2a7ah
+X2a83	equ	2a83h
+X2a8a	equ	2a8ah
+X2a8f	equ	2a8fh
+X2acd	equ	2acdh
+X2ad3	equ	2ad3h
+X2adc	equ	2adch
+X2ae2	equ	2ae2h
+X2ae3	equ	2ae3h
+X2ae8	equ	2ae8h
+X2b65	equ	2b65h
+X2bb0	equ	2bb0h
+X2c2a	equ	2c2ah
+X2c3e	equ	2c3eh
+X2cc2	equ	2cc2h
+X2cc4	equ	2cc4h
+X2cdd	equ	2cddh
+X2d10	equ	2d10h
+X2d11	equ	2d11h
+X2db0	equ	2db0h
+X2e4f	equ	2e4fh
+X2ebe	equ	2ebeh
+X2eeb	equ	2eebh
+X2fc1	equ	2fc1h
+X2fdd	equ	2fddh
+X2fdf	equ	2fdfh
+X2ffb	equ	2ffbh
+X3011	equ	3011h
+X3029	equ	3029h
+X304b	equ	304bh
+X3055	equ	3055h
+X3063	equ	3063h
+X3075	equ	3075h
+X307e	equ	307eh
+X30b3	equ	30b3h
+X30ca	equ	30cah
+X30d1	equ	30d1h
+X3a6e	equ	3a6eh
+X3e02	equ	3e02h
+X3e48	equ	3e48h
+X3ec0	equ	3ec0h
+X3ecd	equ	3ecdh
+X3fd3	equ	3fd3h
+X48f5	equ	48f5h
+X78c1	equ	78c1h
+X7ccd	equ	7ccdh
+Xba28	equ	0ba28h
+Xc21a	equ	0c21ah
+Xc22c	equ	0c22ch
+Xc279	equ	0c279h
+Xc28f	equ	0c28fh
+Xc2bb	equ	0c2bbh
+Xc2c0	equ	0c2c0h
+Xc2f0	equ	0c2f0h
+Xc2f1	equ	0c2f1h
+Xc343	equ	0c343h
+Xc641	equ	0c641h
+Xc93e	equ	0c93eh
+Xca89	equ	0ca89h
+Xca9c	equ	0ca9ch
+Xcaa8	equ	0caa8h
+Xcaac	equ	0caach
+Xcadf	equ	0cadfh
+Xcaf6	equ	0caf6h
+Xcdc7	equ	0cdc7h
+Xd303	equ	0d303h
+Xd3a3	equ	0d3a3h
+Xd3e0	equ	0d3e0h
+Xd3e7	equ	0d3e7h
+Xd3ed	equ	0d3edh
+Xd622	equ	0d622h
+Xea32	equ	0ea32h
+Xeacd	equ	0eacdh
+Xeae1	equ	0eae1h
+Xeb11	equ	0eb11h
+Xeb22	equ	0eb22h
+Xebcd	equ	0ebcdh
+Xed41	equ	0ed41h
+Xfe17	equ	0fe17h
+;
+	end
+;
+
